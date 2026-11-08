@@ -9,6 +9,7 @@
     "check:css": "node scripts/check-css.mjs",
     "check:menus": "node scripts/check-menus.mjs",
     "check:menu-open": "node scripts/check-menu-open.mjs",
+    "check:model-menu": "node scripts/check-model-menu.mjs",
     "check:slash": "node scripts/check-slash.mjs",
     "check:takeover": "node scripts/check-takeover.mjs",
     "check:bundle": "node scripts/check-bundle.mjs",

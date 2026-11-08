@@ -39,6 +39,11 @@ if (menus.status !== 0) process.exit(menus.status ?? 1)
 const menuOpen = spawnSync(process.execPath, [resolve(root, 'scripts/check-menu-open.mjs')], { stdio: 'inherit' })
 if (menuOpen.status !== 0) process.exit(menuOpen.status ?? 1)
 
+// 0c2. The model picker's weight: the first level must stay at MODEL_MENU_TOP models per provider, from topModels, with
+//      the full catalogue behind a submenu — 60 rows laid out on open is what closed the menu on the release.
+const modelMenu = spawnSync(process.execPath, [resolve(root, 'scripts/check-model-menu.mjs')], { stdio: 'inherit' })
+if (modelMenu.status !== 0) process.exit(modelMenu.status ?? 1)
+
 // 0d. The slash gate: the classifier's cases and the composer's `/help` → slash.exec → note path, on stubs.
 const slash = spawnSync(process.execPath, [resolve(root, 'scripts/check-slash.mjs')], { stdio: 'inherit' })
 if (slash.status !== 0) process.exit(slash.status ?? 1)

@@ -105,6 +105,20 @@
   padding: 0 8px 6px;
 }
 
+/* The submenu "Tous les modèles {Fournisseur}…": the full catalogue, wider than the picker, with its filter field
+   pinned to the top of the scroll — a list of 60 rows scrolls under it, and the field stays in reach. */
+.glaze .hui-model-sub {
+  min-width: 220px;
+  max-width: 320px;
+}
+.glaze .hui-model-filter {
+  position: sticky;
+  top: -4px;
+  z-index: 1;
+  padding: 4px 4px 6px;
+  background: var(--popover);
+}
+
 /* The conversations list: a filter field on top, then the groups. */
 .glaze .hui-conv-menu {
   max-width: 340px;

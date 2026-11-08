@@ -11,6 +11,8 @@
   --bot-ground-core: rgba(0, 0, 0, 0.095);
   --bot-heart: #ff4f7e;
   --bot-blush: rgba(255, 110, 150, 0.55);
+  /* The body is drawn larger than its box (the hop and the ground shadow need the room): the box must not clip it. */
+  overflow: visible;
   position: relative;
   display: inline-block;
   flex: none;
@@ -23,14 +25,22 @@
   --bot-ground: rgba(0, 0, 0, 0.2);
   --bot-ground-core: rgba(0, 0, 0, 0.3);
 }
-/* The body overflows its box by a quarter: the ground shadow and the hop need the room. */
+/* The SVG fills the box and the drawing is blown up around the centre: the aicss engine draws the body at R0 = 13.4
+   in a 48-unit viewBox (engine.ts, `R0` and `AI_BOT_SVG.viewBox`), so the face only covers 26.8 / 48 = 55.8% of the
+   box — ~26px in a 46px cell, which reads as a 28px avatar. `--bot-scale` takes that to 89.3% (~90%) at every size
+   (18, 20, 24, 36, 46, 56, 72), and the shape's own wobble (+6.8% of R0 at rest) tops out at 95%, inside the box.
+   Scale, not width: the engine keeps setting `d` and `transform` on the groups, and `transform-origin: center` keeps
+   the animation turning around the face rather than around the corner of the box. */
 .hui-bot svg {
+  --bot-scale: 1.6;
   position: absolute;
-  inset: -25%;
+  inset: 0;
   display: block;
-  width: 150%;
-  height: 150%;
+  width: 100%;
+  height: 100%;
   overflow: visible;
+  transform: scale(var(--bot-scale));
+  transform-origin: center;
 }
 .hui-bot .stop1,
 .hui-bot .stop2 {
