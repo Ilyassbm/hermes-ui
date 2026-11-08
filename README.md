@@ -21,12 +21,16 @@ Terminal, fichiers et revue git restent accessibles par leurs raccourcis natifs.
 
 ## Installer
 
-Sur le Mac (Hermes Desktop connecté à l'instance) :
-Capabilities → Plugins → **Install from Git** → `https://github.com/Ilyassbm/hermes-ui` (cocher Desktop et l'instance),
-puis activer **Hermes UI**. La page s'ouvre par l'entrée « Hermes UI » de la barre latérale ou ⌘K → « Ouvrir Hermes UI ».
+Le repo est privé et l'instance n'a pas d'accès GitHub : « Install from Git » échoue (`could not read Username`).
+On installe donc sur l'instance depuis un clone local :
 
-Le backend d'usage (`dashboard/plugin_api.py`) tourne dans le gateway de l'instance : il faut que `hermes-ui`
-soit dans `plugins.enabled` côté instance (`hermes plugins enable hermes-ui`).
+```bash
+HERMES_HOME=/opt/data hermes plugins install file:///chemin/du/clone --enable --yes-deps   # --force pour mettre à jour
+```
+
+La partie desktop est publiée dans `desktop-plugins/hermes-ui/` par l'instance. Sur le Mac : ⌘K → *Reload desktop plugins*,
+puis activer **Hermes UI** dans Capabilities → Plugins si besoin. La page s'ouvre par l'entrée « Hermes UI » de la barre
+latérale ou ⌘K → « Ouvrir Hermes UI ». Le backend d'usage se monte à la première requête, sans redémarrage.
 
 ## Développer
 
