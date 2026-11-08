@@ -232,6 +232,17 @@ export function newConversation() {
   store.set(blankConversation())
 }
 
+/**
+ * A command's answer, as a line in the thread: no bubble, no role, never sent to the gateway. It lives in the local
+ * conversation only (a reload does not bring it back), which is what the thread shows when `/status` or a skill
+ * answers.
+ */
+export function addNote(text) {
+  const body = typeof text === 'string' ? text.trim() : ''
+  if (!body) return
+  store.set(s => ({ messages: [...s.messages, { id: nid('n'), role: 'note', text: body, at: Date.now() }] }))
+}
+
 export async function openConversation(storedId) {
   const { bot } = store.get()
   store.set({ ...blankConversation(), storedId, loading: true })
@@ -276,7 +287,7 @@ function fileToBase64(file) {
   })
 }
 
-async function ensureSession() {
+export async function ensureSession() {
   const s = store.get()
   if (s.sid) return s.sid
   const prefs = prefsFor(s.bot)

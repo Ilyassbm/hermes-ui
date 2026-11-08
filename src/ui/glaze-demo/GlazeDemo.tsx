@@ -24,7 +24,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardMeta, C
 import { Chart } from '@/components/glaze/ui/chart'
 import { CodeBlock } from '@/components/glaze/ui/code-block'
 import { CopyButton } from '@/components/glaze/ui/copy-button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/glaze/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/glaze/ui/dropdown-menu'
 import { Kbd } from '@/components/glaze/ui/kbd'
 import { Status } from '@/components/glaze/ui/status'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/glaze/ui/table'
@@ -226,9 +226,11 @@ export function GlazeDemo() {
                 <Icon icon={More} size={14} />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" size="sm">
-                <DropdownMenuLabel>Routine nightly-report</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => console.log('[glaze-demo] ouvrir les journaux')}>Ouvrir les journaux</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => console.log('[glaze-demo] copier le lien du passage')}>Copier le lien du passage</DropdownMenuItem>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Routine nightly-report</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => console.log('[glaze-demo] ouvrir les journaux')}>Ouvrir les journaux</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => console.log('[glaze-demo] copier le lien du passage')}>Copier le lien du passage</DropdownMenuItem>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive" onClick={() => console.log('[glaze-demo] désactiver la routine')}>Désactiver la routine</DropdownMenuItem>
               </DropdownMenuContent>
@@ -364,10 +366,14 @@ export function GlazeDemo() {
                 <DropdownMenu>
                   <DropdownMenuTrigger render={<PromptInputModel model={model} />} />
                   <DropdownMenuContent align="start" side="top" size="sm">
-                    <DropdownMenuLabel>Modèle</DropdownMenuLabel>
-                    {MODELS.map(name => (
-                      <DropdownMenuItem key={name} onClick={() => setModel(name)}>{name}</DropdownMenuItem>
-                    ))}
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel>Modèle</DropdownMenuLabel>
+                      <DropdownMenuRadioGroup value={model} onValueChange={setModel}>
+                        {MODELS.map(name => (
+                          <DropdownMenuRadioItem key={name} value={name}>{name}</DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>
               }

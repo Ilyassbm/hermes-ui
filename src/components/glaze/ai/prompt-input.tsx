@@ -67,6 +67,8 @@ type PromptInputHandle = {
   /** Puts text at the caret; [label](type:id) tokens become chips. */
   insert: (text: string) => void;
   getValue: () => PromptValue;
+  /** Opens the `/` list over the editor with an empty search, the way a keystroke would. Nothing without `commands`. */
+  openCommands: () => void;
 };
 
 // ---------- The composer ----------
@@ -383,7 +385,9 @@ function PromptInput({
     clear,
     insert: (text: string) => { editorRef.current?.focus(); insertFragment(fragmentFrom(text)); },
     getValue: () => { const {codec: _codec, ...value} = read(); return value; },
-  }), [clear, fragmentFrom, insertFragment, read]);
+    // Read through the function, not captured: openCommandMenu closes over `commands` and the caret range.
+    openCommands: () => openCommandMenu(),
+  }), [clear, fragmentFrom, insertFragment, read]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Starting text: the saved draft first, then defaultValue. Once, after the chip templates exist.
   React.useEffect(() => {

@@ -6,7 +6,7 @@ import {
   CaretUpDownIcon, ChartLineIcon, CheckIcon, CheckCircleIcon, CircleNotchIcon, ClockIcon, CodeIcon, ColumnsIcon,
   CopyIcon, DotsThreeIcon, DownloadSimpleIcon, EyeIcon, EyeSlashIcon, FileIcon, FileArchiveIcon, FileAudioIcon,
   FileCodeIcon, FileCsvIcon, FileImageIcon, FileTextIcon, FileVideoIcon, FunnelIcon, GearSixIcon, GlobeIcon, InfoIcon,
-  KeyIcon, LinkSimpleIcon, LockIcon, MagnifyingGlassIcon, MicrophoneIcon, MicrophoneSlashIcon, MinusIcon, MoonIcon,
+  KeyIcon, LinkSimpleIcon, ListDashesIcon, LockIcon, MagnifyingGlassIcon, MicrophoneIcon, MicrophoneSlashIcon, MinusIcon, MoonIcon,
   PaperPlaneRightIcon, PaperclipIcon, PauseIcon, PencilSimpleIcon, PlayIcon, PlusIcon, RobotIcon, ShieldSlashIcon,
   SidebarSimpleIcon, SparkleIcon, SquaresFourIcon, SquareIcon, StarIcon, SunIcon, TableIcon, TerminalWindowIcon, TrashIcon, TrayIcon,
   UploadSimpleIcon, UserIcon, WarningIcon, WarningCircleIcon, WrenchIcon, XIcon, XCircleIcon, HourglassSimpleMediumIcon,
@@ -68,6 +68,7 @@ export const Information = InfoIcon;
 export const Key = KeyIcon;
 export const Light = SunIcon;
 export const Link = LinkSimpleIcon;
+export const List = ListDashesIcon;
 export const Locked = LockIcon;
 export const NoAccess = ShieldSlashIcon;
 export const NoResults = MagnifyingGlassIcon;

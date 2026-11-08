@@ -1,0 +1,465 @@
+/* The rail: the OpenBot-shaped column — its top bar, its search field, the pinned bots as tiles, the rest of the team
+   as rows, and the subscription meters at the foot. Plain CSS on Glaze's tokens, all of it under .glaze so nothing
+   reaches the native app (the build's check-css gate looks for exactly that). No Tailwind utility in here: the shapes
+   the spec fixes to the pixel (280px, 38px, 62px, 72×102) are not things a scale has names for.
+
+   Colours, from the spec: page for the ground, paper for the selected row, hover for the pointer, text-1 / text-2 for
+   the two weights of ink, line-faint for the rules. */
+
+.glaze .hui-rail {
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  /* In a frame narrower than the column (the phone overlay on a small window) it takes what there is, which is what
+     the container query below reads to drop the relative time. */
+  max-width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--page);
+  /* Rows hide their relative time when the column is squeezed (an overlay on a phone): a container query reads the
+     rail's own width, not the window's. */
+  container-type: inline-size;
+  container-name: rail;
+}
+
+/* ---------- Top bar: the app menu, then the new-discussion button ---------- */
+
+.glaze .hui-rail-top {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 38px;
+  height: 38px;
+  padding: 2px 3px 0 10px;
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.glaze .hui-rail-app {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-1);
+  cursor: default;
+  transition: background-color var(--dur-state) var(--ease-out);
+}
+.glaze .hui-rail-app:hover {
+  background: var(--hover);
+}
+.glaze .hui-rail-app svg {
+  color: var(--text-3);
+}
+
+.glaze .hui-rail-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-inline-start: auto;
+}
+
+/* One 28px icon button: the new discussion, the header's tabs, the panel's toggle. */
+.glaze .hui-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--text-2);
+  cursor: default;
+  transition: background-color var(--dur-state) var(--ease-out), color var(--dur-state) var(--ease-out),
+    scale var(--dur-state) var(--ease-out);
+}
+.glaze .hui-icon-btn:hover {
+  background: var(--hover);
+  color: var(--text-1);
+}
+.glaze .hui-icon-btn:active {
+  scale: 0.96;
+}
+.glaze .hui-icon-btn:focus-visible {
+  outline: 2px solid var(--line-focus);
+  outline-offset: -2px;
+}
+
+/* ---------- Search: a button drawn as a field ---------- */
+
+.glaze .hui-rail-search {
+  padding: 8px 12px 6px;
+}
+
+.glaze .hui-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  border: 0.5px solid var(--line-control);
+  border-radius: 8px;
+  background: transparent;
+  font-size: 13px;
+  color: var(--text-3);
+  cursor: default;
+  transition: background-color var(--dur-state) var(--ease-out);
+}
+.glaze .hui-search:hover {
+  background: var(--paper);
+}
+.glaze .hui-search:focus-visible {
+  outline: 2px solid var(--line-focus);
+  outline-offset: 1px;
+}
+.glaze .hui-search > span {
+  min-width: 0;
+  flex: 1;
+  text-align: start;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.glaze .hui-search kbd,
+.glaze .hui-search [data-slot='kbd'] {
+  margin-inline-start: auto;
+}
+
+/* ---------- The scrolling list ---------- */
+
+.glaze .hui-rail-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 12px 0;
+  scrollbar-width: none;
+}
+.glaze .hui-rail-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* The fade at each end, only while there is more to see on that side: the list sets data-shade-top /
+   data-shade-bottom from its own scroll position. */
+.glaze .hui-rail-list[data-shade-top] {
+  mask-image: linear-gradient(to bottom, transparent, black 16px);
+}
+.glaze .hui-rail-list[data-shade-bottom] {
+  mask-image: linear-gradient(to top, transparent, black 16px);
+}
+.glaze .hui-rail-list[data-shade-top][data-shade-bottom] {
+  mask-image: linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent);
+}
+
+/* Pinned bots: centred tiles that wrap, 236px at most, 8px apart. */
+.glaze .hui-pinned {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: 236px;
+  margin: 0 auto;
+  padding: 4px 0 2px;
+}
+
+.glaze .hui-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 72px;
+  height: 102px;
+  padding: 4px 2px;
+  border-radius: 8px;
+  cursor: default;
+  transition: background-color var(--dur-state) var(--ease-out), scale var(--dur-state) var(--ease-out);
+}
+.glaze .hui-tile:hover {
+  background: var(--hover);
+}
+.glaze .hui-tile:active {
+  scale: 0.96;
+}
+.glaze .hui-tile[aria-selected='true'] {
+  background: var(--paper);
+}
+.glaze .hui-tile:focus-visible {
+  outline: 2px solid var(--line-focus);
+  outline-offset: -2px;
+}
+
+.glaze .hui-tile-name {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  font-size: 12px;
+  font-weight: 450;
+  color: var(--text-1);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The role tag under a tile's name and beside a row's name. It truncates before the name does: it keeps two
+   characters and gives up the rest. */
+.glaze .hui-role {
+  display: block;
+  min-width: 2ch;
+  max-width: 100%;
+  height: 18px;
+  padding: 0 4px;
+  border: 0.5px solid var(--line-faint);
+  border-radius: 4px;
+  background: var(--hover);
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- The team: a header that collapses, then one row per bot ---------- */
+
+.glaze .hui-team-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  height: 32px;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: default;
+}
+.glaze .hui-team-head svg {
+  margin-inline-start: auto;
+  opacity: 0;
+  transition: opacity var(--dur-state) var(--ease-out), rotate 200ms var(--ease-out);
+}
+.glaze .hui-team-head:hover svg,
+.glaze .hui-team-head:focus-visible svg {
+  opacity: 1;
+}
+.glaze .hui-team[data-open='false'] .hui-team-head svg {
+  rotate: -90deg;
+  opacity: 1;
+}
+
+/* The collapse: 0fr → 1fr on a grid row, with the opacity, both on the house curve. */
+.glaze .hui-team-body {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 200ms var(--ease-out), opacity 200ms var(--ease-out);
+}
+.glaze .hui-team-body > div {
+  min-height: 0;
+  overflow: hidden;
+}
+.glaze .hui-team[data-open='false'] .hui-team-body {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .glaze .hui-team-body,
+  .glaze .hui-team-head svg {
+    transition: none;
+  }
+}
+
+.glaze .hui-bot-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 62px;
+  padding: 8px;
+  /* The row reaches 4px past the list's margin on both sides, so the wash covers the whole column width. */
+  margin: 0 -4px 4px;
+  border-radius: 8px;
+  cursor: default;
+  transition: background-color var(--dur-state) var(--ease-out), scale var(--dur-state) var(--ease-out);
+}
+.glaze .hui-bot-row:hover {
+  background: var(--hover);
+}
+.glaze .hui-bot-row:active {
+  scale: 0.99;
+}
+.glaze .hui-bot-row[aria-selected='true'] {
+  background: var(--paper);
+}
+.glaze .hui-bot-row:focus-visible {
+  outline: 2px solid var(--line-focus);
+  outline-offset: -2px;
+}
+
+.glaze .hui-row-text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+.glaze .hui-row-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.glaze .hui-row-name {
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.glaze .hui-row-line .hui-role {
+  flex: 0 1 auto;
+}
+.glaze .hui-row-time {
+  flex: none;
+  font-size: 12px;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+/* A rail narrower than 210px is an overlay on a phone: the time goes, the names stay. */
+@container rail (max-width: 209px) {
+  .glaze .hui-row-time {
+    display: none;
+  }
+}
+.glaze .hui-row-output {
+  min-width: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The mark on the avatar's bottom corner: a 16px disc, ringed in the row's own ground, holding Glaze's activity arc
+   while the bot works. */
+.glaze .hui-avatar {
+  position: relative;
+  flex: none;
+}
+.glaze .hui-work {
+  position: absolute;
+  inset-inline-end: -5px;
+  bottom: -3px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--page);
+  box-shadow: 0 0 0 2px var(--page);
+  color: var(--text-1);
+}
+.glaze .hui-work svg {
+  width: 10px;
+  height: 10px;
+}
+.glaze .hui-bot-row[aria-selected='true'] .hui-work,
+.glaze .hui-tile[aria-selected='true'] .hui-work {
+  background: var(--paper);
+  box-shadow: 0 0 0 2px var(--paper);
+}
+
+/* ---------- The foot: one card per subscription ---------- */
+
+.glaze .hui-rail-foot {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--line-faint);
+}
+
+.glaze .hui-usage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.glaze .hui-usage-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.glaze .hui-usage-title {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.glaze .hui-usage-window {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.glaze .hui-usage-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.glaze .hui-usage-label {
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.glaze .hui-usage-reset {
+  flex: none;
+  font-size: 12px;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The bar: 4px, a pill, the field's track, the fill animating its width. */
+.glaze .hui-usage-track {
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--field);
+  overflow: hidden;
+}
+.glaze .hui-usage-fill {
+  width: var(--pct, 0%);
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ink-80);
+  transition: width 300ms var(--ease-out);
+}
+.glaze .hui-usage-fill.hui-fill-warn {
+  background: var(--warn);
+}
+.glaze .hui-usage-fill.hui-fill-fail {
+  background: var(--fail);
+}
+@media (prefers-reduced-motion: reduce) {
+  .glaze .hui-usage-fill {
+    transition: none;
+  }
+}

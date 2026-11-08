@@ -23,8 +23,6 @@ type Ctx = any
 
 let ctxRef: Ctx = null
 let installed = false
-/** The launch's first handled route: it must not reset the conversation the app restored. */
-let launchPass = true
 let lastHash = ''
 let lastAt = 0
 
@@ -110,8 +108,14 @@ async function openOn(botName: string, id: string): Promise<void> {
   await openConversation(id)
 }
 
-/** Handles one hash. Exported for the check script's curiosity; the plugin only calls it through `installTakeover`. */
-export async function handleRoute(hash: string): Promise<RouteClass> {
+/**
+ * Handles one hash. Exported for the check script's curiosity; the plugin only calls it through `installTakeover`.
+ *
+ * `launch` is the one pass that must not touch the conversation: the app's very first route restores what it had.
+ * Every other `#/` is a person asking for a new session — the native `mod+n` included — so it starts a fresh
+ * conversation on the current bot each time, not only the first time.
+ */
+export async function handleRoute(hash: string, { launch = false }: { launch?: boolean } = {}): Promise<RouteClass> {
   const kind = classifyRoute(hash)
   if (!ctxRef || !replaceNativeOn()) return kind
 
@@ -120,15 +124,12 @@ export async function handleRoute(hash: string): Promise<RouteClass> {
   lastHash = hash
   lastAt = now
 
-  const first = launchPass
   if (kind === 'new-chat') {
-    launchPass = false
     host.navigate(HUI_PATH)
-    if (!first) newConversation()
+    if (!launch) newConversation()
   } else if (kind === 'session') {
     const id = sessionIdOf(hash)
     if (!id) return kind
-    launchPass = false
     host.navigate(HUI_PATH)
     await revealSession(id)
   }
@@ -144,13 +145,14 @@ export function installTakeover(ctx: Ctx): void {
   if (installed) return
   installed = true
 
-  const run = () => {
-    void handleRoute(window.location.hash).catch(e => console.warn('[hermes-ui] route', e))
+  const run = (launch = false) => {
+    void handleRoute(window.location.hash, { launch }).catch(e => console.warn('[hermes-ui] route', e))
   }
 
-  ctx.addEventListener(window, 'hashchange', run)
+  ctx.addEventListener(window, 'hashchange', () => run(false))
 
-  const firstTick = () => ctx.setTimeout(run, 0)
+  // The launch's own pass: the restored conversation stays, whatever the hash says.
+  const firstTick = () => ctx.setTimeout(() => run(true), 0)
   if (host.state.gateway.get() === 'open') {
     firstTick()
     return

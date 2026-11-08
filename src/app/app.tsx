@@ -1,8 +1,9 @@
 // Hermes UI v2 — the /hui page shell.
 //
-// Three columns on the page surface: the rail (272px), the centre (paper, a sheet with 8px of page showing on top, right
-// and bottom) and the right panel (320px). No rules between them: the surfaces do the separating. No header band either:
-// the bot's name floats in a pill over the thread, and the panel's toggle is the only control the centre keeps.
+// Three columns on the page surface: the rail (280px), the centre (paper, a sheet with 8px of page showing on the right
+// and the bottom, starting at the top edge so its header lines up with the rail's) and the right panel (320px). No rules
+// between them: the surfaces do the separating. The centre carries its own 38px header; the bot picker floats over
+// everything, and `/` is the one key this page listens for when the caret is not in a field.
 //
 // The page is always dark, and its stylesheet is injected in a <style> on mount, scoped to .glaze: the native app's own
 // Tailwind and variables are never touched.
@@ -14,13 +15,15 @@ import { boot, store } from '@/lib/hermes'
 import { useStore } from '@/lib/store'
 import css from '../styles/.compiled.css'
 import { Aside } from './aside'
+import { BotPicker } from './bot-picker'
 import { Center } from './center'
+import { typeSlash } from './editor'
 import { Rail } from './rail'
 import { initView, view } from './ui-state'
 import { useMediaQuery } from './use-media'
 
 const STYLE_ID = 'hermes-ui-glaze'
-const RAIL_W = 272
+const RAIL_W = 280
 const ASIDE_W = 320
 
 /** The compiled Glaze sheet, in one <style> of its own. Every rule in it is scoped to .glaze by the build. */
@@ -80,6 +83,23 @@ export function App({ ctx }: { ctx: any }) {
     if (narrowAside) view.set({ asideOpen: false })
   }, [narrowAside])
 
+  // `/` outside a field puts the caret in the composer and opens the command list. Only on our own route: the Glaze
+  // demo and every native page are left alone, and a key pressed inside an editor, an input or a textarea is the
+  // person's text, not a shortcut.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey || event.defaultPrevented) return
+      const hash = window.location.hash || ''
+      if (!hash.startsWith('#/hui') || hash.startsWith('#/hui/glaze')) return
+      const active = document.activeElement as HTMLElement | null
+      if (active && (active.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName))) return
+      event.preventDefault()
+      typeSlash()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
   // The column widths switch without animating: the centre widens at once, and only the panel's content moves in.
   const columns = `${narrowRail ? 0 : RAIL_W}px minmax(0, 1fr) ${asideOpen && !narrowAside ? ASIDE_W : 0}px`
 
@@ -127,6 +147,7 @@ export function App({ ctx }: { ctx: any }) {
         ) : null}
 
         <Toaster />
+        <BotPicker ctx={ctx} />
       </GlazePortalProvider>
     </div>
   )

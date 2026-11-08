@@ -11,8 +11,8 @@ import { Chip, ChipGroup } from '@/components/glaze/ui/chip'
 import { retryLast, store } from '@/lib/hermes'
 import { hourOf } from '@/lib/labels'
 import { useStore } from '@/lib/store'
-import { BotAvatar } from '../bot-avatar'
 import { botIdentity } from '../format'
+import { BotAvatar } from '../bot-avatar'
 import { Composer } from './composer'
 import { AssistantTurn } from './turn'
 
@@ -45,30 +45,23 @@ export function Thread({ bot, name, input }: ThreadProps) {
   return (
     <ConversationProvider status={status}>
       <Conversation className="relative min-h-0 flex-1">
-        {/* The bot: a pill pinned to the top of the sheet, 12px from its edge, over the thread rather than in it. The
-            viewport starts under it (pt-14 = 56px), so a turn never slides beneath the pill as it scrolls. */}
-        <div className="pointer-events-none absolute inset-x-0 top-3 z-(--z-raised) flex justify-center">
-          <span className="pointer-events-auto inline-flex items-center gap-2 rounded-pill bg-shell px-3 py-1.5 type-label text-text-1">
-            <BotAvatar size={20} colors={identity.colors} shape={identity.shape} label={name} hoverGiggle={false} />
-            {name}
-          </span>
-        </div>
-        {/* The pill floats over the thread, so the top 56px of the viewport fade out (styles/app.css): text that
-            scrolls under the pill stays legible at its edges instead of being cut by a hard line. */}
+        {/* The header above names the bot: no pill floats over the thread any more, so the viewport starts at the top of
+            the sheet's remaining height and nothing scrolls under a name. */}
         <ConversationViewport
           aria-label={`Conversation avec ${name}`}
           className="px-4"
-          data-fade="thread-top"
           labels={{ complete: 'Réponse terminée', stopped: 'Arrêté', failed: 'Réponse en échec' }}
         >
-          <ConversationContent className="mx-auto flex w-full max-w-measure flex-col pt-14 pb-6">
+          <ConversationContent className="mx-auto flex w-full max-w-measure flex-col pt-6 pb-6">
 
             {!ready ? (
               <p className="py-10 text-center type-body-sm text-text-3">Connexion à Hermes…</p>
             ) : messages.length ? (
               <MessageGroup>
                 {messages.map(m =>
-                  m.role === 'user' ? (
+                  m.role === 'note' ? (
+                    <NoteLine key={m.id} text={m.text} />
+                  ) : m.role === 'user' ? (
                     <Message key={m.id} from="user">
                       <MessageContent>
                         <MessageHeader>
@@ -124,6 +117,14 @@ export function Thread({ bot, name, input }: ThreadProps) {
       <ComposerWithSnap bot={bot} name={name} input={input} sid={sid} status={composerStatus} generation={generation} />
     </ConversationProvider>
   )
+}
+
+/**
+ * A command's answer: one centred line, 12px, the thread's second ink, no bubble and no role. Line breaks are kept,
+ * the type stays sans (a note is a sentence, not code), and it is never stored: it belongs to this local conversation.
+ */
+function NoteLine({ text }: { text: string }) {
+  return <p className="whitespace-pre-wrap text-center type-caption text-text-2">{text}</p>
 }
 
 function ComposerWithSnap(props: {

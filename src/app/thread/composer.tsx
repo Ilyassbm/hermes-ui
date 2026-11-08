@@ -1,45 +1,14 @@
-// The composer: one Glaze PromptInput, anchored at the bottom of the sheet, as wide as the thread's reading measure.
+// The composer: one Glaze PromptInput on a single paper surface — the editor on top, the toolbar at its foot — as wide
+// as the thread's reading measure and 16px off the sheet's bottom edge.
 //
-// It is one surface, not a field in a box: PromptInput's own shell holds the editor, the paperclip, the model pill and
-// Send. The model and the effort live in one menu behind the pill; both are remembered per bot and applied to the
-// session by `applyPrefsToSession` right before the next prompt.
-import { Fragment, useEffect, useState, type RefObject } from 'react'
+// The model pill is gone: the model and the effort are chosen in the header now (lot 6 moved them there). What the
+// composer adds is the `/` list, fed by the gateway's `complete.slash` 120ms after the last keystroke; a picked command
+// becomes a chip, and a prompt that starts with `/` is run as a command instead of being sent (src/app/slash-run.ts).
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import { host } from '@hermes/plugin-sdk'
-import { PromptInput, PromptInputModel, type Attachment, type PromptInputHandle } from '@/components/glaze/ai/prompt-input'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/glaze/ui/dropdown-menu'
-import { SegmentedControl, SegmentedControlItem } from '@/components/glaze/ui/segmented-control'
-import { modelLabel } from '@/lib/labels'
-import { prefsFor, savePrefs, send, stop, store } from '@/lib/hermes'
-import { useStore } from '@/lib/store'
-
-const EFFORTS = [
-  ['low', 'Bas'],
-  ['medium', 'Moyen'],
-  ['high', 'Élevé']
-] as const
-
-type Provider = { slug: string; name: string; models: string[]; is_current?: boolean }
-
-let catalog: Provider[] | null = null
-let loading: Promise<Provider[]> | null = null
-
-/** The models the gateway offers, read once per page: the picker opens on the list it already has. */
-function loadCatalog(): Promise<Provider[]> {
-  if (catalog) return Promise.resolve(catalog)
-  if (!loading) {
-    loading = host
-      .request('model.options', {})
-      .then((res: any) => {
-        catalog = (Array.isArray(res?.providers) ? res.providers : []).filter((p: Provider) => p && Array.isArray(p.models) && p.models.length)
-        return catalog as Provider[]
-      })
-      .catch(() => {
-        catalog = []
-        return [] as Provider[]
-      })
-  }
-  return loading
-}
+import { PromptInput, type Attachment, type CommandItem, type PromptInputHandle } from '@/components/glaze/ai/prompt-input'
+import { send, stop, store } from '@/lib/hermes'
+import { runCommand } from '../slash-run'
 
 type Picked = { id: string; file: File; name: string; size: number }
 
@@ -55,47 +24,59 @@ type ComposerProps = {
   onSent?: () => void
 }
 
+/** The slash list's window: the gateway is asked once the typing pauses, not on every key. */
+const COMMAND_DEBOUNCE = 120
+
 export function Composer({ bot, name, input, sid, status, generation, onSent }: ComposerProps) {
   const [files, setFiles] = useState<Picked[]>([])
-  const [providers, setProviders] = useState<Provider[]>(catalog || [])
-  // A preference change is written to storage, not to React: reading `info` back re-renders this menu.
-  useStore(store, s => s.info)
-  const prefs = prefsFor(bot)
-  const meta = useStore(store, s => s.bots).find(b => b.name === bot)
-  const model = prefs.model || meta?.model || ''
-  const effort = prefs.effort || ''
-
-  useEffect(() => {
-    let alive = true
-    void loadCatalog().then(list => {
-      if (alive) setProviders(list)
-    })
-    return () => {
-      alive = false
-    }
-  }, [])
+  const [commands, setCommands] = useState<CommandItem[]>([])
+  const asked = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // The caret belongs in the editor when the conversation changes, and when the bot does.
   useEffect(() => {
     input.current?.focus()
   }, [bot, sid, input])
 
+  /** One RPC, one list: `complete.slash` answers `{items:[{text, display, meta}]}`, the menu wants a label and a hint. */
+  const complete = (text: string) => {
+    if (asked.current) clearTimeout(asked.current)
+    asked.current = setTimeout(() => {
+      const session = store.get().sid
+      void host
+        .request('complete.slash', { ...(session ? { session_id: session } : {}), text })
+        .then((res: any) => {
+          const items = Array.isArray(res?.items) ? res.items : []
+          setCommands(
+            items
+              .map((item: any) => ({
+                id: String(item?.text || ''),
+                label: String(item?.text || '')
+                  .trim()
+                  .replace(/^\//, ''),
+                description: String(item?.display || item?.meta || '').replace(/\s+/g, ' ').trim()
+              }))
+              .filter((item: CommandItem) => Boolean(item.label))
+          )
+        })
+        .catch(() => setCommands([]))
+    }, COMMAND_DEBOUNCE)
+  }
+
+  // The catalogue is fetched once at mount with a bare `/`: the first slash a person types then opens the list at once
+  // instead of waiting for a second keystroke to trigger the fetch.
+  useEffect(() => {
+    complete('/')
+    return () => {
+      if (asked.current) clearTimeout(asked.current)
+    }
+    // Mount only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const attachments: Attachment[] = files.map(f => ({ id: f.id, name: f.name, size: f.size, status: 'done' }))
 
-  const pick = (next: string, provider: string) => {
-    if (!bot) return
-    savePrefs(bot, { model: next, provider })
-    store.set(s => ({ info: { ...s.info } }))
-  }
-
-  const pickEffort = (value: string) => {
-    if (!bot) return
-    savePrefs(bot, { effort: value })
-    store.set(s => ({ info: { ...s.info } }))
-  }
-
   return (
-    <div className="px-4 pb-4">
+    <div className="hui-composer px-4 pb-4">
       <div className="mx-auto w-full max-w-measure">
         <PromptInput
           ref={input}
@@ -106,6 +87,7 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
           status={status}
           generation={generation}
           onStop={() => void stop()}
+          commands={commands}
           attachments={attachments}
           onAttach={list =>
             setFiles(fs => [
@@ -153,42 +135,23 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
             shellStatus: 'Shell. Échap pour sortir',
             off: 'La saisie est désactivée'
           }}
+          onValueChange={value => {
+            const text = String(value?.text || '')
+            // Only a draft that starts with a slash asks the gateway what to offer.
+            if (text.trimStart().startsWith('/')) complete(text.trim())
+            else if (commands.length) setCommands([])
+          }}
           onSubmit={value => {
+            // A command is read from its plain text: the serialized form writes a chip as `[label](command:mm)`, which
+            // no gateway would recognise. Everything else keeps the serialized value (mentions, pasted chips).
+            const plain = String(value.text || '')
+            if (/^\s*\//.test(plain) && runCommand(plain)) return
+            const text = value.serialized || value.text
             const list = files.map(f => f.file)
             setFiles([])
-            void send(value.serialized || value.text, list)
+            void send(text, list)
             onSent?.()
           }}
-          tools={
-            <DropdownMenu>
-              <DropdownMenuTrigger render={<PromptInputModel model={model ? modelLabel(model) : 'Modèle'} aria-label="Modèle et effort" />} />
-              <DropdownMenuContent align="start" side="top" size="sm" className="min-w-(--menu-min)">
-                <DropdownMenuLabel>Effort de raisonnement</DropdownMenuLabel>
-                <div className="px-2 pb-2">
-                  <SegmentedControl size="sm" value={effort || 'medium'} onValueChange={pickEffort} aria-label="Effort de raisonnement">
-                    {EFFORTS.map(([value, label]) => (
-                      <Fragment key={value}>
-                        <SegmentedControlItem value={value}>{label}</SegmentedControlItem>
-                      </Fragment>
-                    ))}
-                  </SegmentedControl>
-                </div>
-                <DropdownMenuSeparator />
-                {providers.length === 0 ? <DropdownMenuLabel>Modèles indisponibles</DropdownMenuLabel> : null}
-                {providers.map(provider => (
-                  <div key={provider.slug}>
-                    <DropdownMenuLabel>{provider.name}</DropdownMenuLabel>
-                    {provider.models.slice(0, 24).map(next => (
-                      <DropdownMenuItem key={`${provider.slug}:${next}`} onClick={() => pick(next, provider.slug)}>
-                        <span className="truncate">{modelLabel(next)}</span>
-                        {model === next ? <span className="ms-auto type-caption text-text-3">actuel</span> : null}
-                      </DropdownMenuItem>
-                    ))}
-                  </div>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          }
         />
       </div>
     </div>

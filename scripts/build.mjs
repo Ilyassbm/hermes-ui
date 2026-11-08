@@ -29,6 +29,11 @@ const watch = process.argv.includes('--watch')
 const gen = spawnSync(process.execPath, [resolve(root, 'scripts/gen-iui-skill.mjs')], { stdio: 'inherit' })
 if (gen.status !== 0) process.exit(gen.status ?? 1)
 
+// 0b. The menu gate: a DropdownMenuLabel outside a Menu.Group throws at render (Base UI #31), which is what took the
+//     model picker down. Cheap (the TypeScript parser, no bundling), so it runs before anything is compiled.
+const menus = spawnSync(process.execPath, [resolve(root, 'scripts/check-menus.mjs')], { stdio: 'inherit' })
+if (menus.status !== 0) process.exit(menus.status ?? 1)
+
 // 1. Tailwind v4 → one stylesheet. app.css pulls `tailwindcss/theme` + `tailwindcss/utilities` in (never the full
 //    `tailwindcss`, whose Preflight is a global reset) and Glaze's own scoped entry.
 const compiled = await postcss([tailwind()]).process(readFileSync(from, 'utf8'), { from, to: cssOut })

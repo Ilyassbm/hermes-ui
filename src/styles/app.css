@@ -8,6 +8,10 @@
    app. Importing `tailwindcss/theme` or `tailwindcss/utilities` at this level would do the opposite: a global
    `:root` block and unscoped `.flex`/`.p-3` rules that collide with the app's own Tailwind. */
 @import "../components/glaze/styles.css";
+/* Lot 6's two hand-set sheets: the rail and the centre's shell (header, composer, picker). Plain CSS on Glaze's tokens,
+   every selector under .glaze. */
+@import "./rail.css";
+@import "./shell.css";
 /* The vendored aicss avatar: its identity colours, scoped to .hui-bot. */
 @import "./bot.css";
 
@@ -47,9 +51,3 @@
   animation: hermes-ui-aside-in 200ms var(--ease-out);
 }
 
-/* The thread passes under the bot's pill: the top 56px of the viewport fade from transparent to opaque, so the text
-   at the pill's edge is legible instead of half lit. 56px is the viewport's own top padding (pt-14), which is exactly
-   the band the pill covers; a mask, never a shadow or a gradient band (Glaze casts none). */
-.glaze [data-fade='thread-top'] {
-  mask-image: linear-gradient(to bottom, transparent, black 56px);
-}
