@@ -1,16 +1,25 @@
-"""hermes-ui backend: subscription usage for the chat rail.
+"""hermes-ui backend: subscription usage and the bots' last output, for the chat rail.
 
 GET /api/plugins/hermes-ui/usage
   Claude  -> Hermes' own Anthropic OAuth usage reader (agent.account_usage), no credential handled here.
   OpenCode Go -> https://opencode.ai/zen/go/v1/usage with OPENCODE_GO_API_KEY from the gateway env.
 
-Cached 60 s. Never returns or logs a credential; errors are reduced to a short reason code.
+GET /api/plugins/hermes-ui/bots
+  One row per Hermes profile (`default` plus every `<root>/profiles/<name>/` holding a config.yaml): the last open
+  session and the last thing its assistant said, read from that profile's state.db in read-only mode.
+
+Both cached, no credential returned, and errors reduced to null fields per row: the rail never waits on a broken
+profile, and a bad database can never fail the whole request.
 """
 from __future__ import annotations
 
 import asyncio
+import json
 import os
+import re
+import sqlite3
 import time
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter
@@ -131,3 +140,153 @@ async def usage(fresh: int = 0) -> dict:
 @router.get("/health")
 async def health() -> dict:
     return {"ok": True, "plugin": "hermes-ui"}
+
+
+# ── bots: last output per profile ────────────────────────────────────────────
+
+_BOTS_TTL_S = 15.0
+_bots_cache: dict[str, Any] = {"at": 0.0, "root": "", "body": None}
+_bots_lock = asyncio.Lock()
+
+
+def _hermes_root() -> Path:
+    """Where the profiles live, asked to Hermes rather than written here: `HERMES_HOME` when the gateway sets it."""
+    try:
+        from hermes_constants import get_default_hermes_root
+
+        return Path(get_default_hermes_root())
+    except Exception:
+        env = (os.environ.get("HERMES_HOME") or "").strip()
+        return Path(env).expanduser() if env else Path.home() / ".hermes"
+
+
+def _profiles(root: Path) -> list[tuple[str, Path]]:
+    """`default` (the root home) first, then every `<root>/profiles/<name>/` that carries a config.yaml."""
+    out: list[tuple[str, Path]] = [("default", root)]
+    try:
+        names = sorted(p for p in (root / "profiles").iterdir() if p.is_dir() and (p / "config.yaml").is_file())
+    except Exception:
+        names = []
+    out.extend((p.name, p) for p in names)
+    return out
+
+
+def _content_text(raw: Any) -> str:
+    """A message body as text. The column holds plain text, or a JSON list of content blocks."""
+    if isinstance(raw, (bytes, bytearray)):
+        raw = raw.decode("utf-8", "replace")
+    if not isinstance(raw, str):
+        return ""
+    text = raw.strip()
+    if text[:1] in "[{":
+        try:
+            data = json.loads(text)
+        except Exception:
+            return raw
+        if isinstance(data, list):
+            parts = [
+                part if isinstance(part, str) else part.get("text", "")
+                for part in data
+                if isinstance(part, (str, dict))
+            ]
+            joined = "\n".join(p for p in parts if isinstance(p, str) and p.strip())
+            return joined or raw
+        if isinstance(data, dict) and isinstance(data.get("text"), str):
+            return data["text"]
+    return raw
+
+
+def _last_output(raw: Any, limit: int = 140) -> str:
+    """One line for the rail: links keep their label, the markdown marks go, the spaces collapse, 140 characters max."""
+    text = _content_text(raw)
+    text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)
+    text = re.sub(r"[#*_`>]", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
+
+
+def _bot_row(name: str, home: Path) -> dict:
+    """The profile's last open session and its last assistant message. Any failure leaves the fields null."""
+    row: dict[str, Any] = {"name": name, "last_session_id": None, "last_active": None, "last_output": None}
+    db = home / "state.db"
+    if not db.is_file():
+        return row
+    conn: sqlite3.Connection | None = None
+    try:
+        # Read-only and short: the gateway may hold the write lock, and the rail must never wait on it.
+        conn = sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=2)
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(sessions)")}
+        if not cols:
+            return row
+        ts_cols = [c for c in ("last_activity_at", "started_at") if c in cols]
+        order = ", ".join(f"COALESCE({c}, 0) DESC" for c in ts_cols) or "rowid DESC"
+        where = ["1 = 1"]
+        if "archived" in cols:
+            where.append("COALESCE(archived, 0) = 0")
+        if "hidden" in cols:
+            where.append("COALESCE(hidden, 0) = 0")
+        hit = conn.execute(
+            f"SELECT id, {', '.join(f'COALESCE({c}, 0)' for c in ts_cols) or '0'} "
+            f"FROM sessions WHERE {' AND '.join(where)} ORDER BY {order} LIMIT 1"
+        ).fetchone()
+        if not hit:
+            return row
+        session_id = str(hit[0])
+        row["last_session_id"] = session_id
+        # `last_activity_at` wins, `started_at` fills in: a session that never wrote a turn has the first one null.
+        active = next((v for v in hit[1:] if v), None)
+
+        mcols = {r[1] for r in conn.execute("PRAGMA table_info(messages)")}
+        if not mcols:
+            return row
+        cond = ["session_id = ?", "role = 'assistant'", "content IS NOT NULL", "TRIM(content) <> ''"]
+        if "display_kind" in mcols:
+            cond.append("COALESCE(display_kind, '') NOT IN ('hidden', 'reasoning')")
+        msg = conn.execute(
+            f"SELECT content, timestamp FROM messages WHERE {' AND '.join(cond)} "
+            f"ORDER BY COALESCE(timestamp, 0) DESC, id DESC LIMIT 1",
+            (session_id,),
+        ).fetchone()
+        if msg:
+            text = _last_output(msg[0])
+            row["last_output"] = text or None
+            if not active and msg[1]:
+                active = msg[1]
+        if active:
+            row["last_active"] = int(float(active))
+    except Exception:
+        # A locked, missing or half-migrated database: the row keeps its nulls, never an exception to the client.
+        pass
+    finally:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
+    return row
+
+
+def collect_bots(root: Path | str | None = None) -> dict:
+    """`{"bots": [...]}` for one Hermes root. Split out so scripts/check-bots-api.py can call it without a server."""
+    home = Path(root) if root is not None else _hermes_root()
+    return {"bots": [_bot_row(name, path) for name, path in _profiles(home)]}
+
+
+@router.get("/bots")
+async def bots(fresh: int = 0) -> dict:
+    root = _hermes_root()
+    async with _bots_lock:
+        now = time.monotonic()
+        cache = _bots_cache
+        if (
+            not fresh
+            and cache["body"] is not None
+            and cache["root"] == str(root)
+            and now - cache["at"] < _BOTS_TTL_S
+        ):
+            return {**cache["body"], "cached": True}
+        # sqlite work is blocking and touches another process's files: keep it off the event loop.
+        body = await asyncio.to_thread(collect_bots, root)
+        body["fetchedAt"] = time.time()
+        cache.update(at=now, root=str(root), body=body)
+        return body
