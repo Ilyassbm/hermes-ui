@@ -220,11 +220,12 @@ function Empty({ label, look }) {
 }
 
 export function Thread() {
-  const { label, look } = useBotMeta()
+  const { label, look, bot } = useBotMeta()
   const messages = useStore(store, s => s.messages)
   const loading = useStore(store, s => s.loading)
   const live = useStore(store, s => Boolean(s.live))
-  const defaultModel = useStore(store, s => s.info.model)
+  const sessionModel = useStore(store, s => s.info.model)
+  const defaultModel = sessionModel || bot?.model || ''
   const scroller = useRef(null)
   const pinned = useRef(true)
   const [showJump, setShowJump] = useState(false)

@@ -117,7 +117,8 @@
 }
 
 .hui *, .hui *::before, .hui *::after { box-sizing: border-box; }
-.hui button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+/* Zero-specificity reset so every component class (.hui-btn, .hui-row…) wins over it. */
+:where(.hui) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 .hui :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 8px; }
 .hui ::selection { background: var(--accent-soft); }
 .hui .hui-scroll { overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
@@ -230,6 +231,11 @@
 .hui-prose pre { margin: 0 0 12px; padding: 12px 16px; border-radius: 12px; background: var(--code-bg); box-shadow: 0 0 0 0.5px var(--line-control), 0 1px 2px rgb(0 0 0 / 0.08); overflow-x: auto; font: 400 12.5px/20px var(--font-mono); scrollbar-width: none; }
 .hui-prose pre::-webkit-scrollbar { display: none; }
 .hui-prose pre code { font: inherit; background: none; padding: 0; }
+/* The native renderer wraps code in [data-slot=code-card] (copy button, expander, nested shiki <pre>s):
+   the card carries the aicss look, the inner <pre>s go flat. */
+.hui .hui-prose [data-slot='code-card'] { margin: 4px 0 12px; border-radius: 12px; background: var(--code-bg); box-shadow: 0 0 0 0.5px var(--line-control), 0 1px 2px rgb(0 0 0 / 0.08); padding: 10px 14px; }
+.hui .hui-prose [data-slot='code-card'] pre { margin: 0; padding: 0; border-radius: 0; background: transparent; box-shadow: none; overflow: visible; font: 400 12.5px/20px var(--font-mono); }
+.hui .hui-prose [data-slot='code-card'] .shiki { background: transparent !important; }
 /* aicss DataTable look. The native renderer wraps tables in .aui-md-table (border + 6px radius):
    the wrapper becomes the card, the table stays flat inside it. */
 .hui .hui-prose .aui-md-table { margin: 4px 0 12px; border: 0; border-radius: 12px; overflow-x: auto; box-shadow: 0 0 0 0.5px var(--line-control), 0 1px 2px rgb(0 0 0 / 0.08); }
