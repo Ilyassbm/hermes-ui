@@ -34,6 +34,15 @@ if (gen.status !== 0) process.exit(gen.status ?? 1)
 const menus = spawnSync(process.execPath, [resolve(root, 'scripts/check-menus.mjs')], { stdio: 'inherit' })
 if (menus.status !== 0) process.exit(menus.status ?? 1)
 
+// 0c. The click gate: a DropdownMenuTrigger on a non-button opened on the keyboard but not on a click, and a trigger
+//     wrapped around a clickable row took the row's left click. Static too (the same parser).
+const menuOpen = spawnSync(process.execPath, [resolve(root, 'scripts/check-menu-open.mjs')], { stdio: 'inherit' })
+if (menuOpen.status !== 0) process.exit(menuOpen.status ?? 1)
+
+// 0d. The slash gate: the classifier's cases and the composer's `/help` → slash.exec → note path, on stubs.
+const slash = spawnSync(process.execPath, [resolve(root, 'scripts/check-slash.mjs')], { stdio: 'inherit' })
+if (slash.status !== 0) process.exit(slash.status ?? 1)
+
 // 1. Tailwind v4 → one stylesheet. app.css pulls `tailwindcss/theme` + `tailwindcss/utilities` in (never the full
 //    `tailwindcss`, whose Preflight is a global reset) and Glaze's own scoped entry.
 const compiled = await postcss([tailwind()]).process(readFileSync(from, 'utf8'), { from, to: cssOut })

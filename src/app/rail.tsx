@@ -7,10 +7,11 @@
 //
 // The styles live in src/styles/rail.css, on Glaze's tokens, scoped to .glaze: the shapes the spec pins (280, 38, 62,
 // 72×102) are hand-set, and the lint stays at zero because no rule of it is restyled through a className.
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
+import { cloneElement, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactElement, type ReactNode } from 'react'
 import { Icon, Add, ChevronDown, ChevronRight, Search, Time } from '@/components/glaze/icon'
 import { ActivityArc } from '@/components/glaze/ai/activity'
 import { Badge } from '@/components/glaze/ui/badge'
+import { Button } from '@/components/glaze/ui/button'
 import { Kbd } from '@/components/glaze/ui/kbd'
 import {
   DropdownMenu,
@@ -272,8 +273,11 @@ function AppMenu({ ctx }: { ctx: any }) {
   }
   return (
     <DropdownMenu>
+      {/* Glaze's Button in the render slot: a real <button>, where a `<div role="button">` opened the menu on the
+          keypress and the mouseup that followed a mouse click closed it at once (lot 7). */}
       <DropdownMenuTrigger
-        render={<div role="button" tabIndex={0} className="hui-rail-app" aria-label="Menu de l'application" />}
+        openOnHover={false}
+        render={<Button variant="ghost" size="sm" className="hui-rail-app" aria-label="Menu de l'application" />}
       >
         <span>Agentise</span>
         <Icon icon={ChevronDown} size={12} />
@@ -314,8 +318,9 @@ function AppMenu({ ctx }: { ctx: any }) {
   )
 }
 
-/** Right click (or a long press, or Shift+F10) on a tile or a row. The menu is anchored at the pointer: no Glaze
- *  `context-menu` exists in the registry, so it is the dropdown menu in its contextmenu mode. */
+/** Right click (or Shift+F10) on a tile or a row. The menu is a plain dropdown whose `open` state and anchor come from
+ *  the row's own `onContextMenu`: a `DropdownMenuTrigger` around the row would take the left click of the selection too,
+ *  opening or closing the menu when the person only meant to pick the bot (lot 7). */
 function BotContextMenu({
   row,
   pinned,
@@ -330,33 +335,84 @@ function BotContextMenu({
   ctx: any
   children: ReactNode
 }) {
+  const [open, setOpen] = useState(false)
+  const [point, setPoint] = useState({ x: 0, y: 0 })
+  const rowRef = useRef<HTMLElement | null>(null)
+  // A zero-sized anchor at the pointer, which is where Base UI places the popup.
+  const anchor = useMemo(
+    () => ({
+      getBoundingClientRect: () => ({
+        x: point.x,
+        y: point.y,
+        top: point.y,
+        left: point.x,
+        right: point.x,
+        bottom: point.y,
+        width: 0,
+        height: 0
+      })
+    }),
+    [point]
+  )
+  const show = (x: number, y: number) => {
+    setPoint({ x, y })
+    setOpen(true)
+  }
+
+  // The row keeps its own handlers (selection on click, Enter/Space): the context menu only adds the right click.
+  const child = children as ReactElement<any>
+  const own = child.props ?? {}
+  const trigger = cloneElement(child, {
+    ref: (node: HTMLElement | null) => {
+      rowRef.current = node
+    },
+    'data-menu-open': open || undefined,
+    onContextMenu: (event: ReactMouseEvent) => {
+      own.onContextMenu?.(event)
+      if (event.defaultPrevented) return
+      event.preventDefault()
+      show(event.clientX, event.clientY)
+    },
+    onKeyDown: (event: ReactKeyboardEvent) => {
+      own.onKeyDown?.(event)
+      // Shift+F10 and the Menu key open a context menu at the focused row, as the platform does.
+      if (!((event.shiftKey && event.key === 'F10') || event.key === 'ContextMenu')) return
+      const box = rowRef.current?.getBoundingClientRect()
+      if (!box) return
+      event.preventDefault()
+      show(box.left + Math.min(box.width / 2, 160), box.top + box.height / 2)
+    }
+  })
+
   return (
-    <DropdownMenu trigger="contextmenu">
-      <DropdownMenuTrigger render={children as any} />
-      <DropdownMenuContent side="inline-end" size="sm">
-        <DropdownMenuGroup>
-          <DropdownMenuItem
-            onClick={() => {
-              void selectBot(row.name).then(() => newConversation())
-            }}
-          >
-            Nouvelle discussion
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onPin}>{pinned ? 'Désépingler' : 'Épingler'}</DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              try {
-                void ctx?.runAction?.('nav.profiles')
-              } catch {
-                /* no profiles page in this app version */
-              }
-            }}
-          >
-            Paramètres du profil
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      {trigger}
+      <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenuContent anchor={anchor as any} align="start" side="bottom" size="sm" finalFocus={rowRef}>
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              onClick={() => {
+                void selectBot(row.name).then(() => newConversation())
+              }}
+            >
+              Nouvelle discussion
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onPin}>{pinned ? 'Désépingler' : 'Épingler'}</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                try {
+                  void ctx?.runAction?.('nav.profiles')
+                } catch {
+                  /* no profiles page in this app version */
+                }
+              }}
+            >
+              Paramètres du profil
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   )
 }
 

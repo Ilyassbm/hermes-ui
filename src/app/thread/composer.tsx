@@ -62,16 +62,17 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
     }, COMMAND_DEBOUNCE)
   }
 
-  // The catalogue is fetched once at mount with a bare `/`: the first slash a person types then opens the list at once
-  // instead of waiting for a second keystroke to trigger the fetch.
+  // The catalogue is fetched once at mount with a bare `/`, and again when the bot changes: `complete.slash` resolves
+  // skills and plugin commands against the calling profile's home, so another bot can offer another list. The first
+  // slash a person types then opens the list at once instead of waiting for the round trip.
   useEffect(() => {
     complete('/')
     return () => {
       if (asked.current) clearTimeout(asked.current)
     }
-    // Mount only.
+    // Mount and bot changes: `complete` is rebuilt every render and only reads `asked`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [bot])
 
   const attachments: Attachment[] = files.map(f => ({ id: f.id, name: f.name, size: f.size, status: 'done' }))
 

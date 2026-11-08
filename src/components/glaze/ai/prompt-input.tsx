@@ -503,6 +503,13 @@ function PromptInput({
     });
   }, [mentions.length, commands.length, mode]);
 
+  // The catalogue is a round trip (`complete.slash` imports prompt_toolkit and scans skills), so the keystroke that
+  // typed `/he` can land before it: `detectTrigger` then saw an empty list and opened nothing, and no later keystroke
+  // came to try again. A catalogue that arrives while a bare `/token` sits in the editor opens the list now (lot 7).
+  React.useEffect(() => {
+    if (commands.length) detectTrigger();
+  }, [commands.length, detectTrigger]);
+
   const openCommandMenu = () => {
     const editor = editorRef.current;
     if (!editor || !commands.length) return;
@@ -609,7 +616,21 @@ function PromptInput({
       const up = event.key === 'ArrowUp' || (event.ctrlKey && event.key === 'p');
       if (down && count) { event.preventDefault(); setActive(i => (i + 1) % count); return; }
       if (up && count) { event.preventDefault(); setActive(i => (i - 1 + count) % count); return; }
-      if ((event.key === 'Enter' || event.key === 'Tab') && count) { event.preventDefault(); pick(options[Math.min(active, count - 1)]); return; }
+      if ((event.key === 'Enter' || event.key === 'Tab') && count) {
+        const option = options[Math.min(active, count - 1)];
+        // A whole command name typed and Enter pressed is a command to run, not one to complete: the list closes and
+        // the composer sends what is written (`/help` → onSubmit → slash.exec). Choosing a row with the pointer, or
+        // completing a half-typed name, still only puts `/name ` in the editor (lot 7).
+        if (event.key === 'Enter' && menu.kind === '/' && option.mention.label.toLowerCase() === menu.query.trim().toLowerCase()) {
+          event.preventDefault();
+          setMenu(null);
+          send();
+          return;
+        }
+        event.preventDefault();
+        pick(option);
+        return;
+      }
       if (event.key === 'Escape') { consume(event); closeMenu(); return; }
     }
     if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'z') {

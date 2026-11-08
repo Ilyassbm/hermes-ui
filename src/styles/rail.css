@@ -35,6 +35,13 @@
 }
 
 .glaze .hui-rail-app {
+  /* A real <button> (lot 7): the class owns the box, the UA chrome is dropped. */
+  appearance: none;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: start;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -63,6 +70,12 @@
 
 /* One 28px icon button: the new discussion, the header's tabs, the panel's toggle. */
 .glaze .hui-icon-btn {
+  /* A real <button> when it is a menu trigger (lot 7): no UA chrome, the class owns the box. */
+  appearance: none;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
   display: grid;
   place-items: center;
   width: 28px;
@@ -291,6 +304,11 @@
 .glaze .hui-bot-row[aria-selected='true'] {
   background: var(--paper);
 }
+/* The row whose context menu is open keeps the paper wash, so the person sees what its actions will hit. */
+.glaze .hui-bot-row[data-menu-open],
+.glaze .hui-tile[data-menu-open] {
+  background: var(--paper);
+}
 .glaze .hui-bot-row:focus-visible {
   outline: 2px solid var(--line-focus);
   outline-offset: -2px;
@@ -349,6 +367,27 @@
 .glaze .hui-avatar {
   position: relative;
   flex: none;
+  display: grid;
+  place-items: center;
+}
+/* The cell pins its size: a team row's avatar is 46px in a 46×46 cell (it measured ~28 before lot 7, the avatar
+   shrank inside a flex row), the pinned tile's is 56px in a 56×56 one. `--bot-size` alone is not enough when a
+   parent flex row can compress the item, so both the cell and the avatar box are set here. */
+.glaze .hui-bot-row .hui-avatar {
+  width: 46px;
+  height: 46px;
+}
+.glaze .hui-tile .hui-avatar {
+  width: 56px;
+  height: 56px;
+}
+.glaze .hui-bot-row .hui-avatar > .hui-bot {
+  width: 46px;
+  height: 46px;
+}
+.glaze .hui-tile .hui-avatar > .hui-bot {
+  width: 56px;
+  height: 56px;
 }
 .glaze .hui-work {
   position: absolute;
@@ -400,12 +439,15 @@
 }
 
 .glaze .hui-usage-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   font-size: 12px;
   font-weight: 400;
+  line-height: 16px;
   color: var(--text-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .glaze .hui-usage-window {
@@ -414,26 +456,27 @@
   gap: 6px;
 }
 
+/* The label owns the first line, whole: it wraps rather than ellipsising, whatever the rail's width. */
 .glaze .hui-usage-meta {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
 }
 .glaze .hui-usage-label {
   min-width: 0;
   font-size: 13px;
+  line-height: 18px;
   color: var(--text-1);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
+/* The reset and the percentage share the second line, flush with the card's inline end. */
 .glaze .hui-usage-reset {
-  flex: none;
   font-size: 12px;
+  line-height: 16px;
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
+  text-align: end;
   white-space: nowrap;
 }
 

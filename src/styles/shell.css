@@ -70,6 +70,13 @@
 }
 
 .glaze .hui-model-trigger {
+  /* A real <button> (lot 7): the UA chrome is dropped and the class owns the box. */
+  appearance: none;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: start;
   display: flex;
   align-items: center;
   gap: 4px;

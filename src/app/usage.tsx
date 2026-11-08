@@ -83,10 +83,12 @@ export function UsageCards({ cards }: { cards: Card[] }) {
           <h2 className="hui-usage-title">{card.title}</h2>
           {card.rows.map(row => (
             <div key={`${card.id}-${row.key}`} className="hui-usage-window">
-              <p className="hui-usage-meta">
-                <span className="hui-usage-label">{row.label}</span>
-                <span className="hui-usage-reset">{row.reset ? `${row.reset}  ${row.used} %` : `${row.used} %`}</span>
-              </p>
+              {/* Two lines, as Ilyass reads them: the whole label across the card, then the reset and the percentage
+                  at the inline end. Neither line truncates the label. */}
+              <div className="hui-usage-meta">
+                <p className="hui-usage-label">{row.label}</p>
+                <p className="hui-usage-reset">{row.reset ? `${row.reset}  ${row.used} %` : `${row.used} %`}</p>
+              </div>
               <div className="hui-usage-track" role="presentation">
                 <div
                   className={`hui-usage-fill ${fillClass(row.used)}`}

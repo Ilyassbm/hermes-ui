@@ -98,8 +98,11 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
 
         {sessions.length ? (
           <DropdownMenu>
+            {/* Glaze's Button in the render slot: a real <button>, where a `div role="button"` opened the menu on a
+                keypress but let the click's mouseup close it again (lot 7). */}
             <DropdownMenuTrigger
-              render={<div role="button" tabIndex={0} className="hui-icon-btn hui-tab-list" aria-label="Toutes les conversations" />}
+              openOnHover={false}
+              render={<Button variant="ghost" size="icon-sm" className="hui-icon-btn hui-tab-list" aria-label="Toutes les conversations" />}
             >
               <Icon icon={List} size={14} />
             </DropdownMenuTrigger>
@@ -231,8 +234,11 @@ function ModelMenu() {
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
+      {/* `.hui-model-trigger` used to be a `<div role="button">`: on a non-native element Base UI's trigger opened the
+          menu and the mouseup that followed the click closed it again. Glaze's Button renders the real <button>. */}
       <DropdownMenuTrigger
-        render={<div role="button" tabIndex={0} className="hui-model-trigger" aria-label={`Modèle et effort, ${trigger}`} />}
+        openOnHover={false}
+        render={<Button variant="ghost" size="sm" className="hui-model-trigger" aria-label={`Modèle et effort, ${trigger}`} />}
       >
         <span>{trigger}</span>
         <Icon icon={ChevronDown} size={12} />
