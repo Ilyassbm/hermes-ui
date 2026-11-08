@@ -1,0 +1,13 @@
+{
+  "name": "hermes-ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "install-local": "node scripts/build.mjs --install"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12"
+  }
+}
