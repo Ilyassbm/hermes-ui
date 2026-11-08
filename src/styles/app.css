@@ -1,0 +1,14 @@
+/* Hermes UI v2 — Tailwind v4 entry for the Glaze surface (/hui/glaze).
+   Compiled by scripts/build.mjs (PostCSS + @tailwindcss/postcss) into src/styles/.compiled.css, post-processed so
+   every global selector falls under .glaze, then injected as text in a <style id="hermes-ui-glaze"> on mount.
+
+   No preflight: the full `@import "tailwindcss"` is never used, and no theme or utilities are emitted at the top
+   level either — Glaze's entry below pins the theme with `@theme inline reference` (nothing is written to :root)
+   and generates the utilities nested under `:where(.glaze, [data-system="glaze"])`, so no class reaches the native
+   app. Importing `tailwindcss/theme` or `tailwindcss/utilities` at this level would do the opposite: a global
+   `:root` block and unscoped `.flex`/`.p-3` rules that collide with the app's own Tailwind. */
+@import "../components/glaze/styles.css";
+
+/* Everything the Glaze surface renders, our own markup included. Glaze's styles.css scans its own folders; this
+   covers src/ so a class used in src/ui/glaze-demo is generated too. */
+@source "../**/*.{ts,tsx,js,jsx}";

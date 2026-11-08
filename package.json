@@ -5,9 +5,22 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "lint": "eslint -c glaze.eslint.config.mjs src",
+    "check:css": "node scripts/check-css.mjs",
     "install-local": "node scripts/build.mjs --install"
   },
   "devDependencies": {
-    "esbuild": "0.25.12"
+    "@typescript-eslint/parser": "^8.72.1",
+    "esbuild": "0.25.12",
+    "eslint": "^9.39.5"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.9.0",
+    "@phosphor-icons/react": "^2.1.10",
+    "@tailwindcss/postcss": "^4.3.5",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.7.0",
+    "tailwindcss": "^4.3.5"
   }
 }

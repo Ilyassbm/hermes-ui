@@ -1,3 +1,5 @@
 node_modules/
 dist/
 __pycache__/
+# Tailwind output, rebuilt by scripts/build.mjs
+src/styles/.compiled.css
