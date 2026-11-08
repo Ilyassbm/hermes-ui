@@ -1,10 +1,17 @@
-// Hermes UI — custom chat page for Hermes Desktop and the Webapp.
-// Two routes (/hui and the Glaze demo), a sidebar row, a palette command, and the two rebindable keybinds.
+// Hermes UI — custom chat page for Hermes Desktop and the Webapp, and the app's home.
+//
+// Two routes (/hui and the Glaze demo), a sidebar row, the palette commands, and the two rebindable keybinds. On top of
+// the page: the native chat routes are taken over (native-takeover), the native chrome is quieted once (native-chrome),
+// and "Glaze Noir" is registered and selected once (theme).
 import { host, KEYBINDS_AREA, PALETTE_AREA, ROUTES_AREA, SIDEBAR_NAV_AREA } from '@hermes/plugin-sdk'
 import { App } from './app/app'
+import { installNativeChrome } from './app/native-chrome'
+import { installTakeover, setReplaceNative } from './app/native-takeover'
+import { installTheme } from './app/theme'
 import { GlazeDemo } from './ui/glaze-demo/GlazeDemo'
 import { bindContext, handleEvent, newConversation } from './lib/hermes'
 import { toggleAside } from './app/ui-state'
+import { toast } from '@/components/glaze/ui/toast'
 
 const PATH = '/hui'
 const GLAZE_PATH = '/hui/glaze'
@@ -30,6 +37,43 @@ export default {
         id: 'open',
         area: PALETTE_AREA,
         data: { id: 'hermes-ui.open', label: 'Ouvrir Hermes UI', keywords: ['hermes', 'ui', 'chat', 'bots'], run: () => host.navigate(PATH) }
+      },
+      // The takeover is a preference, so it is also a pair of rows: the current one is the one that does nothing.
+      {
+        id: 'native',
+        area: PALETTE_AREA,
+        data: {
+          id: 'hermes-ui.native',
+          label: "Hermes UI : utiliser l'interface native",
+          keywords: ['hermes', 'ui', 'natif', 'native', 'accueil', 'home'],
+          run: () => {
+            setReplaceNative(ctx, false)
+            toast("Interface native", { description: 'Les nouveaux chats et les sessions ouvrent les pages du bureau.' })
+          }
+        }
+      },
+      {
+        id: 'everywhere',
+        area: PALETTE_AREA,
+        data: {
+          id: 'hermes-ui.everywhere',
+          label: 'Hermes UI : utiliser Hermes UI partout',
+          keywords: ['hermes', 'ui', 'partout', 'accueil', 'home'],
+          run: () => {
+            setReplaceNative(ctx, true)
+            toast('Hermes UI partout', { description: 'Les nouveaux chats et les sessions ouvrent Hermes UI.' })
+          }
+        }
+      },
+      {
+        id: 'statusbar',
+        area: PALETTE_AREA,
+        data: {
+          id: 'hermes-ui.statusbar',
+          label: 'Hermes UI : barre d’état',
+          keywords: ['hermes', 'ui', 'barre', 'état', 'statusbar'],
+          run: () => void ctx.runAction?.('view.toggleStatusbar')
+        }
       },
       {
         id: 'new',
@@ -61,5 +105,11 @@ export default {
         }
       }
     ])
+
+    // The rest of the app: the theme first (it needs to be registered before it can be requested), then the chrome,
+    // then the takeover — its first pass waits for the gateway by itself.
+    installTheme(ctx)
+    installNativeChrome(ctx)
+    installTakeover(ctx)
   }
 }

@@ -1,0 +1,75 @@
+/* Glaze Noir — the skin for the native pages that stay native (Réglages, Capabilities, Messaging…).
+   Injected by the app as the theme's `customCSS`, so it is global CSS by construction. Every rule is therefore gated
+   on `:where(:not(.glaze *))`: the native app gets Glaze's geometry, and Hermes UI's own page (.glaze) is never
+   touched, not even by specificity. Only `data-slot` attributes and the scrollbar/selection pseudo-elements are
+   targeted — never the app's generated Tailwind classes, which change between builds.
+
+   Geometry only: 8px on controls, 12px on cards, 10px on overlays. No shadow anywhere, hairlines from the theme's
+   own border, thin scrollbars, a neutral selection. Glaze has no accent, so nothing here paints one.
+
+   Budget: scripts/check-css.mjs fails the build above 8 kB, and fails any selector that mentions .glaze. */
+
+/* Cards: 12px, flat, the theme's hairline. */
+:where(:not(.glaze *)) [data-slot='card'],
+:where(:not(.glaze *)) [data-slot='card-stack-surface'],
+:where(:not(.glaze *)) [data-slot='tool-approval-card'],
+:where(:not(.glaze *)) [data-slot='connector-card'] {
+  border-radius: 12px;
+  border-color: var(--dt-border, rgba(244, 244, 243, 0.1));
+  box-shadow: none;
+}
+
+/* Overlays (menus, popovers, dialogs, sheets, selects, tooltips): 10px, a 1px hairline instead of a shadow. */
+:where(:not(.glaze *)) [data-slot='popover-content'],
+:where(:not(.glaze *)) [data-slot='dropdown-menu-content'],
+:where(:not(.glaze *)) [data-slot='context-menu-content'],
+:where(:not(.glaze *)) [data-slot='select-content'],
+:where(:not(.glaze *)) [data-slot='dialog-content'],
+:where(:not(.glaze *)) [data-slot='sheet-content'],
+:where(:not(.glaze *)) [data-slot='tooltip-content'],
+:where(:not(.glaze *)) [data-slot='command'] {
+  border-radius: 10px;
+  border-color: var(--dt-border, rgba(244, 244, 243, 0.1));
+  box-shadow: none;
+}
+
+/* One-line controls: 8px, flat. */
+:where(:not(.glaze *)) [data-slot='button'],
+:where(:not(.glaze *)) [data-slot='input'],
+:where(:not(.glaze *)) [data-slot='textarea'],
+:where(:not(.glaze *)) [data-slot='select-trigger'],
+:where(:not(.glaze *)) [data-slot='kbd'],
+:where(:not(.glaze *)) [data-slot='badge'] {
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+/* The chrome's edges: one hairline, no rule of its own. */
+:where(:not(.glaze *)) [data-slot='sidebar'],
+:where(:not(.glaze *)) [data-slot='sidebar-footer'],
+:where(:not(.glaze *)) [data-slot='statusbar'],
+:where(:not(.glaze *)) [data-slot='separator'] {
+  border-color: var(--dt-border, rgba(244, 244, 243, 0.1));
+  box-shadow: none;
+}
+
+/* Scrollbars: thin, rounded, the thumb ink at 15% — the same grey as a field's resting line. */
+:where(:not(.glaze *)) ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+:where(:not(.glaze *)) ::-webkit-scrollbar-track {
+  background: transparent;
+}
+:where(:not(.glaze *)) ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background-color: rgba(244, 244, 243, 0.15);
+  background-clip: padding-box;
+}
+
+/* Selection: neutral ink, never an accent. */
+:where(:not(.glaze *)) ::selection {
+  background-color: rgba(244, 244, 243, 0.22);
+  color: #f4f4f3;
+}

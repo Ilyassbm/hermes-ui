@@ -8,6 +8,11 @@ import postcss from 'postcss'
 
 export const DEFAULT_FILE = 'src/styles/.compiled.css'
 
+/** The theme's `customCSS`: the one sheet allowed to reach the app, under its own guards (see `checkNativeSkin`). */
+export const NATIVE_SKIN_FILE = 'src/app/native-skin.css'
+/** Its budget in bytes: it ships inside desktop/plugin.js and is injected on every theme apply. */
+export const NATIVE_SKIN_MAX = 8 * 1024
+
 /** The selectors that would reach the native app if they were left unscoped. Bare `::before` / `::after` are in the
  *  list because Tailwind emits them beside `*` for its `--tw-*` defaults. */
 const GLOBAL_START = /^(:root|:host|html|body|\*|::backdrop|::before|::after)(?![\w-])/
@@ -86,6 +91,46 @@ export function scopeGlobalSelectors(css) {
   return { css: root.toString(), changed }
 }
 
+/**
+ * Guards the native skin (the theme's `customCSS`), which is the one stylesheet meant to reach the app.
+ *
+ * Its two rules, both hard:
+ *  - it must never target `.glaze`: the page owns its own look, and a skin rule that lands inside it is a regression
+ *    of "no rule may restyle Hermes UI";
+ *  - every rule must carry the `:not(.glaze …)` guard, so the app is skinned and the page is left alone;
+ *  - and it stays under 8 kB, because it ships inside the bundle and is injected on every theme apply.
+ *
+ * @returns {{errors: string[], bytes: number, rules: number}}
+ */
+export function checkNativeSkin(css) {
+  const errors = []
+  const bytes = Buffer.byteLength(css, 'utf8')
+  let rules = 0
+
+  if (bytes >= NATIVE_SKIN_MAX) {
+    errors.push(`${bytes} bytes — the budget is ${NATIVE_SKIN_MAX} (< 8 kB)`)
+  }
+
+  const root = postcss.parse(css)
+  root.walkRules(rule => {
+    if (!rule.selector) return
+    rules++
+    for (const part of splitSelectorList(rule.selector)) {
+      const sel = part.trim()
+      if (!sel) continue
+      // The guard itself mentions .glaze — that is the point of it. Strip it, then look for a real target.
+      const bare = sel.replace(/:not\(\s*\.glaze[^)]*\)/g, '')
+      if (/\.glaze(?![\w-])/.test(bare) || /\[data-system\s*=\s*["']?glaze/.test(bare)) {
+        errors.push(`targets Hermes UI: ${sel}`)
+        continue
+      }
+      if (!sel.includes(':not(.glaze')) errors.push(`missing the :not(.glaze …) guard: ${sel}`)
+    }
+  })
+
+  return { errors, bytes, rules }
+}
+
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]
 if (isMain) {
   const file = process.argv[2] ?? DEFAULT_FILE
@@ -97,4 +142,14 @@ if (isMain) {
     process.exit(1)
   }
   console.log(`check-css: OK — ${file} has no :root, :host, html, body, * or ::backdrop outside .glaze`)
+
+  const skin = checkNativeSkin(readFileSync(NATIVE_SKIN_FILE, 'utf8'))
+  if (skin.errors.length) {
+    console.error(`check-css: ${skin.errors.length} problem(s) in ${NATIVE_SKIN_FILE}`)
+    for (const error of skin.errors.slice(0, 20)) console.error(`  ${error}`)
+    process.exit(1)
+  }
+  console.log(
+    `check-css: OK — ${NATIVE_SKIN_FILE} is ${skin.bytes} bytes, ${skin.rules} rules, none targeting .glaze and all guarded by :not(.glaze …)`
+  )
 }

@@ -7,6 +7,7 @@
     "build": "node scripts/build.mjs",
     "lint": "eslint -c glaze.eslint.config.mjs src",
     "check:css": "node scripts/check-css.mjs",
+    "check:takeover": "node scripts/check-takeover.mjs",
     "check:bundle": "node scripts/check-bundle.mjs",
     "check:iui": "node scripts/check-iui.mjs",
     "check:iui-skill": "node scripts/gen-iui-skill.mjs --check",

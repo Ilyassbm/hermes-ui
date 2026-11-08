@@ -14,7 +14,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import postcss from 'postcss'
 import tailwind from '@tailwindcss/postcss'
-import { findGlobalSelectors, scopeGlobalSelectors } from './check-css.mjs'
+import { checkNativeSkin, findGlobalSelectors, NATIVE_SKIN_FILE, scopeGlobalSelectors } from './check-css.mjs'
 import { checkBundle } from './check-bundle.mjs'
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
@@ -46,6 +46,16 @@ if (leaks.length) {
 
 writeFileSync(cssOut, scoped.css)
 console.log(`css: src/styles/app.css → src/styles/.compiled.css (${(scoped.css.length / 1024).toFixed(1)} kB, ${scoped.changed} selector(s) scoped)`)
+
+// 3b. The native skin (the theme's customCSS) is the one sheet allowed to reach the app: it must stay small, never
+//     target .glaze, and guard every rule with :not(.glaze …).
+const nativeSkin = checkNativeSkin(readFileSync(resolve(root, NATIVE_SKIN_FILE), 'utf8'))
+if (nativeSkin.errors.length) {
+  console.error(`build: ${nativeSkin.errors.length} problem(s) in ${NATIVE_SKIN_FILE} — refusing to bundle`)
+  for (const error of nativeSkin.errors.slice(0, 20)) console.error(`  ${error}`)
+  process.exit(1)
+}
+console.log(`skin: ${NATIVE_SKIN_FILE} (${nativeSkin.bytes} bytes, ${nativeSkin.rules} rules, none targeting .glaze)`)
 
 const options = {
   entryPoints: ['src/plugin.jsx'],

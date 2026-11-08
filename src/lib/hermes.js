@@ -683,6 +683,21 @@ export function bindContext(ctx) {
 }
 
 export async function boot() {
+  // One boot per app session, shared: the page asks for it when the gateway opens, and the takeover asks for it again
+  // before it opens a session route. Two concurrent runs would each pick a bot and reset the conversation under the
+  // other, so callers await the same promise instead of re-checking `ready` (which is set before the bot is selected).
+  if (!bootPromise) {
+    bootPromise = bootOnce().catch(e => {
+      bootPromise = null
+      throw e
+    })
+  }
+  return bootPromise
+}
+
+let bootPromise = null
+
+async function bootOnce() {
   if (store.get().ready) return
   const bots = await loadBots()
   const last = ctxRef?.storage?.get('lastBot', null)

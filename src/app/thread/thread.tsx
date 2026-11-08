@@ -53,7 +53,14 @@ export function Thread({ bot, name, input }: ThreadProps) {
             {name}
           </span>
         </div>
-        <ConversationViewport aria-label={`Conversation avec ${name}`} className="px-4" labels={{ complete: 'Réponse terminée', stopped: 'Arrêté', failed: 'Réponse en échec' }}>
+        {/* The pill floats over the thread, so the top 56px of the viewport fade out (styles/app.css): text that
+            scrolls under the pill stays legible at its edges instead of being cut by a hard line. */}
+        <ConversationViewport
+          aria-label={`Conversation avec ${name}`}
+          className="px-4"
+          data-fade="thread-top"
+          labels={{ complete: 'Réponse terminée', stopped: 'Arrêté', failed: 'Réponse en échec' }}
+        >
           <ConversationContent className="mx-auto flex w-full max-w-measure flex-col pt-14 pb-6">
 
             {!ready ? (

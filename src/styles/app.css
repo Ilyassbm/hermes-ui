@@ -46,3 +46,10 @@
 .glaze [data-enter='aside'] {
   animation: hermes-ui-aside-in 200ms var(--ease-out);
 }
+
+/* The thread passes under the bot's pill: the top 56px of the viewport fade from transparent to opaque, so the text
+   at the pill's edge is legible instead of half lit. 56px is the viewport's own top padding (pt-14), which is exactly
+   the band the pill covers; a mask, never a shadow or a gradient band (Glaze casts none). */
+.glaze [data-fade='thread-top'] {
+  mask-image: linear-gradient(to bottom, transparent, black 56px);
+}
