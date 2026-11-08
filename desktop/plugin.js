@@ -12471,7 +12471,7 @@ function gA(e) {
           role: "assistant",
           text: "",
           reasoning: "",
-          toolActions: [],
+          toolActions: [{ type: "turn", gen: n.gen }],
           at: (i.timestamp || 0) * 1e3,
           status: "done",
           model: i.model || "",
@@ -12504,7 +12504,7 @@ ${c}` : c);
         continue;
       }
     }
-  return s(), { turns: t.filter((i) => i.role === "user" || i.text || i.toolActions.length || i.reasoning), files: [...new Set(o)] };
+  return s(), { turns: t.filter((i) => i.role === "user" || i.text || i.reasoning || i.toolActions.length > 1), files: [...new Set(o)] };
 }
 async function hA() {
   let e = [];
@@ -12748,7 +12748,8 @@ function CA(e) {
     role: "assistant",
     text: "",
     reasoning: "",
-    toolActions: [],
+    // Every turn opens with its own generation (rule tool-call-stop): a late stop from the last one cannot cancel it.
+    toolActions: [{ type: "turn", gen: t }],
     adapter: ys(t),
     gen: t,
     at: Date.now(),
@@ -29795,7 +29796,7 @@ function $E({ message: e, name: t, identity: o }) {
 import { jsx as Ut, jsxs as jn } from "react/jsx-runtime";
 var V7 = ["Fais le point sur tes tâches", "Qu'as-tu produit aujourd'hui ?", "Propose-moi la prochaine action"];
 function WE({ bot: e, name: t, input: o }) {
-  let a = bt(Re, (y) => y.messages), r = bt(Re, (y) => y.live), n = bt(Re, (y) => y.sid), s = bt(Re, (y) => y.ready), i = bt(Re, (y) => y.error), l = C0(e || "default"), c = a[a.length - 1], u = !!(c && c.role === "assistant" && (c.text || c.reasoning || (c.toolActions || []).length)), d = !!r, m = d ? "streaming" : "idle", p = d ? u ? "streaming" : "submitted" : "ready", f = d ? c?.gen : n;
+  let a = bt(Re, (y) => y.messages), r = bt(Re, (y) => y.live), n = bt(Re, (y) => y.sid), s = bt(Re, (y) => y.ready), i = bt(Re, (y) => y.error), l = C0(e || "default"), c = a[a.length - 1], u = !!(c && c.role === "assistant" && (c.text || c.reasoning || (c.toolActions || []).some((y) => y.type !== "turn"))), d = !!r, m = d ? "streaming" : "idle", p = d ? u ? "streaming" : "submitted" : "ready", f = d ? c?.gen : n;
   return /* @__PURE__ */ jn(VC, { status: m, children: [
     /* @__PURE__ */ jn(BC, { className: "min-h-0 flex-1", children: [
       /* @__PURE__ */ Ut(_C, { "aria-label": `Conversation avec ${t}`, className: "px-4", labels: { complete: "Réponse terminée", stopped: "Arrêté", failed: "Réponse en échec" }, children: /* @__PURE__ */ jn(ZC, { className: "mx-auto flex w-full max-w-measure flex-col pb-6", children: [

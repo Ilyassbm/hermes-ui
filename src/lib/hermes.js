@@ -117,7 +117,7 @@ export function toTurns(raw) {
           role: 'assistant',
           text: '',
           reasoning: '',
-          toolActions: [],
+          toolActions: [{ type: 'turn', gen: adapter.gen }],
           at: (m.timestamp || 0) * 1000,
           status: 'done',
           model: m.model || '',
@@ -156,7 +156,7 @@ export function toTurns(raw) {
     // role tool: folded into its call above
   }
   closeTurn()
-  return { turns: turns.filter(t => t.role === 'user' || t.text || t.toolActions.length || t.reasoning), files: [...new Set(files)] }
+  return { turns: turns.filter(t => t.role === 'user' || t.text || t.reasoning || t.toolActions.length > 1), files: [...new Set(files)] }
 }
 
 // ── bots & sessions ──────────────────────────────────────────────────────────
@@ -503,7 +503,8 @@ function newTurn(s) {
     role: 'assistant',
     text: '',
     reasoning: '',
-    toolActions: [],
+    // Every turn opens with its own generation (rule tool-call-stop): a late stop from the last one cannot cancel it.
+    toolActions: [{ type: 'turn', gen }],
     adapter: emptyToolAdapter(gen),
     gen,
     at: Date.now(),

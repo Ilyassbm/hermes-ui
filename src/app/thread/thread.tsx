@@ -33,7 +33,10 @@ export function Thread({ bot, name, input }: ThreadProps) {
   const identity = botIdentity(bot || 'default')
 
   const last = messages[messages.length - 1]
-  const started = Boolean(last && last.role === 'assistant' && (last.text || last.reasoning || (last.toolActions || []).length))
+  // The first byte of anything: a word, a thought or a call. The turn's own opening action does not count.
+  const started = Boolean(
+    last && last.role === 'assistant' && (last.text || last.reasoning || (last.toolActions || []).some((a: any) => a.type !== 'turn'))
+  )
   const streaming = Boolean(live)
   const status = streaming ? 'streaming' : 'idle'
   const composerStatus = streaming ? (started ? 'streaming' : 'submitted') : 'ready'
