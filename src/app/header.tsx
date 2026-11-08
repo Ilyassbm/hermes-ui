@@ -208,9 +208,13 @@ function ModelMenu() {
   const [open, setOpen] = useState(false)
   const button = useRef<HTMLButtonElement | null>(null)
   const measured = useRef(false)
-  // A press on the button while the menu is open closes the menu (Base UI's outside press) and the click that follows
-  // would open it again: the flag lets that click land on a closed menu instead of toggling it back on.
+  // A press on this button is an outside press to Base UI: the button anchors the menu, it is not its
+  // DropdownMenuTrigger, so the press closes the menu on pointerdown, before the click. The click that follows must
+  // then leave the menu closed instead of opening it again. `onOpenChange` marks the press and the click spends the
+  // mark, so the two events agree whatever order React flushes them in; the timestamp keeps a press that ended off the
+  // button from swallowing the next real click (lot 9).
   const pressedWhileOpen = useRef(false)
+  const pressedAt = useRef(0)
   // `/model` (and the model shortcut) asks the header to open this menu.
   const asked = useStore(view, s => s.modelMenu)
 
@@ -259,6 +263,23 @@ function ModelMenu() {
     else show()
   }
 
+  /**
+   * The menu's own open state, with the one thing the controlled menu must remember: a press on the button closes it
+   * as an outside press, and the click that follows lands on the same button. Marking that press here is what lets the
+   * click close instead of reopen.
+   */
+  const changeOpen = (next: boolean, details?: { reason?: string; event?: Event }) => {
+    pressedWhileOpen.current = false
+    if (!next && details?.reason === 'outside-press') {
+      const target = details.event?.target
+      if (target instanceof Node && button.current?.contains(target)) {
+        pressedWhileOpen.current = true
+        pressedAt.current = Date.now()
+      }
+    }
+    setOpen(next)
+  }
+
   const pick = (next: string, provider: string) => {
     if (!bot) return
     savePrefs(bot, { model: next, provider })
@@ -283,12 +304,11 @@ function ModelMenu() {
         aria-label={`Modèle et effort, ${trigger}`}
         aria-haspopup="menu"
         aria-expanded={open}
-        onPointerDown={() => {
-          pressedWhileOpen.current = open
-        }}
         onClick={() => {
-          if (pressedWhileOpen.current) {
-            pressedWhileOpen.current = false
+          // The click of a press that closed the menu (see `changeOpen`) must not open it again.
+          const fromThisPress = pressedWhileOpen.current && Date.now() - pressedAt.current < 1000
+          pressedWhileOpen.current = false
+          if (fromThisPress) {
             setOpen(false)
             return
           }
@@ -297,13 +317,18 @@ function ModelMenu() {
         onKeyDown={event => {
           if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'ArrowDown') return
           event.preventDefault()
-          if (!open) show()
+          // Enter and Space on an open menu close it; the arrow keys only ever open.
+          if (open) {
+            if (event.key !== 'ArrowDown') setOpen(false)
+            return
+          }
+          show()
         }}
       >
         <span>{trigger}</span>
         <Icon icon={ChevronDown} size={12} />
       </Button>
-      <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenu open={open} onOpenChange={changeOpen}>
         <DropdownMenuContent
           anchor={button as any}
           finalFocus={button}

@@ -12,6 +12,7 @@ import {PromptAttachment, accepts, useFileDrop, type Attachment, type PromptAtta
 import {PromptInputMic, type MicState, type PromptInputMicLabels, type PromptInputMicProps} from '@/components/glaze/ai/prompt-input/mic';
 import {TriggerMenu, matchRank, type MenuOption, type MenuState} from '@/components/glaze/ai/prompt-input/menu';
 import {caretAt, caretAtEnd, chipAtCaret} from '@/components/glaze/ai/prompt-input/caret';
+import {leadingSlashToken} from '@/components/glaze/ai/prompt-input/slash';
 import {PromptQueue, type PromptQueueLabels, type PromptQueueProps, type QueuedMessage} from '@/components/glaze/ai/prompt-queue';
 
 const formatCount = (n: number) => n.toLocaleString('en-US');
@@ -39,7 +40,7 @@ const withoutUndefined = <T extends object>(labels: T | undefined) => Object.fro
 //   keyCode 229, which WebKit sends after compositionend).
 // - `@` after a space or at the start of a line opens files and resources. `/` as the whole input opens
 //   commands inline; `/` typed at the start of a draft opens a searchable command menu over the draft, so
-//   the draft is kept and the command is put in front of it. `!` at the start of an empty prompt enters
+//   the draft is kept and the command takes the place of the trigger in front of it. `!` at the start of an empty prompt enters
 //   shell mode: mono, no spellcheck, a $ in front, sent with mode "shell". Backspace on empty leaves it.
 // - Escape does one thing, in this order: close the menu, leave shell mode, cancel a held send, stop the
 //   run, blur. When it does one of the first four it stops there, so a parent dialog stays open.
@@ -530,6 +531,22 @@ function PromptInput({
     }
   };
 
+  /** Deletes the first `count` characters of the editor, across the text nodes they span. */
+  const deleteFromStart = (editor: HTMLElement, count: number) => {
+    let left = count;
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    let end: {node: Text; offset: number} | null = null;
+    for (let node = walker.nextNode() as Text | null; node; node = walker.nextNode() as Text | null) {
+      if (left <= node.data.length) { end = {node, offset: left}; break; }
+      left -= node.data.length;
+    }
+    if (!end) return;
+    const range = document.createRange();
+    range.setStart(editor, 0);
+    range.setEnd(end.node, end.offset);
+    range.deleteContents();
+  };
+
   const pick = (option: MenuOption) => {
     const editor = editorRef.current;
     if (!menu || !editor) return;
@@ -538,7 +555,15 @@ function PromptInput({
     const chip = makeChip(mention);
     const space = document.createTextNode(' ');
     if (menu.kind === 'commands') {
-      // Over a draft: the command goes in front of what is already written.
+      // The palette stands over the trigger that opened it: the `/` the shortcut typed, plus whatever reached the editor
+      // before the search field took focus. The command replaces that run instead of landing in front of it, so picking
+      // `/help` from `/he` leaves the chip alone and not the chip beside `/he` (lot 9).
+      const trigger = leadingSlashToken(editor.textContent ?? '');
+      if (trigger) {
+        deleteFromStart(editor, trigger);
+        // The trigger sat in front of a draft: its one separating space leaves with it.
+        if ((editor.textContent ?? '').startsWith(' ')) deleteFromStart(editor, 1);
+      }
       editor.prepend(chip, space);
       setMenu(null);
       editor.focus();

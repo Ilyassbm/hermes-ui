@@ -3,6 +3,9 @@
 //   1. `classifyInput` (src/lib/slash.ts) — what a person typed, as the composer must treat it. The file has no
 //      imports by design, so it is bundled on the fly with the repo's own esbuild and asked about the spec's inputs.
 //
+//   1b. `leadingSlashToken` (src/components/glaze/ai/prompt-input/slash.ts) — how much of the editor's text the palette
+//      stands over: choosing a command replaces that run, so "[/help]" never sits beside the "/he" that opened the list.
+//
 //   2. the composer's send path — `onSubmit('/help')` → `runCommand` (src/app/slash-run.ts) → a gateway request
 //      `slash.exec {command:'help'}` → the answer written in the thread as a system note. slash-run talks to
 //      `@hermes/plugin-sdk` (`host.request`), `@/lib/hermes` (`store`, `ensureSession`, `addNote`), `./editor` and
@@ -81,6 +84,49 @@ if (dispatched !== 'goal finir le lot') {
   console.error('check-slash: commandText did not keep the argument')
   failed += 1
 }
+
+// ---------- 1b. the trigger a picked command replaces ----------
+//
+// The palette opens over the `/…` that opened it (the shortcut's `/`, plus whatever was typed before the search field
+// took focus). Choosing a command must delete that run, not land the chip in front of it. The measure is DOM-free
+// (src/components/glaze/ai/prompt-input/slash.ts), so it is asked here directly, and the replacement is replayed on
+// plain text: "/he" + /help must read "/help", never "/help /he".
+const triggerOut = join(outDir, 'hermes-ui-check-slash-trigger.mjs')
+await build({
+  entryPoints: [join(ROOT, 'src/components/glaze/ai/prompt-input/slash.ts')],
+  outfile: triggerOut,
+  bundle: true,
+  format: 'esm',
+  platform: 'node',
+  target: 'node18',
+  logLevel: 'silent'
+})
+
+const { leadingSlashToken } = await import(pathToFileURL(triggerOut).href)
+
+const TRIGGERS = [
+  ['/he', 3, 'le déclencheur tapé dans l’éditeur'],
+  ['/', 1, 'le `/` du raccourci, seul'],
+  ['/help ', 5, 'une commande entière : l’espace qui suit reste'],
+  ['/he bonjour', 3, 'un brouillon derrière le déclencheur reste intact'],
+  ['bonjour', 0, 'un prompt sans `/` : rien à retirer'],
+  ['bonjour /he', 0, 'un `/` au milieu n’est pas un déclencheur']
+]
+
+console.log(`\n${'texte'.padEnd(22)} ${'retiré'.padEnd(8)} ${'cas'.padEnd(52)} verdict`)
+for (const [text, expected, label] of TRIGGERS) {
+  const got = leadingSlashToken(text)
+  const ok = got === expected
+  if (!ok) failed += 1
+  console.log(`${JSON.stringify(text).padEnd(22)} ${String(got).padEnd(8)} ${label.padEnd(52)} ${ok ? 'PASS' : 'FAIL (attendu ' + expected + ')'}`)
+}
+
+// The composer: delete the trigger at the head of the editor, then prepend the chip. Replayed on the text.
+const pick = (editorText, command) => command + ' ' + editorText.slice(leadingSlashToken(editorText))
+const picked = pick('/he', '/help')
+console.log(`\npick: ${JSON.stringify('/he')} + /help → ${JSON.stringify(picked)}`)
+if (picked === '/help ' || picked.startsWith('/help') && !picked.includes('/he')) pass(`le déclencheur est remplacé : ${JSON.stringify(picked)}`)
+else fail(`le déclencheur est resté : ${JSON.stringify(picked)}`)
 
 // ---------- 2. onSubmit('/help') → slash.exec → the note ----------
 
@@ -225,10 +271,11 @@ if (JSON.stringify(methods) === JSON.stringify(['slash.exec', 'command.dispatch'
 
 if (!process.argv.includes('--keep')) {
   rmSync(outFile, { force: true })
+  rmSync(triggerOut, { force: true })
   rmSync(harnessDir, { recursive: true, force: true })
 }
 if (failed) {
   console.error(`\ncheck-slash: ${failed} case(s) failed`)
   process.exit(1)
 }
-console.log(`\ncheck-slash: OK — ${CASES.length} cas de classement + 5 preuves du chemin de commande`)
+console.log(`\ncheck-slash: OK — ${CASES.length} cas de classement + ${TRIGGERS.length} cas de déclencheur remplacé + 5 preuves du chemin de commande`)

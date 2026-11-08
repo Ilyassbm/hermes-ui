@@ -5,6 +5,7 @@
 import { type RefObject } from 'react'
 import { Conversation, ConversationContent, ConversationError, ConversationJump, ConversationProvider, ConversationViewport, useConversation } from '@/components/glaze/ai/conversation'
 import { Message, MessageBubble, MessageBubbleContent, MessageContent, MessageGroup, MessageHeader, MessageTime } from '@/components/glaze/ai/message'
+import { Response } from '@/components/glaze/ai/response'
 import type { PromptInputHandle } from '@/components/glaze/ai/prompt-input'
 import { Attachment, AttachmentContent, AttachmentGlyph, AttachmentGroup, AttachmentMedia, AttachmentTitle } from '@/components/glaze/ui/attachment'
 import { Chip, ChipGroup } from '@/components/glaze/ui/chip'
@@ -120,11 +121,13 @@ export function Thread({ bot, name, input }: ThreadProps) {
 }
 
 /**
- * A command's answer: one centred line, 12px, the thread's second ink, no bubble and no role. Line breaks are kept,
- * the type stays sans (a note is a sentence, not code), and it is never stored: it belongs to this local conversation.
+ * A command's answer: markdown, rendered by Response at size sm and settled (no stream, no pacing), centred in the
+ * thread's reading measure, in the second ink and without a bubble or a role. Line breaks in a plain sentence stay
+ * line breaks; a list, a heading or inline code arrives as itself instead of as its markers. It is never stored: it
+ * belongs to this local conversation.
  */
 function NoteLine({ text }: { text: string }) {
-  return <p className="whitespace-pre-wrap text-center type-caption text-text-2">{text}</p>
+  return <Response size="sm" className="text-center text-text-2">{text}</Response>
 }
 
 function ComposerWithSnap(props: {
