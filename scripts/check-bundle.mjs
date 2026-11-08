@@ -10,6 +10,9 @@
 //    define stopped working.
 //  - imports : the loader hands the plugin `@hermes/plugin-sdk`, `react` and `react/jsx-runtime` and nothing else. Any
 //    other bare import resolves to nothing inside the app and throws at load.
+//  - line count : the loader finds the plugin's imports with a scanner that reads code and strings, and a bundle
+//    collapsed onto a few lines confuses it ("Failed to resolve module specifier \"react\""). The build keeps
+//    minifyWhitespace off for that reason; a bundle under MIN_LINES means it came back on.
 //
 // Run by `npm run build` after esbuild, and on its own: `node scripts/check-bundle.mjs [file]`.
 import { readFileSync } from 'node:fs'
@@ -19,6 +22,9 @@ export const DEFAULT_FILE = 'desktop/plugin.js'
 
 /** The only modules the Hermes Desktop plugin loader resolves for us. */
 export const ALLOWED_IMPORTS = new Set(['@hermes/plugin-sdk', 'react', 'react/jsx-runtime'])
+
+/** A real bundle of this plugin is tens of thousands of lines; a minified one is a handful. */
+export const MIN_LINES = 1000
 
 const isIdentStart = c => /[A-Za-z_$]/.test(c)
 const isIdentPart = c => /[A-Za-z0-9_$]/.test(c)
@@ -188,7 +194,10 @@ export function checkBundle(code) {
     const at = code.indexOf('.development.js')
     violations.push(`development build reference at byte ${at}: ${JSON.stringify(code.slice(Math.max(0, at - 60), at + 30))}`)
   }
-  return { violations, modules, imports: imports.length }
+  // Whitespace minification puts the whole module on one line, which the loader's import scanner misreads.
+  const lines = code.split('\n').length
+  if (lines < MIN_LINES) violations.push(`${lines} line(s) only (min ${MIN_LINES}): whitespace minification is back on`)
+  return { violations, modules, imports: imports.length, lines }
 }
 
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]
