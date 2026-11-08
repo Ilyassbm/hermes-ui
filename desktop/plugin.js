@@ -14198,6 +14198,9 @@ var zf = `/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 :where(.glaze, [data-system="glaze"]) .grid-cols-\\[minmax\\(0\\,1fr\\)_auto_auto\\] {
   grid-template-columns: minmax(0,1fr) auto auto;
 }
+:where(.glaze, [data-system="glaze"]) .grid-rows-1 {
+  grid-template-rows: repeat(1, minmax(0, 1fr));
+}
 :where(.glaze, [data-system="glaze"]) .grid-rows-\\[minmax\\(0\\,1fr\\)\\] {
   grid-template-rows: minmax(0,1fr);
 }
@@ -30485,7 +30488,7 @@ function pM({ ctx: e }) {
   }, [r]);
   let s = `${n ? 0 : lM}px minmax(0, 1fr) ${o && !r ? cM : 0}px`;
   return /* @__PURE__ */ Xa("div", { className: "glaze absolute inset-0 bg-page text-text-1", "data-theme": "dark", children: /* @__PURE__ */ O1(Uc, { children: [
-    /* @__PURE__ */ O1("div", { className: "grid h-full min-h-0 w-full grid-cols-(--cols)", style: { "--cols": s }, children: [
+    /* @__PURE__ */ O1("div", { className: "grid h-full min-h-0 w-full grid-cols-(--cols) grid-rows-1", style: { "--cols": s }, children: [
       /* @__PURE__ */ Xa("div", { className: "flex h-full min-h-0 min-w-0 flex-col", children: n ? null : /* @__PURE__ */ Xa(gw, { ctx: e }) }),
       /* @__PURE__ */ Xa("div", { className: "flex h-full min-h-0 min-w-0 flex-col", children: /* @__PURE__ */ Xa(jE, { ctx: e, narrowRail: n }) }),
       /* @__PURE__ */ Xa("div", { className: "flex h-full min-h-0 min-w-0 flex-col overflow-hidden", children: !r && o ? /* @__PURE__ */ Xa(ab, { ctx: e }) : null })

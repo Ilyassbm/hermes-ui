@@ -86,7 +86,9 @@ export function App({ ctx }: { ctx: any }) {
   return (
     <div className="glaze absolute inset-0 bg-page text-text-1" data-theme="dark">
       <GlazePortalProvider>
-        <div className="grid h-full min-h-0 w-full grid-cols-(--cols)" style={{ '--cols': columns } as CSSProperties}>
+        {/* grid-rows-1: one row that fills the frame. With an auto row the columns would size to their content and the
+            paper would stop in the middle of the page, which is what lot 2 showed. */}
+        <div className="grid h-full min-h-0 w-full grid-cols-(--cols) grid-rows-1" style={{ '--cols': columns } as CSSProperties}>
           <div className="flex h-full min-h-0 min-w-0 flex-col">
             {narrowRail ? null : <Rail ctx={ctx} />}
           </div>
