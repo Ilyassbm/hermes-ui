@@ -8,6 +8,9 @@
     "lint": "eslint -c glaze.eslint.config.mjs src",
     "check:css": "node scripts/check-css.mjs",
     "check:bundle": "node scripts/check-bundle.mjs",
+    "check:iui": "node scripts/check-iui.mjs",
+    "check:iui-skill": "node scripts/gen-iui-skill.mjs --check",
+    "gen:iui": "node scripts/gen-iui-skill.mjs",
     "check:tools": "node scripts/check-tool-mapping.mjs",
     "check:bots": "/opt/hermes/.venv/bin/python -I scripts/check-bots-api.py",
     "install-local": "node scripts/build.mjs --install"
@@ -19,11 +22,14 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
+    "@json-render/core": "^0.22.0",
+    "@json-render/react": "^0.22.0",
     "@phosphor-icons/react": "^2.1.10",
     "@tailwindcss/postcss": "^4.3.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.7.0",
-    "tailwindcss": "^4.3.5"
+    "tailwindcss": "^4.3.5",
+    "zod": "^4.6.7"
   }
 }

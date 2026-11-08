@@ -663,6 +663,21 @@ export async function loadUsage(fresh = false) {
 
 // ── boot ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Opens an https address the way the host knows how: the desktop app hands its `os.openExternal`, the browser a new
+ * tab. Anything that is not https is refused here too, so a spec cannot smuggle a scheme through the action.
+ */
+export function openExternal(url) {
+  const target = String(url || '')
+  if (!/^https:\/\//i.test(target)) return
+  const os = ctxRef?.os
+  if (os && typeof os.openExternal === 'function') {
+    os.openExternal(target)
+    return
+  }
+  window.open(target, '_blank', 'noopener')
+}
+
 export function bindContext(ctx) {
   ctxRef = ctx
 }

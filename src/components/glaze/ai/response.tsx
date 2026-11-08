@@ -175,6 +175,8 @@ type TagRenderer = {
   pending: string;
   /** Draws the finished tag. `data` is the parsed JSON body, or the raw body when json is false. */
   render: (data: unknown, attrs: Record<string, string>) => React.ReactNode;
+  /** Draws the placeholder while the body is still arriving. Defaults to the `pending` row. */
+  placeholder?: () => React.ReactNode;
   /** The body is JSON. Defaults to true. */
   json?: boolean;
 };
@@ -435,6 +437,7 @@ function resolveTag(chunk: string, tags: Record<string, TagRenderer>, open: bool
   const renderer = tags[name];
   if (!renderer) return {outcome: 'literal', node: <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{chunk}</p>};
   const attrs = parseAttrs(rawAttrs);
+  const hold = () => renderer.placeholder?.() ?? <Pending label={renderer.pending}/>;
   const close = `</${name}>`;
   const after = chunk.slice(whole.length);
   const at = after.indexOf(close);
@@ -443,7 +446,7 @@ function resolveTag(chunk: string, tags: Record<string, TagRenderer>, open: bool
 
   if (renderer.json === false) {
     if (at !== -1) return {outcome: 'segment', node: renderer.render(body.trim(), attrs), rest: trailing};
-    if (open && !expired) return {outcome: 'pending', node: <Pending label={renderer.pending}/>};
+    if (open && !expired) return {outcome: 'pending', node: hold()};
     // Never closed: the opening line reads as text and everything after it parses as markdown again.
     const [first, ...more] = chunk.split('\n');
     return {outcome: 'literal', node: <p className="[overflow-wrap:anywhere]">{first}</p>, rest: more.join('\n')};
@@ -463,7 +466,7 @@ function resolveTag(chunk: string, tags: Record<string, TagRenderer>, open: bool
   if (v === 0 && body.trim()) return {outcome: 'literal', node: <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{body.trim()}</p>, rest: trailing};
   // Still a viable prefix: the placeholder holds through a stall, so the box never flickers. Only the
   // end of the stream discards it.
-  if (v >= body.length && at === -1) return open ? {outcome: 'pending', node: <Pending label={renderer.pending}/>} : {outcome: 'discard', node: null};
+  if (v >= body.length && at === -1) return open ? {outcome: 'pending', node: hold()} : {outcome: 'discard', node: null};
   // Broken JSON: drop the JSON-like part, keep any prose after it.
   return {outcome: 'discard', node: null, rest: (at === -1 ? body.slice(v) : trailing)};
 }

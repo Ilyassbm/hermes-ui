@@ -7,6 +7,7 @@
 //
 // --install HERMES_ROOT=<root> : also copies it as a standalone desktop plugin (dev only).
 import { build } from 'esbuild'
+import { spawnSync } from 'node:child_process'
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
@@ -22,6 +23,11 @@ const cssOut = resolve(root, 'src/styles/.compiled.css')
 
 const install = process.argv.includes('--install')
 const watch = process.argv.includes('--watch')
+
+// 0. The skill a bot reads is generated from the catalogue before anything is bundled: catalog.ts is the source, the
+//    committed skills/intelligent-ui/SKILL.md is what the plugin registers. A failure here stops the build.
+const gen = spawnSync(process.execPath, [resolve(root, 'scripts/gen-iui-skill.mjs')], { stdio: 'inherit' })
+if (gen.status !== 0) process.exit(gen.status ?? 1)
 
 // 1. Tailwind v4 → one stylesheet. app.css pulls `tailwindcss/theme` + `tailwindcss/utilities` in (never the full
 //    `tailwindcss`, whose Preflight is a global reset) and Glaze's own scoped entry.
