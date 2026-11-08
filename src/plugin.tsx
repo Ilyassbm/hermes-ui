@@ -1,9 +1,10 @@
 // Hermes UI — custom chat page for Hermes Desktop and the Webapp.
-// One route (/hui) + a sidebar row + palette command + a rebindable "new conversation" keybind.
+// Two routes (/hui and the Glaze demo), a sidebar row, a palette command, and the two rebindable keybinds.
 import { host, KEYBINDS_AREA, PALETTE_AREA, ROUTES_AREA, SIDEBAR_NAV_AREA } from '@hermes/plugin-sdk'
-import { App } from './ui/App'
+import { App } from './app/app'
 import { GlazeDemo } from './ui/glaze-demo/GlazeDemo'
 import { bindContext, handleEvent, newConversation } from './lib/hermes'
+import { toggleAside } from './app/ui-state'
 
 const PATH = '/hui'
 const GLAZE_PATH = '/hui/glaze'
@@ -22,7 +23,7 @@ export default {
     })
     ctx.registerMany([
       { id: 'page', area: ROUTES_AREA, data: { path: PATH }, render: () => <App ctx={ctx} /> },
-      // Glaze surface: its own route, no sidebar row. The v1 page above stays untouched until lot 2 migrates it.
+      // Glaze surface: its own route, no sidebar row.
       { id: 'glaze', area: ROUTES_AREA, data: { path: GLAZE_PATH }, render: () => <GlazeDemo /> },
       { id: 'nav', area: SIDEBAR_NAV_AREA, data: { path: PATH, label: 'Hermes UI', codicon: 'comment-discussion' } },
       {
@@ -41,6 +42,21 @@ export default {
           run: () => {
             host.navigate(PATH)
             newConversation()
+          }
+        }
+      },
+      {
+        // The right panel's toggle: the same handler as the button in the centre, so the two cannot drift apart.
+        id: 'aside',
+        area: KEYBINDS_AREA,
+        data: {
+          id: 'hermes-ui.toggleAside',
+          label: 'Hermes UI : afficher ou masquer le panneau',
+          category: 'view',
+          defaults: ['mod+alt+b'],
+          run: () => {
+            host.navigate(PATH)
+            toggleAside(ctx)
           }
         }
       }

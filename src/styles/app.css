@@ -8,7 +8,41 @@
    app. Importing `tailwindcss/theme` or `tailwindcss/utilities` at this level would do the opposite: a global
    `:root` block and unscoped `.flex`/`.p-3` rules that collide with the app's own Tailwind. */
 @import "../components/glaze/styles.css";
+/* The vendored aicss avatar: its identity colours, scoped to .hui-bot. */
+@import "./bot.css";
 
 /* Everything the Glaze surface renders, our own markup included. Glaze's styles.css scans its own folders; this
-   covers src/ so a class used in src/ui/glaze-demo is generated too. */
+   covers src/ so a class used in src/app or src/ui/glaze-demo is generated too. */
 @source "../**/*.{ts,tsx,js,jsx}";
+
+/* The two entrances the spec pins to a duration: the rail's compact bar (opacity + 4px up, 160ms) and the aside's
+   content (opacity + 12px in, 200ms). Widths are never animated — the column switches, the content moves.
+   Applied as an inline `animation`, so no utility has to exist for them. */
+@keyframes hermes-ui-rail-bar {
+  from { opacity: 0; translate: 0 -4px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes hermes-ui-aside-in {
+  from { opacity: 0; translate: 12px 0; }
+  to { opacity: 1; translate: 0 0; }
+}
+/* Reduced motion: the fade stays, the 4px / 12px shift goes. */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes hermes-ui-rail-bar {
+    from { opacity: 0; translate: 0 0; }
+    to { opacity: 1; translate: 0 0; }
+  }
+  @keyframes hermes-ui-aside-in {
+    from { opacity: 0; translate: 0 0; }
+    to { opacity: 1; translate: 0 0; }
+  }
+}
+
+/* Where the two entrances are applied. A data attribute rather than a class, so no utility has to be invented for a
+   one-off motion the spec fixes by hand. */
+.glaze [data-enter='rail-bar'] {
+  animation: hermes-ui-rail-bar 160ms var(--ease-out);
+}
+.glaze [data-enter='aside'] {
+  animation: hermes-ui-aside-in 200ms var(--ease-out);
+}

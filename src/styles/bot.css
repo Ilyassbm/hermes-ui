@@ -1,0 +1,45 @@
+/* The aicss bot avatar (src/vendor/aicss/engine.ts drives the SVG). Kept out of the Glaze sheet on purpose: these are
+   the vendored avatar's own identity colours, not Glaze roles — the one place where a bot's hue is its identity, as
+   Ilyass specified. Everything else on the page takes its colour from a Glaze token.
+
+   Scoped to .hui-bot, and its dark variant to .glaze[data-theme="dark"], so nothing here reaches the native app. */
+.hui-bot {
+  --bot-1: #66a6ff;
+  --bot-2: #0059d4;
+  --bot-face: #ffffff;
+  --bot-ground: rgba(0, 0, 0, 0.05);
+  --bot-ground-core: rgba(0, 0, 0, 0.095);
+  --bot-heart: #ff4f7e;
+  --bot-blush: rgba(255, 110, 150, 0.55);
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: var(--bot-size, 24px);
+  height: var(--bot-size, 24px);
+  vertical-align: middle;
+}
+.glaze[data-theme='dark'] .hui-bot {
+  --bot-face: #101010;
+  --bot-ground: rgba(0, 0, 0, 0.2);
+  --bot-ground-core: rgba(0, 0, 0, 0.3);
+}
+/* The body overflows its box by a quarter: the ground shadow and the hop need the room. */
+.hui-bot svg {
+  position: absolute;
+  inset: -25%;
+  display: block;
+  width: 150%;
+  height: 150%;
+  overflow: visible;
+}
+.hui-bot .stop1,
+.hui-bot .stop2 {
+  transition: stop-color 450ms ease;
+}
+.hui-bot .stop1 { stop-color: var(--bot-1); }
+.hui-bot .stop2 { stop-color: var(--bot-2); }
+.hui-bot .face { fill: var(--bot-face); stroke: var(--bot-face); }
+.hui-bot .ground { fill: var(--bot-ground); }
+.hui-bot .core { fill: var(--bot-ground-core); }
+.hui-bot .blush { fill: var(--bot-blush); }
+.hui-bot .heart { fill: var(--bot-heart); }

@@ -37,8 +37,6 @@ export default [
     ignores: [
       ...LINT_IGNORES,
       '**/lib/glaze/lint/**',
-      // v1, migré au lot 2
-      'src/ui/*.jsx',
     ],
   },
   {
