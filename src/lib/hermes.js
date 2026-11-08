@@ -465,8 +465,9 @@ function stopApprovalPoll() {
 export async function answerApproval(choice) {
   const { sid, approval } = store.get()
   if (!sid || !approval) return
+  // The card goes at once, but the request id stays remembered: the poll can still list it for a moment, and a second
+  // card for the same command would ask the person twice.
   store.set({ approval: null })
-  askedApproval = ''
   try {
     await host.request('approval.respond', { session_id: sid, choice, ...(approval.requestId ? { request_id: approval.requestId } : {}) })
   } catch (e) {
