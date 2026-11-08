@@ -100,6 +100,55 @@ export function shortModel(model) {
   return m.replace(/-\d{8}$/, '')
 }
 
+// A model as a person reads it: "DeepSeek V4.1 Flash", "Opus 5.5", "GPT-6". The id stays in the title attribute, and
+// `vX.Y` keeps its shape — a version is not a word to capitalise.
+const MODEL_LABELS = {
+  'deepseek-v4.1-flash': 'DeepSeek V4.1 Flash',
+  'claude-opus-5-5': 'Opus 5.5',
+  'claude-sonnet-5': 'Sonnet 5',
+  'claude-haiku-4-5': 'Haiku 4.5',
+  'grok-4.7': 'Grok 4.7',
+  'gpt-6': 'GPT-6'
+}
+
+const titled = word => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word)
+
+export function modelLabel(model) {
+  const id = shortModel(model)
+  if (!id) return ''
+  if (MODEL_LABELS[id]) return MODEL_LABELS[id]
+  // A Claude id names the family and its version: claude-opus-5-5 → Opus 5.5.
+  const claude = /^claude-([a-z]+)-(.+)$/.exec(id)
+  if (claude) return `${titled(claude[1])} ${claude[2].replace(/-/g, '.')}`
+  // A GPT id is a brand: gpt-6 → GPT-6.
+  const gpt = /^gpt-(.+)$/.exec(id)
+  if (gpt) return `GPT-${gpt[1].replace(/-/g, ' ')}`
+  return id.split(/[-_]+/).filter(Boolean).map(w => (/^v\d/i.test(w) ? w : titled(w))).join(' ')
+}
+
+// Glaze formats a duration for an English reader ("14.4s", "1m 05s"). French writes the unit apart, keeps a
+// non-breaking space before it, and rounds to the second under a minute: "14 s", "1 min 05 s", "1 h 04 min".
+const NBSP = '\u00a0'
+
+export function frDuration(value) {
+  const text = String(value ?? '').trim()
+  const ms = /^([\d.]+)ms$/.exec(text)
+  if (ms) return `${Math.round(Number(ms[1]))}${NBSP}ms`
+  const sec = /^([\d.]+)s$/.exec(text)
+  if (sec) {
+    const s = Math.round(Number(sec[1]))
+    if (s < 60) return `${s}${NBSP}s`
+    return `${Math.floor(s / 60)}${NBSP}min ${String(s % 60).padStart(2, '0')}${NBSP}s`
+  }
+  const min = /^(\d+)m (\d+)s$/.exec(text)
+  if (min) return `${min[1]}${NBSP}min ${min[2]}${NBSP}s`
+  const hour = /^(\d+)h (\d+)m$/.exec(text)
+  if (hour) return `${hour[1]}${NBSP}h ${hour[2]}${NBSP}min`
+  const day = /^(\d+)d (\d+)h$/.exec(text)
+  if (day) return `${day[1]}${NBSP}j ${day[2]}${NBSP}h`
+  return text
+}
+
 export function hourOf(ts) {
   if (!ts) return ''
   const d = new Date(ts)

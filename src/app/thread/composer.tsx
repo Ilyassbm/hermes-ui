@@ -8,7 +8,7 @@ import { host } from '@hermes/plugin-sdk'
 import { PromptInput, PromptInputModel, type Attachment, type PromptInputHandle } from '@/components/glaze/ai/prompt-input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/glaze/ui/dropdown-menu'
 import { SegmentedControl, SegmentedControlItem } from '@/components/glaze/ui/segmented-control'
-import { shortModel } from '@/lib/labels'
+import { modelLabel } from '@/lib/labels'
 import { prefsFor, savePrefs, send, stop, store } from '@/lib/hermes'
 import { useStore } from '@/lib/store'
 
@@ -161,7 +161,7 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
           }}
           tools={
             <DropdownMenu>
-              <DropdownMenuTrigger render={<PromptInputModel model={model ? shortModel(model) : 'Modèle'} aria-label="Modèle et effort" />} />
+              <DropdownMenuTrigger render={<PromptInputModel model={model ? modelLabel(model) : 'Modèle'} aria-label="Modèle et effort" />} />
               <DropdownMenuContent align="start" side="top" size="sm" className="min-w-(--menu-min)">
                 <DropdownMenuLabel>Effort de raisonnement</DropdownMenuLabel>
                 <div className="px-2 pb-2">
@@ -180,7 +180,7 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
                     <DropdownMenuLabel>{provider.name}</DropdownMenuLabel>
                     {provider.models.slice(0, 24).map(next => (
                       <DropdownMenuItem key={`${provider.slug}:${next}`} onClick={() => pick(next, provider.slug)}>
-                        <span className="truncate">{shortModel(next)}</span>
+                        <span className="truncate">{modelLabel(next)}</span>
                         {model === next ? <span className="ms-auto type-caption text-text-3">actuel</span> : null}
                       </DropdownMenuItem>
                     ))}

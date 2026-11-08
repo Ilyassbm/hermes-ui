@@ -44,16 +44,17 @@ export function Thread({ bot, name, input }: ThreadProps) {
 
   return (
     <ConversationProvider status={status}>
-      <Conversation className="min-h-0 flex-1">
+      <Conversation className="relative min-h-0 flex-1">
+        {/* The bot: a pill pinned to the top of the sheet, 12px from its edge, over the thread rather than in it. The
+            viewport starts under it (pt-14 = 56px), so a turn never slides beneath the pill as it scrolls. */}
+        <div className="pointer-events-none absolute inset-x-0 top-3 z-(--z-raised) flex justify-center">
+          <span className="pointer-events-auto inline-flex items-center gap-2 rounded-pill bg-shell px-3 py-1.5 type-label text-text-1">
+            <BotAvatar size={20} colors={identity.colors} shape={identity.shape} label={name} hoverGiggle={false} />
+            {name}
+          </span>
+        </div>
         <ConversationViewport aria-label={`Conversation avec ${name}`} className="px-4" labels={{ complete: 'Réponse terminée', stopped: 'Arrêté', failed: 'Réponse en échec' }}>
-          <ConversationContent className="mx-auto flex w-full max-w-measure flex-col pb-6">
-            {/* The bot, in a pill that stays over the thread while it scrolls. */}
-            <div className="sticky top-3 z-(--z-raised) flex justify-center pt-1">
-              <span className="inline-flex items-center gap-2 rounded-pill bg-shell px-3 py-1.5 type-label text-text-1">
-                <BotAvatar size={20} colors={identity.colors} shape={identity.shape} label={name} hoverGiggle={false} />
-                {name}
-              </span>
-            </div>
+          <ConversationContent className="mx-auto flex w-full max-w-measure flex-col pt-14 pb-6">
 
             {!ready ? (
               <p className="py-10 text-center type-body-sm text-text-3">Connexion à Hermes…</p>

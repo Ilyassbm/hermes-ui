@@ -6,6 +6,7 @@
 // to one renderer each, in French.
 import { CappedOutput, registerTool } from '@/components/glaze/ai/tool-call'
 import type { ToolCallLabels, ToolCallData, ToolRenderer } from '@/components/glaze/ai/tool-call'
+import { frDuration } from '@/lib/labels'
 
 type Words = {
   /** The -ing phrase while it runs. */
@@ -338,7 +339,7 @@ export const TOOL_LABELS: ToolCallLabels = {
   trimmed: characters => `Tronqué à ${characters.toLocaleString('fr-FR')} caractères`,
   added: 'ajoutées',
   removed: 'retirées',
-  worked: time => `A travaillé ${time}`,
+  worked: time => `A travaillé ${frDuration(time)}`,
   ranTools: count => (count === 1 ? 'A exécuté 1 outil' : `A exécuté ${count} outils`),
   failedCount: count => (count === 1 ? '1 échec' : `${count} échecs`),
   allow: 'Autoriser',

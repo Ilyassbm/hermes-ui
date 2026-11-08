@@ -3,17 +3,18 @@
 // The order is Glaze's fixed one — reasoning, tool calls, the answer, the footer — and every section but the answer is
 // optional. The turn owns its own tool-call list: the store appends the actions (`tool-events`), this component replays
 // them through Glaze's reducer, so a finished call folds away without a state machine of its own.
-import { useEffect, useReducer, useRef } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import { Activity } from '@/components/glaze/ai/activity'
-import { AgentTurn, MessageFooter, MessageModel } from '@/components/glaze/ai/message'
+import { AgentTurn, MessageFooter } from '@/components/glaze/ai/message'
 import { Reasoning } from '@/components/glaze/ai/reasoning'
 import { Response } from '@/components/glaze/ai/response'
 import { ToolCallList, toolCallsReducer, type ToolCallData } from '@/components/glaze/ai/tool-call'
 import { Button } from '@/components/glaze/ui/button'
 import { CopyButton } from '@/components/glaze/ui/copy-button'
-import { shortModel } from '@/lib/labels'
+import { frDuration, modelLabel } from '@/lib/labels'
 import { replyApproval, store } from '@/lib/hermes'
 import { useStore } from '@/lib/store'
+import { IUI_TAGS } from '../iui/block'
 import { BotAvatar } from '../bot-avatar'
 import { emptyCalls, turnReducer, type ToolAction } from './tool-events'
 import { TOOL_LABELS } from './tools'
@@ -51,6 +52,9 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
   // the turn says what it is doing itself, so the line goes.
   const waiting = streaming && !text && !reasoning && calls.length === 0
   const thinking = message.thinkStart && message.thinkEnd ? Math.max(0, (message.thinkEnd - message.thinkStart) / 1000) : undefined
+  // The reasoning stays folded while it streams: the header already says "Réfléchit…" with the arc, and a wall of
+  // thought scrolling under the answer is not what the turn is for. Opening it is the person's click alone.
+  const [reasoningOpen, setReasoningOpen] = useState(false)
 
   return (
     <AgentTurn
@@ -63,7 +67,11 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
       <div className="flex min-h-(--control-sm) min-w-0 items-center gap-2">
         <BotAvatar size={20} colors={identity.colors} shape={identity.shape} label={name} hoverGiggle={false} />
         <span className="truncate type-label-sm text-text-1">{name}</span>
-        {message.model ? <MessageModel model={shortModel(message.model)} /> : null}
+        {message.model ? (
+          <span data-slot="turn-model" title={message.model} className="truncate type-caption text-text-3">
+            {modelLabel(message.model)}
+          </span>
+        ) : null}
       </div>
 
       {waiting ? <Activity waiting announce={false} label={`${name} réfléchit…`} className="py-1" /> : null}
@@ -72,7 +80,9 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
         <Reasoning
           streaming={streaming && !text}
           duration={thinking}
-          labels={{ thinking: 'Réfléchit…', thoughtFor: time => `A réfléchi ${time}`, moment: 'un instant', stoppedEarly: 'Arrêté avant de réfléchir' }}
+          open={reasoningOpen}
+          onOpenChange={setReasoningOpen}
+          labels={{ thinking: 'Réfléchit…', thoughtFor: time => `A réfléchi ${frDuration(time)}`, moment: 'un instant', stoppedEarly: 'Arrêté avant de réfléchir' }}
         >
           {reasoning}
         </Reasoning>
@@ -111,7 +121,11 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
         />
       ) : null}
 
-      {text ? <Response streaming={streaming}>{text}</Response> : null}
+      {text ? (
+        <Response streaming={streaming} tags={IUI_TAGS}>
+          {text}
+        </Response>
+      ) : null}
 
       {text && !streaming ? (
         <MessageFooter>
