@@ -30,6 +30,9 @@ import { Status } from '@/components/glaze/ui/status'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/glaze/ui/table'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/glaze/ui/tooltip'
 import { Icon, More, Retry } from '@/components/glaze/icon'
+import { IuiBlock, IUI_TAGS } from '@/app/iui/block'
+import { EXAMPLES } from '@/app/iui/examples'
+import type { TagRenderer } from '@/components/glaze/ai/response'
 
 const STYLE_ID = 'hermes-ui-glaze'
 
@@ -136,6 +139,48 @@ const WEEK = [
   { jour: 'sam', reussies: 11, echouees: 1 },
   { jour: 'dim', reussies: 9, echouees: 2 },
 ]
+
+// ---------- Intelligent UI ----------
+
+/** The demo's own send: a spec's `send` logs here instead of typing into the conversation behind this page. */
+const DEMO_SEND = (text: string) => console.log('[glaze-demo] iui send →', text)
+
+/** The real tag, with the demo's send: same Response path as a thread, same catalogue, same sanitiser. */
+const DEMO_TAGS: Record<string, TagRenderer> = {
+  'hui-ui': { ...IUI_TAGS['hui-ui'], render: data => <IuiBlock spec={data} onSend={DEMO_SEND} /> }
+}
+
+const LEADS: Record<string, string> = {
+  plan: 'Trois étapes avant la relance, et la suite proposée en deux boutons.',
+  comparaison: 'Preto coûte moins cher, Branco tient la durée : les cinq derniers passages, côte à côte.',
+  formulaire: 'La réservation tient en un compteur, un choix et un bouton.'
+}
+
+/** One spec streamed a character at a time, 16 ms apart: the placeholder, then the card. */
+function StreamedSpec({ text }: { text: string }) {
+  const [shown, setShown] = useState('')
+  const [run, setRun] = useState(0)
+  useEffect(() => {
+    setShown('')
+    let i = 0
+    const timer = setInterval(() => {
+      i += 1
+      setShown(text.slice(0, i))
+      if (i >= text.length) clearInterval(timer)
+    }, 16)
+    return () => clearInterval(timer)
+  }, [text, run])
+  return (
+    <div className="flex flex-col gap-2">
+      <Response streaming={shown.length < text.length} tags={DEMO_TAGS}>
+        {shown}
+      </Response>
+      <Button variant="secondary" size="sm" className="self-start" onClick={() => setRun(n => n + 1)}>
+        Rejouer le flux
+      </Button>
+    </div>
+  )
+}
 
 export function GlazeDemo() {
   useGlazeStyle()
@@ -284,6 +329,23 @@ export function GlazeDemo() {
                 config={{ reussies: { label: 'Réussies' }, echouees: { label: 'Échouées', status: 'fail' } }}
               />
             </div>
+
+            <div className="flex flex-col gap-2">
+              <h2 className="type-heading-sm">Intelligent UI</h2>
+              <p className="type-caption text-text-3">
+                Le vrai chemin : un bloc <span className="mono">{'<hui-ui>'}</span> dans le markdown, le tag enregistré sur Response, le catalogue du skill, le sanitiser du fil.
+              </p>
+            </div>
+
+            {EXAMPLES.slice(0, 2).map(example => (
+              <AgentTurn key={example.id} name="Dex" state="done" time="21:20">
+                <Response tags={DEMO_TAGS}>{`${LEADS[example.id]}\n\n<hui-ui>${example.json}</hui-ui>`}</Response>
+              </AgentTurn>
+            ))}
+
+            <AgentTurn name="Dex" state="live" time="21:24">
+              <StreamedSpec text={`${LEADS.formulaire}\n\n<hui-ui>${EXAMPLES[2].json}</hui-ui>`} />
+            </AgentTurn>
           </div>
         </div>
 
