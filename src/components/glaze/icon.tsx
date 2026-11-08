@@ -8,7 +8,7 @@ import {
   FileCodeIcon, FileCsvIcon, FileImageIcon, FileTextIcon, FileVideoIcon, FunnelIcon, GearSixIcon, GlobeIcon, InfoIcon,
   KeyIcon, LinkSimpleIcon, LockIcon, MagnifyingGlassIcon, MicrophoneIcon, MicrophoneSlashIcon, MinusIcon, MoonIcon,
   PaperPlaneRightIcon, PaperclipIcon, PauseIcon, PencilSimpleIcon, PlayIcon, PlusIcon, RobotIcon, ShieldSlashIcon,
-  SparkleIcon, SquareIcon, SunIcon, TableIcon, TerminalWindowIcon, TrashIcon, TrayIcon,
+  SidebarSimpleIcon, SparkleIcon, SquaresFourIcon, SquareIcon, StarIcon, SunIcon, TableIcon, TerminalWindowIcon, TrashIcon, TrayIcon,
   UploadSimpleIcon, UserIcon, WarningIcon, WarningCircleIcon, WrenchIcon, XIcon, XCircleIcon, HourglassSimpleMediumIcon,
 } from '@phosphor-icons/react/ssr';
 import {cn} from '@/lib/glaze/utils';
@@ -84,7 +84,12 @@ export const Search = MagnifyingGlassIcon;
 export const Send = PaperPlaneRightIcon;
 export const Settings = GearSixIcon;
 export const Show = EyeIcon;
+/** The right panel: a sidebar drawn from the start edge, mirrored where it is used. */
+export const SidebarSimple = SidebarSimpleIcon;
 export const Sparkle = SparkleIcon;
+/** The app menu: four squares, one per area of the app. */
+export const SquaresFour = SquaresFourIcon;
+export const Star = StarIcon;
 export const Stop = SquareIcon;
 export const Subtract = MinusIcon;
 export const Success = CheckCircleIcon;
@@ -114,12 +119,15 @@ type IconProps = Omit<PhosphorProps, 'size' | 'weight' | 'color' | 'alt' | 'mirr
   weight?: IconWeight;
   /** Accessible name. Without one the icon is decorative and hidden from assistive tech. */
   label?: string;
+  /** Mirrors the glyph, for a direction that reads the other way: a sidebar drawn from the start edge, on the end edge. */
+  mirrored?: boolean;
 };
 
-export function Icon({icon: Glyph, size = 14, weight = 'regular', label, className, ...props}: IconProps) {
+export function Icon({icon: Glyph, size = 14, weight = 'regular', label, mirrored, className, ...props}: IconProps) {
   return <Glyph
     size={size}
     weight={weight}
+    mirrored={mirrored}
     focusable="false"
     aria-hidden={label ? undefined : true}
     aria-label={label}

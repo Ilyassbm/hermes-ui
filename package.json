@@ -8,6 +8,7 @@
     "lint": "eslint -c glaze.eslint.config.mjs src",
     "check:css": "node scripts/check-css.mjs",
     "check:bundle": "node scripts/check-bundle.mjs",
+    "check:tools": "node scripts/check-tool-mapping.mjs",
     "check:bots": "/opt/hermes/.venv/bin/python -I scripts/check-bots-api.py",
     "install-local": "node scripts/build.mjs --install"
   },

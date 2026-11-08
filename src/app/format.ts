@@ -35,12 +35,13 @@ const DAY = 24 * HOUR
 
 /**
  * A time as the rail says it: "maint." under a minute, "4 min", "2 h", "hier", "3 j", then a short date.
- * `ts` is epoch milliseconds; 0/undefined reads as "maint." because the row has nothing better to say.
+ * `ts` is epoch milliseconds; a bot with no `last_active` has no time to show at all, so it returns '' — never a
+ * placeholder that reads as "just now" for a bot that never answered.
  */
 export function sinceLabel(ts?: number | null): string {
-  if (!ts) return 'maint.'
+  if (!ts) return ''
   const delta = Date.now() - ts
-  if (!Number.isFinite(delta)) return 'maint.'
+  if (!Number.isFinite(delta)) return ''
   if (delta < MIN) return 'maint.'
   if (delta < HOUR) return `${Math.floor(delta / MIN)} min`
   if (delta < DAY) return `${Math.floor(delta / HOUR)} h`

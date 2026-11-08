@@ -2,6 +2,7 @@
 // One active bot at a time: selecting a bot activates its gateway (host.ensureAgent), so
 // host.request / host.onEvent address that bot.
 import { host } from '@hermes/plugin-sdk'
+import { askStep, emptyToolAdapter, replyStep, toolEventStep, turnEndStep } from '../app/thread/tool-events'
 import { createStore } from './store'
 
 export const store = createStore({
@@ -12,7 +13,7 @@ export const store = createStore({
   sid: null, // runtime session id of the open conversation (null = new conversation)
   storedId: null,
   loading: false,
-  messages: [], // [{ id, role, text, reasoning, tools, model, at, status, thoughtMs }]
+  messages: [], // [{ id, role, text, reasoning, toolActions, model, at, status, thinkStart, thinkEnd, gen }]
   live: null, // { phase, verb, subagents, startedAt, reasoning } while a turn runs
   approval: null, // { requestId, command, description, allowPermanent }
   info: { model: '', title: '' },
@@ -24,6 +25,8 @@ export const store = createStore({
 
 let ctxRef = null
 let msgSeq = 0
+/** Assistant turns are numbered: the tool-call reducer keys its `stop` on the turn's generation. */
+let turnGen = 0
 const nid = p => `${p}-${Date.now().toString(36)}-${(msgSeq++).toString(36)}`
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -76,11 +79,31 @@ function addFiles(paths) {
 export function toTurns(raw) {
   const turns = []
   const files = []
+  // A tool's result comes as its own message, keyed by the call it answers: index them before walking the turns.
+  const results = new Map()
+  for (const m of raw || []) {
+    if (!m || m.role !== 'tool') continue
+    const id = m.tool_call_id || m.tool_use_id || m.id
+    if (id) {
+      results.set(id, { failed: m.is_error === true || m.status === 'error', text: textOf(m.content) })
+    }
+  }
   let cur = null
+  let adapter = null
+  /** Closes the assistant turn being built: whatever call it left open was cut off by the end of the turn. */
+  const closeTurn = () => {
+    if (cur && adapter) {
+      const end = turnEndStep(adapter)
+      adapter = end.state
+      cur.toolActions.push(...end.actions)
+    }
+    cur = null
+    adapter = null
+  }
   for (const m of raw || []) {
     if (!m || m.display_kind === 'hidden' || m.role === 'system') continue
     if (m.role === 'user') {
-      cur = null
+      closeTurn()
       const text = textOf(m.content)
       if (!text.trim()) continue
       turns.push({ id: m.message_uid || nid('u'), role: 'user', text, at: (m.timestamp || 0) * 1000 })
@@ -88,7 +111,20 @@ export function toTurns(raw) {
     }
     if (m.role === 'assistant') {
       if (!cur) {
-        cur = { id: m.message_uid || nid('a'), role: 'assistant', text: '', reasoning: '', tools: [], at: (m.timestamp || 0) * 1000, status: 'done', model: m.model || '' }
+        adapter = emptyToolAdapter(++turnGen)
+        cur = {
+          id: m.message_uid || nid('a'),
+          role: 'assistant',
+          text: '',
+          reasoning: '',
+          toolActions: [],
+          at: (m.timestamp || 0) * 1000,
+          status: 'done',
+          model: m.model || '',
+          gen: adapter.gen,
+          thinkStart: 0,
+          thinkEnd: 0
+        }
         turns.push(cur)
       }
       const t = textOf(m.content)
@@ -98,15 +134,29 @@ export function toTurns(raw) {
       for (const tc of m.tool_calls || []) {
         const name = tc?.function?.name || tc?.name
         const args = parseArgs(tc?.function?.arguments || tc?.arguments)
-        cur.tools.push({ id: tc?.id || nid('t'), name, done: true })
+        const id = tc?.id || nid('t')
+        // The same two steps a live turn takes: the call starts with its arguments, then its result lands.
+        const started = toolEventStep(adapter, { type: 'tool.start', payload: { tool_id: id, tool_name: name, args } })
+        adapter = started.state
+        cur.toolActions.push(...started.actions)
+        const result = results.get(id)
+        if (result) {
+          const done = toolEventStep(adapter, {
+            type: 'tool.complete',
+            payload: { tool_id: id, tool_name: name, is_error: result.failed, result: result.text }
+          })
+          adapter = done.state
+          cur.toolActions.push(...done.actions)
+        }
         files.push(...filesFromTool(name, args))
       }
       files.push(...filesFromText(t))
       continue
     }
-    // role tool: already folded through tool_calls
+    // role tool: folded into its call above
   }
-  return { turns: turns.filter(t => t.role === 'user' || t.text || t.tools.length), files: [...new Set(files)] }
+  closeTurn()
+  return { turns: turns.filter(t => t.role === 'user' || t.text || t.toolActions.length || t.reasoning), files: [...new Set(files)] }
 }
 
 // ── bots & sessions ──────────────────────────────────────────────────────────
@@ -281,6 +331,8 @@ export async function send(text, attachments = []) {
     messages: [...st.messages, { id: nid('u'), role: 'user', text: body, at: Date.now(), attachments: attachments.map(a => ({ name: a.name, kind: a.type?.startsWith('image/') ? 'image' : 'file' })) }],
     live: { phase: 'thinking', verb: '', subagents: 0, startedAt: Date.now(), reasoning: '' }
   }))
+  // The turn exists from the moment the prompt leaves, so "réfléchit…" has a turn to sit in before the first token.
+  patchDraft(d => d)
   try {
     const hadSession = Boolean(store.get().sid)
     const sid = await ensureSession()
@@ -304,8 +356,15 @@ export async function send(text, attachments = []) {
 }
 
 export async function stop() {
-  const { sid } = store.get()
+  const { sid, messages } = store.get()
   if (!sid) return
+  // The turn's live calls are settled before the network cancel is awaited (rule tool-call-stop): an event that
+  // arrives while the interrupt is in flight can then never leave a row spinning.
+  const last = messages[messages.length - 1]
+  if (last && last.role === 'assistant' && last.status === 'streaming') {
+    const gen = last.gen ?? 0
+    patchDraft(d => ({ ...d, toolActions: [...d.toolActions, { type: 'stop', gen }] }))
+  }
   try {
     await host.request('session.interrupt', { session_id: sid })
   } catch {
@@ -325,6 +384,13 @@ export async function retryLast() {
 }
 
 function failTurn(reason) {
+  // The turn's live calls did not finish: they are stopped, not left spinning under the error row.
+  if (draft(store.get())[0]) {
+    patchDraft(d => {
+      const end = turnEndStep(d.adapter || emptyToolAdapter(d.gen || 0))
+      return { ...d, adapter: end.state, toolActions: end.actions.length ? [...d.toolActions, ...end.actions] : d.toolActions }
+    })
+  }
   store.set(s => ({
     live: null,
     error: reason || "La réponse n'est pas arrivée.",
@@ -336,6 +402,32 @@ function failTurn(reason) {
 // ── approvals ────────────────────────────────────────────────────────────────
 
 let pollTimer = null
+/** The requestId whose card is already on the thread: the poll runs every 1.5 s and must not ask twice. */
+let askedApproval = ''
+
+/** The call the card belongs to: the shell call still running, else an id of its own. */
+function approvalTarget(d) {
+  const calls = d.adapter?.calls ?? []
+  const running = [...calls].reverse().find(c => c.status === 'running' && /shell|bash|terminal|process|exec/i.test(c.tool))
+  return running?.id
+}
+
+/**
+ * The pending approval becomes the turn's `awaiting-permission` call: the card asks, and the two answers go back to
+ * the gateway. The call it interrupts keeps its place, so answering it lets the row resume instead of jumping.
+ */
+function askApproval(a) {
+  const requestId = a.requestId || ''
+  if (!requestId || requestId === askedApproval) return
+  askedApproval = requestId
+  const command = a.command || ''
+  patchDraft(d => {
+    const from = d.adapter || emptyToolAdapter(d.gen || 0)
+    const id = approvalTarget(d) || `approval-${requestId}`
+    const { state, actions } = askStep(from, id, command ? [command] : [], "Autoriser laisse lancer cette commande sans redemander.")
+    return { ...d, adapter: state, toolActions: [...d.toolActions, ...actions] }
+  })
+}
 
 function startApprovalPoll() {
   if (pollTimer) return
@@ -346,16 +438,17 @@ function startApprovalPoll() {
       const res = await host.request('approval.pending', { session_id: sid })
       const list = res?.approvals || res?.pending || (Array.isArray(res) ? res : [])
       const first = list[0]
-      store.set({
-        approval: first
-          ? {
-              requestId: first.request_id || first.id || '',
-              command: first.command || '',
-              description: first.description || '',
-              allowPermanent: first.allow_permanent !== false
-            }
-          : null
-      })
+      const approval = first
+        ? {
+            requestId: first.request_id || first.id || '',
+            command: first.command || '',
+            description: first.description || '',
+            allowPermanent: first.allow_permanent !== false
+          }
+        : null
+      store.set({ approval })
+      if (approval) askApproval(approval)
+      else askedApproval = ''
     } catch {
       /* older gateway or session gone */
     }
@@ -373,11 +466,25 @@ export async function answerApproval(choice) {
   const { sid, approval } = store.get()
   if (!sid || !approval) return
   store.set({ approval: null })
+  askedApproval = ''
   try {
     await host.request('approval.respond', { session_id: sid, choice, ...(approval.requestId ? { request_id: approval.requestId } : {}) })
   } catch (e) {
     store.set({ error: `Réponse non transmise : ${e?.message || e}` })
   }
+}
+
+/**
+ * The person's answer on the card. The row goes back to running (or to denied) at once, then the choice reaches the
+ * gateway: `once` allows this call, `always` allows its command from now on, `reject` refuses it.
+ */
+export function replyApproval(callId, reply, permanent = false) {
+  patchDraft(d => {
+    const from = d.adapter || emptyToolAdapter(d.gen || 0)
+    const { state, actions } = replyStep(from, callId, reply)
+    return { ...d, adapter: state, toolActions: [...d.toolActions, ...actions] }
+  })
+  void answerApproval(reply === 'reject' ? 'deny' : permanent ? 'always' : 'once')
 }
 
 // ── live events ──────────────────────────────────────────────────────────────
@@ -388,15 +495,41 @@ function draft(s) {
   return [null, s.messages]
 }
 
+function newTurn(s) {
+  const gen = ++turnGen
+  return {
+    id: nid('a'),
+    role: 'assistant',
+    text: '',
+    reasoning: '',
+    toolActions: [],
+    adapter: emptyToolAdapter(gen),
+    gen,
+    at: Date.now(),
+    turnStart: s.live?.startedAt || Date.now(),
+    status: 'streaming',
+    model: s.info.model
+  }
+}
+
 function patchDraft(fn) {
   store.set(s => {
     let [d, rest] = draft(s)
     if (!d) {
-      d = { id: nid('a'), role: 'assistant', text: '', reasoning: '', tools: [], at: Date.now(), turnStart: s.live?.startedAt || Date.now(), status: 'streaming', model: s.info.model }
+      d = newTurn(s)
       rest = s.messages
     }
-    const next = fn({ ...d, tools: [...d.tools] })
+    const next = fn(d)
     return { messages: [...rest, next] }
+  })
+}
+
+/** One event through the tool adapter, its actions appended to the open turn. */
+function stepTools(ev) {
+  patchDraft(d => {
+    const from = d.adapter || emptyToolAdapter(d.gen || 0)
+    const { state, actions } = toolEventStep(from, ev)
+    return { ...d, adapter: state, toolActions: actions.length ? [...d.toolActions, ...actions] : d.toolActions }
   })
 }
 
@@ -419,6 +552,7 @@ export function handleEvent(ev) {
       if (p.title || p.model) store.set({ info: { model: p.model || s.info.model, title: p.title || s.info.title } })
       return
     case 'message.start':
+      // A new turn opens here: its generation makes a late stop from the last turn harmless.
       if (!s.live) store.set({ live: { phase: 'thinking', verb: '', subagents: 0, startedAt: Date.now(), reasoning: '' } })
       patchDraft(d => d)
       return
@@ -428,13 +562,18 @@ export function handleEvent(ev) {
         setLive({ phase: s.live?.phase === 'tool' ? 'tool' : 'thinking' })
       }
       return
+    // thinking.delta carries the model's progress kaomojis ("◉_◉ synthesizing…"): they are status noise, never shown.
+    case 'thinking.delta':
+      return
     case 'tool.generating':
+      stepTools(ev)
       setLive({ phase: 'tool', verb: '' })
       return
     case 'tool.start': {
       const name = p.tool_name || p.name
       const args = p.args || {}
-      patchDraft(d => ({ ...d, tools: [...d.tools, { id: p.tool_id || nid('t'), name, done: false }], thinkEnd: d.thinkEnd || Date.now() }))
+      stepTools(ev)
+      patchDraft(d => ({ ...d, thinkEnd: d.thinkEnd || Date.now() }))
       if (name === 'delegate_task') {
         const n = Array.isArray(args.tasks) ? args.tasks.length : 1
         setLive({ phase: 'delegating', subagents: Math.max(n, 1), toolName: name })
@@ -445,7 +584,7 @@ export function handleEvent(ev) {
     }
     case 'tool.complete': {
       const name = p.tool_name || p.name
-      patchDraft(d => ({ ...d, tools: d.tools.map(t => (t.id === p.tool_id ? { ...t, done: true, error: !!p.is_error } : t)) }))
+      stepTools(ev)
       addFiles([...filesFromTool(name, p.args || {}), ...filesFromText(typeof p.result === 'string' ? p.result : '')])
       setLive({ phase: 'thinking', toolName: '' })
       return
@@ -454,6 +593,7 @@ export function handleEvent(ev) {
       setLive({ phase: 'delegating', subagents: Math.max(1, (store.get().live?.subagents || 0)) })
       return
     case 'message.delta':
+      // A null text is a keep-alive, not a token: nothing to append.
       if (typeof p.text === 'string' && p.text) {
         patchDraft(d => ({ ...d, text: d.text + p.text, thinkEnd: d.thinkEnd || Date.now() }))
         setLive({ phase: 'writing' })
@@ -462,14 +602,20 @@ export function handleEvent(ev) {
     case 'message.complete': {
       const text = typeof p.text === 'string' ? p.text : textOf(p.content)
       const failed = p.status === 'error' || p.outcome === 'failed'
-      patchDraft(d => ({
-        ...d,
-        text: text || d.text,
-        reasoning: d.reasoning || (typeof p.reasoning === 'string' ? p.reasoning : ''),
-        status: failed && !text ? 'failed' : 'done',
-        thinkEnd: d.thinkEnd || Date.now(),
-        model: store.get().info.model || d.model
-      }))
+      patchDraft(d => {
+        const from = d.adapter || emptyToolAdapter(d.gen || 0)
+        const end = turnEndStep(from)
+        return {
+          ...d,
+          adapter: end.state,
+          toolActions: end.actions.length ? [...d.toolActions, ...end.actions] : d.toolActions,
+          text: text || d.text,
+          reasoning: d.reasoning || (typeof p.reasoning === 'string' ? p.reasoning : ''),
+          status: failed && !text ? 'failed' : 'done',
+          thinkEnd: d.thinkEnd || Date.now(),
+          model: store.get().info.model || d.model
+        }
+      })
       addFiles(filesFromText(text))
       store.set({ live: null, approval: null, ...(failed && !text ? { error: p.error || "La réponse n'est pas arrivée." } : {}) })
       stopApprovalPoll()
