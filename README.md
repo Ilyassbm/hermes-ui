@@ -35,14 +35,22 @@ activer **Hermes UI** dans Capabilities → Plugins si besoin. La page s'ouvre d
 
 | Geste | Effet |
 | --- | --- |
+| ⌥1 … ⌥9 | Aller au bot 1 à 9 (l'ordre du rail, épinglés d'abord) |
+| ⌘⌥N | Nouvelle discussion avec un bot… (chiffre 1–9 dans la fenêtre pour choisir, Échap pour fermer) |
+| ⌘⌥K | Rechercher un bot ou une conversation |
 | ⌘⇧O | Nouvelle conversation dans Hermes UI |
 | ⌘⌥B | Afficher ou masquer le panneau droit |
 | ⌘⇧S | Barre d'état native (cachée une fois à l'installation) |
 | ⌘B | Barre latérale native (repliée une fois à l'installation) |
 | ⌘K | « Ouvrir Hermes UI », « utiliser l'interface native », « utiliser Hermes UI partout », « barre d'état » |
 
-Les deux premiers sont des raccourcis du plugin, rebindables dans Réglages → Raccourcis. Les deux suivants sont ceux du
-bureau : rien n'est forcé après la première fois.
+Les raccourcis du plugin sont rebindables dans Réglages → Raccourcis ; les trois derniers sont ceux du bureau : rien
+n'est forcé après la première fois.
+
+Les combos par défaut sont en **Alt + chiffre**, pas ⌘⌥ + chiffre : le bureau réserve ⌘⌥1…⌘⌥9 à ses propres
+`profile.switch.10..18`, et un défaut natif passe toujours avant un défaut de plugin. `npm run check:keybinds` refuse un
+défaut qui prendrait un combo natif (la liste du bureau est embarquée dans le script). Alt + chiffre passe aussi quand le
+curseur est dans la zone de saisie.
 
 ## Intelligent UI
 
@@ -59,6 +67,7 @@ npm run build            # CSS Glaze + check-css + esbuild → desktop/plugin.js
 npm run lint             # glaze.eslint.config.mjs, 0 erreur
 npm run check:takeover   # la table de routage du takeover, cas par cas
 npm run check:css        # aucun sélecteur global hors .glaze, skin natif < 8 Ko
+npm run check:keybinds   # aucun défaut du plugin sur un combo natif (liste du bureau embarquée)
 HERMES_ROOT=<home> node scripts/build.mjs --install   # copie en plugin desktop autonome (dev)
 ```
 

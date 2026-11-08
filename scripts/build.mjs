@@ -48,6 +48,11 @@ if (modelMenu.status !== 0) process.exit(modelMenu.status ?? 1)
 const slash = spawnSync(process.execPath, [resolve(root, 'scripts/check-slash.mjs')], { stdio: 'inherit' })
 if (slash.status !== 0) process.exit(slash.status ?? 1)
 
+// 0e. The keybind gate: a default combo the app already spends never fires (⌘⌥1…⌘⌥9 switched profile, not bot). The
+//     app's list is embedded in the script — `apps/` is not in this repository.
+const keybinds = spawnSync(process.execPath, [resolve(root, 'scripts/check-keybinds.mjs')], { stdio: 'inherit' })
+if (keybinds.status !== 0) process.exit(keybinds.status ?? 1)
+
 // 1. Tailwind v4 → one stylesheet. app.css pulls `tailwindcss/theme` + `tailwindcss/utilities` in (never the full
 //    `tailwindcss`, whose Preflight is a global reset) and Glaze's own scoped entry.
 const compiled = await postcss([tailwind()]).process(readFileSync(from, 'utf8'), { from, to: cssOut })

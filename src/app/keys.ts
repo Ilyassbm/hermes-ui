@@ -11,7 +11,9 @@ export const DEFAULT_COMBOS: Record<string, string> = {
   'hermes-ui.newConversation': 'mod+shift+o',
   'hermes-ui.search': 'mod+alt+k',
   'hermes-ui.toggleAside': 'mod+alt+b',
-  ...Object.fromEntries(Array.from({ length: 9 }, (_, i) => [`hermes-ui.bot${i + 1}`, `mod+alt+${i + 1}`]))
+  // Alt+digit since lot 10: ⌘⌥+digit belongs to the app's own profile.switch.10..18, and a built-in default always
+  // wins over a contributed one in `$comboIndex`.
+  ...Object.fromEntries(Array.from({ length: 9 }, (_, i) => [`hermes-ui.bot${i + 1}`, `alt+${i + 1}`]))
 }
 
 const isMacPlatform = () =>

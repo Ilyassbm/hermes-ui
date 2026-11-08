@@ -5,7 +5,12 @@
 // bots, then the team, each row numbered 1–9 so a digit picks it without moving the pointer. In search mode a third
 // section lists conversations, filtered on their titles, and the sessions of every bot are loaded when it opens so the
 // list is complete rather than half-empty.
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+//
+// Lot 10: the keyboard is heard on the document, in the capture phase, not through the popup's React handler — Escape
+// has to close the dialog even when the app's own window listener saw the key first, and a digit has to pick before
+// it reaches the field it would be typed into. Every row's click, the digits and Enter all call `pick`: select the
+// bot, create the discussion, then close. Closing first is what made the digit look dead in lot 9.
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Icon, Search } from '@/components/glaze/icon'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/glaze/ui/dialog'
 import { Input } from '@/components/glaze/ui/input'
@@ -44,6 +49,8 @@ export function BotPicker({ ctx }: { ctx: any }) {
   const [query, setQuery] = useState('')
   const [index, setIndex] = useState(0)
   const listRef = useRef<HTMLDivElement | null>(null)
+  /** One pick per open: the dialog's listener and a stray second key must not both act. */
+  const busy = useRef(false)
 
   // A stored pin list, the same one the rail writes.
   const pinned = useMemo<string[]>(() => {
@@ -58,6 +65,7 @@ export function BotPicker({ ctx }: { ctx: any }) {
   // Opening clears the field, and search mode fills the conversation lists of every bot it can reach.
   useEffect(() => {
     if (!open) return
+    busy.current = false
     setQuery('')
     setIndex(0)
     if (mode !== 'search') return
@@ -123,45 +131,73 @@ export function BotPicker({ ctx }: { ctx: any }) {
     row?.scrollIntoView({ block: 'nearest' })
   }, [index])
 
-  const choose = (choice: Choices | undefined) => {
-    if (!choice) return
-    openPicker(null)
-    if (choice.kind === 'bot') {
-      void selectBot(choice.name).then(() => {
-        newConversation()
+  /**
+   * The one door: a row's click, Enter on the active row and a digit all come through here. Select the bot, create
+   * the discussion, then close — the picker is still up while the selection lands, so no `selectBot` running behind
+   * it can put the old bot back.
+   */
+  const pick = (choice: Choices | undefined) => {
+    if (!choice || busy.current) return
+    busy.current = true
+    if (choice.kind === 'conv') {
+      void selectBot(choice.bot, { keepConversation: true })
+        .catch(() => undefined)
+        .then(() => {
+          openPicker(null)
+          void openConversation(choice.id)
+        })
+      return
+    }
+    void selectBot(choice.name)
+      .catch(() => undefined)
+      .then(() => {
+        // The roster moved under us and the bot is gone: close on the conversation the person already had.
+        if (store.get().bot === choice.name) newConversation()
+        openPicker(null)
         focusEditor()
       })
-      return
-    }
-    void selectBot(choice.bot, { keepConversation: true }).then(() => openConversation(choice.id))
   }
 
-  const onKeyDown = (event: ReactKeyboardEvent) => {
-    if (event.key === 'ArrowDown') {
+  /** The dialog's keys, kept in a ref so the one document listener always sees the current list. */
+  const keyHandler = useRef<(event: KeyboardEvent) => void>(() => {})
+
+  keyHandler.current = event => {
+    if (!open) return
+    // Escape closes, whatever the field holds: the dialog is a choice, not a form to fill.
+    if (event.key === 'Escape') {
       event.preventDefault()
-      setIndex(i => (choices.length ? (i + 1) % choices.length : 0))
+      event.stopPropagation()
+      openPicker(null)
       return
     }
-    if (event.key === 'ArrowUp') {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault()
-      setIndex(i => (choices.length ? (i - 1 + choices.length) % choices.length : 0))
+      const step = event.key === 'ArrowDown' ? 1 : -1
+      setIndex(i => (choices.length ? (i + step + choices.length) % choices.length : 0))
       return
     }
     if (event.key === 'Enter') {
       event.preventDefault()
-      choose(choices[Math.min(index, Math.max(0, choices.length - 1))])
+      pick(choices[Math.min(index, Math.max(0, choices.length - 1))])
       return
     }
     // A digit picks the n-th bot outright, but only on an empty field: in a search it is a character.
-    if (/^[1-9]$/.test(event.key) && !query) {
-      const digit = Number(event.key)
-      const row = botRows.find(candidate => candidate.digit === digit)
-      if (row) {
-        event.preventDefault()
-        choose(row)
-      }
+    if (!query && !event.metaKey && !event.ctrlKey && !event.altKey && /^[1-9]$/.test(event.key)) {
+      const row = botRows.find(candidate => candidate.digit === Number(event.key))
+      if (!row) return
+      event.preventDefault()
+      pick(row)
     }
   }
+
+  // Capture phase on the document: the key is seen before the field it would land in, and before anything the app
+  // listens for on the way down. Escape stops there so no outer handler acts on it as well.
+  useEffect(() => {
+    if (!open) return
+    const onKey = (event: KeyboardEvent) => keyHandler.current(event)
+    document.addEventListener('keydown', onKey, true)
+    return () => document.removeEventListener('keydown', onKey, true)
+  }, [open])
 
   /** One bot row: avatar, name, role, and the digit that picks it. */
   const botRow = (row: BotChoice) => {
@@ -175,7 +211,7 @@ export function BotPicker({ ctx }: { ctx: any }) {
         data-choice-index={at}
         className="hui-picker-row"
         onMouseEnter={() => setIndex(at)}
-        onClick={() => choose(row)}
+        onClick={() => pick(row)}
       >
         <BotAvatar size={24} colors={row.identity.colors} shape={row.identity.shape} label={row.label} hoverGiggle={false} />
         <span className="hui-picker-text">
@@ -189,7 +225,7 @@ export function BotPicker({ ctx }: { ctx: any }) {
 
   return (
     <Dialog open={open} onOpenChange={next => { if (!next) openPicker(null) }}>
-      <DialogContent className="hui-picker" showCloseButton={false} onKeyDown={onKeyDown}>
+      <DialogContent className="hui-picker" showCloseButton={false}>
         <DialogTitle className="hui-sr">
           {mode === 'search' ? 'Rechercher un bot ou une conversation' : 'Nouvelle discussion avec un bot'}
         </DialogTitle>
@@ -229,7 +265,7 @@ export function BotPicker({ ctx }: { ctx: any }) {
                 data-choice-index={at}
                 className="hui-picker-row"
                 onMouseEnter={() => setIndex(at)}
-                onClick={() => choose(row)}
+                onClick={() => pick(row)}
               >
                 <Icon icon={Search} size={14} />
                 <span className="hui-picker-text">

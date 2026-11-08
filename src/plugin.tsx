@@ -4,6 +4,12 @@
 // with any bot, a search over bots and conversations, and one key per bot. On top of the page: the native chat routes
 // are taken over (native-takeover), the native chrome is quieted once (native-chrome), and "Glaze Noir" is registered
 // and selected once (theme).
+//
+// Lot 10: the per-bot keys moved to Alt+1…Alt+9. They were ⌘⌥1…⌘⌥9, which the app already spends on its own
+// `profile.switch.10..18` defaults (apps/desktop/src/lib/keybinds/actions.ts, comboForSlot) — and since
+// `allKeybindActions()` lists the built-ins before the contributed ones, `$comboIndex` handed the chord to the profile
+// switch (store/keybinds.ts, "The first action runs"). Alt+digit is free in the app: its Alt chords are letters and
+// brackets (alt+n, alt+t, alt+w, alt+], alt+[).
 import { host, KEYBINDS_AREA, PALETTE_AREA, ROUTES_AREA, SIDEBAR_NAV_AREA } from '@hermes/plugin-sdk'
 import { App } from './app/app'
 import { installNativeChrome } from './app/native-chrome'
@@ -13,6 +19,7 @@ import { goToBot } from './app/bot-order'
 import { GlazeDemo } from './ui/glaze-demo/GlazeDemo'
 import { bindContext, handleEvent, newConversation } from './lib/hermes'
 import { openPicker, toggleAside } from './app/ui-state'
+import { installBotKeys } from './app/bot-keys'
 import { toast } from '@/components/glaze/ui/toast'
 
 const PATH = '/hui'
@@ -31,7 +38,11 @@ const BOT_KEYBINDS = Array.from({ length: 9 }, (_, i) => {
       id: `hermes-ui.bot${n}`,
       label: `Hermes UI : aller au bot ${n}`,
       category: 'session',
-      defaults: [`mod+alt+${n}`],
+      // Alt+digit, not ⌘⌥+digit: the app spends ⌘⌥1…⌘⌥9 on profile.switch.10..18, and the built-ins come first in
+      // `$comboIndex`, so those chords switched profile instead of bot. `editableTargetPolicy: 'modified'` is what
+      // lets a non-Shift modifier (Alt) still fire from the composer, as the app's own Alt defaults do.
+      defaults: [`alt+${n}`],
+      editableTargetPolicy: 'modified',
       run: () => {
         host.navigate(PATH)
         goToBot(ctxRef, n)
@@ -163,7 +174,9 @@ export default {
     ])
 
     // The rest of the app: the theme first (it needs to be registered before it can be requested), then the chrome,
-    // then the takeover — its first pass waits for the gateway by itself.
+    // then the takeover — its first pass waits for the gateway by itself. The bot keys' own listener goes with them:
+    // the app's dispatcher skips a contributed action inside the composer (see src/app/bot-keys.ts).
+    installBotKeys(ctx, PATH)
     installTheme(ctx)
     installNativeChrome(ctx)
     installTakeover(ctx)
