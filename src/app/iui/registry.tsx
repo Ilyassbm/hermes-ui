@@ -380,8 +380,10 @@ export const { registry, handlers } = defineRegistry(catalog, {
   },
 
   actions: {
-    send: async (params, _setState, state) => {
-      const text = interpolate(String(params?.text ?? ''), state ?? {}).trim()
+    send: async params => {
+      // The text arrives interpolated: the Button reads the live state at the click, not the state the spec was
+      // born with, so a counter moved after the spec landed still lands in the sentence.
+      const text = String(params?.text ?? '').trim()
       if (text) sink.send(text)
     },
     copy: async params => {
