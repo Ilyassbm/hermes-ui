@@ -77,7 +77,9 @@ const options = {
   legalComments: 'inline',
   // One 1.5 MB plugin file is served from disk by the app, not over a network: minifying buys load time and keeps the
   // development warnings that hide in unminified dependencies out of the file.
-  minify: true,
+  minifyIdentifiers: true,
+  minifySyntax: true,
+  minifyWhitespace: false, // the app loader finds imports with a code/string scanner that one-line output confuses
   banner: { js: '// Hermes UI — built from src/ by scripts/build.mjs. Do not edit by hand.' },
   logLevel: 'info',
 }
@@ -87,13 +89,13 @@ await build(options)
 // 4. Hard gate on what the loader will execute: no CommonJS require, no development build, no import outside the three
 //    modules it resolves. A bundle that fails here would throw at load time inside the app, so the build refuses it.
 const bundle = readFileSync('desktop/plugin.js', 'utf8')
-const { violations, modules, imports } = checkBundle(bundle)
+const { violations, modules, imports, lines } = checkBundle(bundle)
 if (violations.length) {
   console.error(`build: bundle rejected — ${violations.length} problem(s) in desktop/plugin.js`)
   for (const v of violations.slice(0, 20)) console.error(`  ${v}`)
   process.exit(1)
 }
-console.log(`bundle: ${(bundle.length / 1024 / 1024).toFixed(2)} MB, ${imports} import statement(s), modules: ${modules.join(', ') || 'none'}`)
+console.log(`bundle: ${(bundle.length / 1024 / 1024).toFixed(2)} MB, ${lines} lines, ${imports} import statement(s), modules: ${modules.join(', ') || 'none'}`)
 
 if (install) {
   const hermesRoot = process.env.HERMES_ROOT || join(homedir(), '.hermes')
