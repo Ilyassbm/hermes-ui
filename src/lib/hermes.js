@@ -29,6 +29,8 @@ export const store = createStore({
   error: '',
   /** The error banner's Retry reopens the conversation (a failed `session.resume`), not the last prompt. */
   retryOpen: false,
+  /** The technical shape behind an error banner ("resume 0/712 · history: 0"), so a failure is diagnosable. */
+  errorDetail: '',
   /** The gateway was still opening past the wait: Retry runs the boot again. */
   retryBoot: false,
   /** The profile whose backend refused selection: Retry selects it again. */
@@ -467,17 +469,38 @@ export async function openConversation(storedId) {
     let payload = res
     const liveSid = res?.session_id || storedId
     const stored = Number(payload?.message_count || 0)
+    let historyNote = 'not called'
     if (!Array.isArray(payload?.messages) || (!payload.messages.length && stored > 0)) {
-      const hist = await retryOnce(() =>
-        requestReady('session.history', { session_id: liveSid, ...(bot ? { profile: bot } : {}) }, { long: true, bot })
-      ).catch(() => null)
+      // The live record is claimed by the resume a beat before `session.history` can read it back, so a first call
+      // that answers nothing is retried once after a tick rather than reported.
+      const askHistory = async () => {
+        try {
+          return await requestReady(
+            'session.history',
+            { session_id: liveSid, ...(bot ? { profile: bot } : {}) },
+            { long: true, bot }
+          )
+        } catch (e) {
+          historyNote = `history: ${e?.message || e}`
+          return null
+        }
+      }
+      let hist = await askHistory()
+      if (!hist?.messages?.length) {
+        await sleep(450)
+        hist = await askHistory()
+      }
       if (Array.isArray(hist?.messages) && hist.messages.length) {
         payload = { ...payload, messages: hist.messages, message_count: hist.count || hist.messages.length }
+        historyNote = `history: ${hist.messages.length}`
+      } else if (historyNote === 'not called') {
+        historyNote = 'history: 0'
       }
     }
+    const detail = `resume ${Array.isArray(res?.messages) ? res.messages.length : 'none'}/${stored}${res?.hydrating ? ' hydrating' : ''} · ${historyNote}`
     const { turns, files } = toTurns(payload?.messages)
     if (!turns.length && (payload?.message_count || 0) > 0) {
-      store.set({ loading: false, error: UI.thread.emptyHistory, retryOpen: true })
+      store.set({ loading: false, error: UI.thread.emptyHistory, errorDetail: detail, retryOpen: true })
       return
     }
     store.set({
@@ -486,13 +509,20 @@ export async function openConversation(storedId) {
       messages: turns,
       files: files.map(row => ({ ...row, at: row.at || Date.now() })),
       loading: false,
+      errorDetail: '',
       live: res?.running ? { phase: 'thinking', verb: '', subagents: 0, startedAt: Date.now(), reasoning: '' } : null
     })
     if (res?.running) startApprovalPoll()
   } catch (e) {
     // The banner says what happened, and its Retry replays this very call (see `retryOpen` in the store).
     const late = e instanceof GatewayUnavailable || isGatewayUnavailable(e)
-    store.set({ loading: false, error: late ? UI.boot.gatewayUnavailable : UI.thread.resumeFailed, retryOpen: true, retryBoot: false })
+    store.set({
+      loading: false,
+      error: late ? UI.boot.gatewayUnavailable : UI.thread.resumeFailed,
+      errorDetail: `resume: ${e?.message || e}`,
+      retryOpen: true,
+      retryBoot: false
+    })
   }
 }
 

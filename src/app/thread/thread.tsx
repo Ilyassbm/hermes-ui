@@ -38,6 +38,7 @@ export function Thread({ bot, name, input }: ThreadProps) {
   const error = useStore(store, s => s.error)
   const loading = useStore(store, s => s.loading)
   const retryOpen = useStore(store, s => s.retryOpen)
+  const errorDetail = useStore(store, s => s.errorDetail)
   const retryBootFlag = useStore(store, s => s.retryBoot)
   const retryBot = useStore(store, s => s.retryBot)
   const storedId = useStore(store, s => s.storedId)
@@ -123,6 +124,12 @@ export function Thread({ bot, name, input }: ThreadProps) {
                 labels={{ retry: UI.thread.retry }}
                 className="mx-0"
               />
+            ) : null}
+            {/* What the backend actually answered, in one muted line: a banner a person cannot act on is a dead end. */}
+            {error && errorDetail ? (
+              <p className="type-caption px-1 text-text-3" data-hui-part="error-detail">
+                {errorDetail}
+              </p>
             ) : null}
           </ConversationContent>
         </ConversationViewport>
