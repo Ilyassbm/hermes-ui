@@ -13,7 +13,8 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
-const scratch = process.env.HUI_SCRATCH || '/opt/data/profiles/dex/cache/scratch'
+const scratch = process.env.HUI_SCRATCH || join(root, 'scripts', '.tmp')
+mkdirSync(scratch, { recursive: true })
 const outfile = join(scratch, 'check-takeover.routes.mjs')
 
 const CASES = [

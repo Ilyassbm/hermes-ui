@@ -1,0 +1,23 @@
+{
+  "_readme": "A gateway capture in the shape the desktop receives (hermes-gateway-v1): a tool is named before it has an id, then the id arrives with the arguments, then the result. scripts/check-tool-mapping.mjs replays it through src/app/thread/tool-events.ts and Glaze's reducer. Trimmed from a real turn; no payload from a private session.",
+  "events": [
+    { "type": "tool.generating", "payload": { "name": "search_files" } },
+    {
+      "type": "tool.start",
+      "payload": {
+        "tool_id": "call_6f1c2a",
+        "tool_name": "search_files",
+        "args": { "pattern": "hermes", "path": "/opt/data", "target": "content" }
+      }
+    },
+    {
+      "type": "tool.complete",
+      "payload": {
+        "tool_id": "call_6f1c2a",
+        "is_error": false,
+        "result": { "output": "src/app/thread/thread.tsx:58\n", "exit_code": 0 }
+      }
+    },
+    { "type": "message.complete", "payload": {} }
+  ]
+}

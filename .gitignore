@@ -5,3 +5,4 @@ __pycache__/
 src/styles/.compiled.css
 # lintapple reports (npm run lint:ui)
 cache/
+scripts/.tmp/

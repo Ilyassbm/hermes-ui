@@ -11,7 +11,8 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
-const scratch = process.env.HERMES_UI_SCRATCH || '/opt/data/profiles/dex/cache/scratch'
+const scratch = process.env.HERMES_UI_SCRATCH || join(root, 'scripts', '.tmp')
+mkdirSync(scratch, { recursive: true })
 const entry = resolve(root, 'src/app/iui/skill.ts')
 const outfile = join(scratch, `iui-skill-${process.pid}.mjs`)
 const target = resolve(root, 'skills/intelligent-ui/SKILL.md')

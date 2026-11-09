@@ -9,7 +9,8 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
-const scratch = process.env.HERMES_UI_SCRATCH || '/opt/data/profiles/dex/cache/scratch'
+const scratch = process.env.HERMES_UI_SCRATCH || join(root, 'scripts', '.tmp')
+mkdirSync(scratch, { recursive: true })
 const outfile = join(scratch, `iui-check-${process.pid}.mjs`)
 mkdirSync(scratch, { recursive: true })
 

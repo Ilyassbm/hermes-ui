@@ -6,19 +6,21 @@
 //
 //   node scripts/check-tool-mapping.mjs [capture.json]
 //
-// The capture is read-only. Reads `/opt/data/profiles/dex/cache/scratch/hui-turn1.json` by default (override with
-// HUI_EVENTS); its temporary bundle lands beside it (override the directory with HUI_SCRATCH).
+// The capture is read-only and ships with the repo (`scripts/fixtures/turn-tool-events.json`, override with
+// HUI_EVENTS). Its temporary bundle lands in `scripts/.tmp` (override the directory with HUI_SCRATCH), so the check
+// runs on a fresh clone and never reaches outside the repository.
 //
 // Passes when the turn ends with no call left pending or running, and when the search it made is `completed` — a
 // pending row left behind is the bug this script exists to catch.
 import { build } from 'esbuild'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
-const scratch = process.env.HUI_SCRATCH || '/opt/data/profiles/dex/cache/scratch'
-const capture = process.env.HUI_EVENTS || join(scratch, 'hui-turn1.json')
+const scratch = process.env.HUI_SCRATCH || join(root, 'scripts', '.tmp')
+mkdirSync(scratch, { recursive: true })
+const capture = process.env.HUI_EVENTS || join(root, 'scripts', 'fixtures', 'turn-tool-events.json')
 
 // The entry only re-exports: the logic stays in the app's own modules.
 const entry = join(scratch, 'hui-tool-mapping.entry.ts')
