@@ -235,10 +235,28 @@
   line-height: 16px;
   font-weight: 450;
   color: var(--text-1);
+  /* An opaque ground of the tile's own colour, behind the label and nowhere else: the avatar's SVG is blown up
+     1.6× and its box overhangs the name's line, so axe found an image node in the name's background stack and
+     answered "contrast could not be measured" (lot 19). The band is the tile's own ground — paper at rest, the ink
+     wash flattened onto the page on hover and while selected — so it is invisible, and it ends the stack at the
+     name. `color-mix` flattens the wash because a translucent ground would let the check read through to the SVG. */
+  background-color: var(--paper);
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.glaze .hui-tile:hover .hui-tile-name {
+  /* --hover (--ink at 6%) over the rail's page, flattened: the same pixels, an opaque colour. */
+  background-color: color-mix(in srgb, var(--ink) 6%, var(--page));
+}
+.glaze .hui-tile[aria-selected='true'] .hui-tile-name {
+  /* --pressed (--ink at 10%) over the rail's page, flattened. */
+  background-color: color-mix(in srgb, var(--ink) 10%, var(--page));
+}
+.glaze .hui-tile[data-menu-open] .hui-tile-name {
+  /* An open context menu turns the tile back to paper (below), so the label's ground follows it. */
+  background-color: var(--paper);
 }
 
 /* The role tag under a tile's name and beside a row's name. It truncates before the name does: it keeps two

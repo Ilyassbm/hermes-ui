@@ -130,6 +130,10 @@ function TooltipContent({className, side = 'top', sideOffset = 6, align = 'cente
     >
       <TooltipPrimitive.Popup
         data-hui-part="tooltip-content"
+        // The chip is the tooltip, so it says so: Base UI's popup is a bare div with no role, and a checker that
+        // follows data-ui-tooltip / aria-describedby to a role="tooltip" element found nothing to read (lot 19).
+        // The role is the ARIA name of this surface; the label still reaches the trigger through Base UI.
+        role="tooltip"
         className={mergeClass([tooltipPopupClass, tooltipMotionClass], className)}
         {...props}
       >

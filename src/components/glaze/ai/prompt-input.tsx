@@ -3,6 +3,7 @@
 import * as React from 'react';
 import {Icon, Search, Add, Terminal, ChevronDown} from '@/components/glaze/icon';
 import {Button, type ButtonProps} from '@/components/glaze/ui/button';
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@/components/glaze/ui/tooltip';
 import {describeAccept} from '@/components/glaze/ui/attachment';
 import {cn} from '@/lib/glaze/utils';
 import {Mention, encodeMentionId, mentionTypeLabels, parseMentions, uniqueLabel, type MentionType} from '@/components/glaze/ai/mention';
@@ -256,6 +257,9 @@ function PromptInput({
   const menuId = React.useId();
   const reasonId = React.useId();
   const statusId = React.useId();
+  // One tooltip id per composer: the same PromptInput renders in more than one place (the demo and the app), and two
+  // open chips must not share an id (lot 19, as CopyButton).
+  const attachTip = `hui-tip-attach-${React.useId().replace(/:/g, '')}`;
 
   const mode = modeProp ?? innerMode;
   // The debounced and unmount saves and read() run outside a render, so they read the mode from here.
@@ -817,10 +821,19 @@ function PromptInput({
   const shellMode = mode === 'shell';
   const attachEl = onAttach && <>
     {/* 28px, not 26: a 12px glyph in a 28px box clears the edge by 8px, which is the content inset lintapple reads
-        (lot 17; it measured 7px in the 26px small control). The native title is the hover hint. */}
-    <Button size="icon-sm" variant="ghost" className="size-7" aria-label={words.attach} title={words.attach} disabled={disabled} onClick={() => fileRef.current?.click()}>
-      <Icon icon={Add} size={12}/>
-    </Button>
+        (lot 17; it measured 7px in the 26px small control). It is an icon-only control, so it carries a real
+        tooltip instead of the native title it had before: data-ui-tooltip names the chip, and the chip's role and
+        text are what a text check reads (lot 19). */}
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger
+          render={<Button size="icon-sm" variant="ghost" className="size-7" aria-label={words.attach} disabled={disabled} onClick={() => fileRef.current?.click()} data-ui-tooltip={attachTip} />}
+        >
+          <Icon icon={Add} size={12}/>
+        </TooltipTrigger>
+        <TooltipContent id={attachTip}>{words.attach}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
     <input ref={fileRef} type="file" multiple hidden accept={accept} tabIndex={-1} onChange={event => {
       takeFiles(Array.from(event.target.files ?? []));
       event.target.value = '';

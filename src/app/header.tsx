@@ -100,14 +100,26 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
         {sessions.length ? (
           <DropdownMenu>
             {/* Glaze's Button in the render slot: a real <button>, where a `div role="button"` opened the menu on a
-                keypress but let the click's mouseup close it again (lot 7). The native title is the hover hint; the
-                name stays the same string, so the two cannot drift. */}
-            <DropdownMenuTrigger
-              openOnHover={false}
-              render={<Button variant="ghost" size="icon-sm" className="hui-icon-btn hui-tab-list" aria-label={UI.header.allConversations} title={UI.header.allConversations} />}
-            >
-              <Icon icon={List} size={12} />
-            </DropdownMenuTrigger>
+                keypress but let the click's mouseup close it again (lot 7). The tooltip is the hover hint now, and
+                it carries the same string as the name: Base UI nests the two triggers (TooltipTrigger rendering the
+                DropdownMenuTrigger, which renders the Button), so one element opens the menu and shows the hint
+                (lot 19). data-ui-tooltip names the chip's id, which a text check follows to its role="tooltip". */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger
+                  aria-label={UI.header.allConversations}
+                  render={
+                    <DropdownMenuTrigger
+                      openOnHover={false}
+                      render={<Button variant="ghost" size="icon-sm" className="hui-icon-btn hui-tab-list" aria-label={UI.header.allConversations} data-ui-tooltip="hui-tip-header-conversations" />}
+                    >
+                      <Icon icon={List} size={12} />
+                    </DropdownMenuTrigger>
+                  }
+                />
+                <TooltipContent id="hui-tip-header-conversations">{UI.header.allConversations}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <DropdownMenuContent align="start" side="bottom" size="sm" className="hui-conv-menu">
               <div className="hui-conv-filter">
                 <Input
