@@ -70,7 +70,8 @@
 }
 
 .glaze .hui-model-trigger {
-  /* A real <button> (lot 7): the UA chrome is dropped and the class owns the box. */
+  /* A real <button> (lot 7): the UA chrome is dropped and the class owns the box. In the composer's toolbar (lot 14)
+     it reads as the model, not as an icon: the provider's mark, the short name at 14px, the effort in small print. */
   appearance: none;
   margin: 0;
   border: 0;
@@ -79,19 +80,19 @@
   text-align: start;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   height: 28px;
-  padding: 0 8px;
-  border-radius: 8px;
-  font-size: 12px;
-  color: var(--text-2);
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-1);
   cursor: default;
   white-space: nowrap;
+  max-width: 240px;
   transition: background-color var(--dur-state) var(--ease-out), color var(--dur-state) var(--ease-out);
 }
 .glaze .hui-model-trigger:hover {
   background: var(--hover);
-  color: var(--text-1);
 }
 .glaze .hui-model-trigger:focus-visible {
   outline: 2px solid var(--line-focus);
@@ -100,9 +101,42 @@
 .glaze .hui-model-trigger svg {
   color: var(--text-3);
 }
+.glaze .hui-model-trigger .hui-model-logo {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  display: block;
+  color: var(--text-2);
+}
+.glaze .hui-model-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  font-weight: 450;
+  line-height: 20px;
+}
+.glaze .hui-model-effort-tag {
+  flex: none;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
 
 .glaze .hui-model-effort {
   padding: 0 8px 6px;
+}
+
+/* The menu's provider heading: its mark, then the name, on the group label's own row. */
+.glaze .hui-model-provider {
+  gap: 6px;
+}
+.glaze .hui-model-provider svg {
+  color: var(--text-2);
+}
+.glaze .hui-model-menu {
+  min-width: 240px;
 }
 
 /* The submenu "Tous les modèles {Fournisseur}…": the full catalogue, wider than the picker, with its filter field

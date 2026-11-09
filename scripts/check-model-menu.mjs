@@ -3,7 +3,7 @@
 // that Base UI then closed (lot 8).
 //
 // The rule the picker keeps: the first level shows at most MODEL_MENU_TOP models per provider, taken from `topModels`
-// (which slices with that constant); the whole catalogue lives in the `UI.header.allModels(provider.name)` submenu
+// (which slices with that constant); the whole catalogue lives in the `UI.model.allModels(provider.name)` submenu
 // ("All … models…"), whose list is mounted with the submenu and opens on a filter field.
 //
 // Checked statically, with the TypeScript AST (no browser, no gateway):
@@ -11,7 +11,7 @@
 //   2. every `.slice(...)` in topModels is capped by MODEL_MENU_TOP (or a literal ≤ 8), so the constant is the real cap;
 //   3. in the model menu's first level, every DropdownMenuRadioItem is fed by `topModels(...)` — not by
 //      `provider.models` directly, and not by a numeric slice above 8;
-//   4. the level has an all-models submenu (`UI.header.allModels(…)`), and `AllModels` renders a filter field before
+//   4. the level has an all-models submenu (`UI.model.allModels(…)`), and `AllModels` renders a filter field before
 //      the full list.
 //
 //   node scripts/check-model-menu.mjs
@@ -24,7 +24,7 @@ import ts from 'typescript'
 
 const ROOT = resolve(fileURLToPath(import.meta.url), '../..')
 const MODELS = join(ROOT, 'src/app/models.ts')
-const HEADER = join(ROOT, 'src/app/header.tsx')
+const HEADER = join(ROOT, 'src/app/model-menu.tsx')
 
 /** The constant's documented ceiling. */
 export const MAX_TOP = 8
@@ -121,19 +121,19 @@ if (!topModelsFn) {
   })
 }
 
-/* ---------------------------------------------------------------- header.tsx -- */
+/* ------------------------------------------------------------- model-menu.tsx -- */
 
 const header = parse(HEADER)
 const menu = elements(header.source, 'DropdownMenuContent').find(el => classNameOf(el).includes('hui-model-menu'))
 if (!menu) {
-  problems.push('src/app/header.tsx:1:1: no DropdownMenuContent.hui-model-menu: the model picker is gone')
+  problems.push('src/app/model-menu.tsx:1:1: no DropdownMenuContent.hui-model-menu: the model picker is gone')
 } else {
   // First level = everything in the model menu that is not inside a submenu's content.
   const subs = elements(menu, 'DropdownMenuSubContent')
   const inSub = node => subs.some(sub => sub.pos <= node.pos && node.end <= sub.end)
 
   const rows = elements(menu, 'DropdownMenuRadioItem').filter(row => !inSub(row))
-  if (!rows.length) problems.push('src/app/header.tsx:1:1: the model picker has no model row')
+  if (!rows.length) problems.push('src/app/model-menu.tsx:1:1: the model picker has no model row')
 
   for (const row of rows) {
     // The `.map(...)` whose callback renders this row.
@@ -153,7 +153,7 @@ if (!menu) {
 
   // The rest of the catalogue, behind the submenu, with its filter.
   const subTrigger = elements(menu, 'DropdownMenuSubTrigger').find(el => el.getText().includes('allModels('))
-  if (!subTrigger) fail(header, menu, 'no all-models submenu row (UI.header.allModels(provider.name)): the catalogue would be unreachable')
+  if (!subTrigger) fail(header, menu, 'no all-models submenu row (UI.model.allModels(provider.name)): the catalogue would be unreachable')
   if (!subs.length) fail(header, menu, 'no DropdownMenuSubContent under the model menu: the submenu list has nowhere to open')
 }
 
@@ -163,7 +163,7 @@ walk(header.source, node => {
   if (ts.isFunctionDeclaration(node) && node.name?.getText() === 'AllModels') all = node
 })
 if (!all) {
-  problems.push('src/app/header.tsx:1:1: AllModels is gone: the submenu list must mount with the submenu, not with the header')
+  problems.push('src/app/model-menu.tsx:1:1: AllModels is gone: the submenu list must mount with the submenu, not with the composer')
 } else {
   const body = all.body?.getText() ?? ''
   if (!elements(all, 'Input').length) fail(header, all, 'AllModels has no filter field: the full list needs its search box on top')

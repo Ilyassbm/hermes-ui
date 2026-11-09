@@ -3,6 +3,7 @@
 // host.request / host.onEvent address that bot.
 import { host } from '@hermes/plugin-sdk'
 import { askStep, emptyToolAdapter, replyStep, toolEventStep, turnEndStep } from '../app/thread/tool-events'
+import { UI } from '../app/strings'
 import { createStore } from './store'
 
 export const store = createStore({
@@ -20,7 +21,9 @@ export const store = createStore({
   files: [], // [{ path, at }]
   routines: [],
   usage: null,
-  error: ''
+  error: '',
+  /** The error banner's Retry reopens the conversation (a failed `session.resume`), not the last prompt. */
+  retryOpen: false
 })
 
 let ctxRef = null
@@ -225,7 +228,51 @@ export async function selectBot(botName, { keepConversation = false } = {}) {
 }
 
 function blankConversation() {
-  return { sid: null, storedId: null, messages: [], live: null, approval: null, files: [], info: { model: '', title: '' }, error: '' }
+  return { sid: null, storedId: null, messages: [], live: null, approval: null, files: [], info: { model: '', title: '' }, error: '', retryOpen: false, loading: false }
+}
+
+// ── transport ────────────────────────────────────────────────────────────────
+
+/**
+ * `host.request` carries the SDK's generic 30 s deadline (`apps/desktop/src/sdk/index.ts:1506`). A session call whose
+ * backend is cold legitimately runs longer, and at 30 s it dies with an unclassified timeout — the banner Ilyass saw:
+ * “request timed out after 30s: session.resume”. `requestProfile(route, method, params, timeoutMs, { spawnPriority:
+ * 'foreground' })` is the SDK's own door for that case (`sdk/index.ts:1372-1389`): a conversation opened from the rail
+ * is an explicit user action, so it takes the pool's reserved interactive slot instead of queuing behind background
+ * roster hydration. An older desktop without `requestProfile` gets the same timeout on `request`.
+ */
+const LONG_TIMEOUT = 120_000
+
+function routeFor(bot) {
+  return store.get().bots.find(b => b.name === bot)?.route || bot
+}
+
+function longRequest(method, params, bot = store.get().bot) {
+  if (bot && typeof host.requestProfile === 'function') {
+    return host.requestProfile(routeFor(bot), method, params, LONG_TIMEOUT, { spawnPriority: 'foreground' })
+  }
+  return host.request(method, params, LONG_TIMEOUT)
+}
+
+/** A timeout, and only a timeout: a refusal (“permission denied”, “unknown session”) is never replayed. */
+function isTimeout(e) {
+  return e?.code === 'TIMEOUT' || /timed out/i.test(String(e?.message || e))
+}
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+
+/**
+ * One extra try, 700 ms later: the SDK documents that a cold profile backend can lose the hydration-timeout race once
+ * and still be fine on a second call. Anything that is not a timeout is thrown on the first failure.
+ */
+async function retryOnce(run) {
+  try {
+    return await run()
+  } catch (e) {
+    if (!isTimeout(e)) throw e
+    await sleep(700)
+    return run()
+  }
 }
 
 export function newConversation() {
@@ -245,9 +292,12 @@ export function addNote(text) {
 
 export async function openConversation(storedId) {
   const { bot } = store.get()
+  // The tab is active before the gateway answers: `storedId` is the selection, not a result of the call.
   store.set({ ...blankConversation(), storedId, loading: true })
   try {
-    const res = await host.request('session.resume', { session_id: storedId, cols: 96, source: 'desktop', ...(bot ? { profile: bot } : {}) })
+    const res = await retryOnce(() =>
+      longRequest('session.resume', { session_id: storedId, cols: 96, source: 'desktop', ...(bot ? { profile: bot } : {}) })
+    )
     const { turns, files } = toTurns(res?.messages)
     store.set({
       sid: res?.session_id || storedId,
@@ -259,7 +309,9 @@ export async function openConversation(storedId) {
     })
     if (res?.running) startApprovalPoll()
   } catch (e) {
-    store.set({ loading: false, error: `Conversation illisible : ${e?.message || e}` })
+    // The banner says what happened, and its Retry replays this very call (see `retryOpen` in the store).
+    console.warn('[hermes-ui] session.resume failed', e)
+    store.set({ loading: false, error: UI.thread.resumeFailed, retryOpen: true })
   }
 }
 
@@ -291,14 +343,16 @@ export async function ensureSession() {
   const s = store.get()
   if (s.sid) return s.sid
   const prefs = prefsFor(s.bot)
-  const res = await host.request('session.create', {
-    cols: 96,
-    source: 'desktop',
-    ...(s.bot ? { profile: s.bot } : {}),
-    ...(prefs.model ? { model: prefs.model, ...(prefs.provider ? { provider: prefs.provider } : {}) } : {}),
-    ...(prefs.effort ? { reasoning_effort: prefs.effort } : {}),
-    fast: false
-  })
+  const res = await retryOnce(() =>
+    longRequest('session.create', {
+      cols: 96,
+      source: 'desktop',
+      ...(s.bot ? { profile: s.bot } : {}),
+      ...(prefs.model ? { model: prefs.model, ...(prefs.provider ? { provider: prefs.provider } : {}) } : {}),
+      ...(prefs.effort ? { reasoning_effort: prefs.effort } : {}),
+      fast: false
+    })
+  )
   const sid = res?.session_id
   applied.set(sid, `${prefs.provider || ''}|${prefs.model || ''}|${prefs.effort || ''}`)
   store.set({ sid, storedId: res?.stored_session_id || sid })
@@ -339,6 +393,7 @@ export async function send(text, attachments = []) {
   if (s.live) return
   store.set(st => ({
     error: '',
+    retryOpen: false,
     messages: [...st.messages, { id: nid('u'), role: 'user', text: body, at: Date.now(), attachments: attachments.map(a => ({ name: a.name, kind: a.type?.startsWith('image/') ? 'image' : 'file' })) }],
     live: { phase: 'thinking', verb: '', subagents: 0, startedAt: Date.now(), reasoning: '' }
   }))
@@ -359,7 +414,7 @@ export async function send(text, attachments = []) {
       }
     }
     const full = [body, ...refs].filter(Boolean).join('\n\n')
-    await host.request('prompt.submit', { session_id: sid, text: full })
+    await longRequest('prompt.submit', { session_id: sid, text: full })
     startApprovalPoll()
   } catch (e) {
     failTurn(e?.message || String(e))
@@ -404,6 +459,7 @@ function failTurn(reason) {
   }
   store.set(s => ({
     live: null,
+    retryOpen: false,
     error: reason || "The response did not arrive.",
     messages: s.messages.map(m => (m.status === 'streaming' ? { ...m, status: m.text ? 'done' : 'failed' } : m))
   }))

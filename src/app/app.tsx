@@ -13,34 +13,18 @@ import { Toaster } from '@/components/glaze/ui/toast'
 import { GlazePortalProvider } from '@/lib/glaze/portal'
 import { boot, store } from '@/lib/hermes'
 import { useStore } from '@/lib/store'
-import css from '../styles/.compiled.css'
 import { Aside } from './aside'
 import { BotPicker } from './bot-picker'
 import { Center } from './center'
 import { typeSlash } from './editor'
+import { useGlazeStyle } from './glaze-style'
 import { Rail } from './rail'
+import { loadSettings, settings } from './settings-state'
 import { initView, view } from './ui-state'
 import { useMediaQuery } from './use-media'
 
-const STYLE_ID = 'hermes-ui-glaze'
 const RAIL_W = 280
 const ASIDE_W = 320
-
-/** The compiled Glaze sheet, in one <style> of its own. Every rule in it is scoped to .glaze by the build. */
-function useGlazeStyle() {
-  useEffect(() => {
-    let el = document.getElementById(STYLE_ID) as HTMLStyleElement | null
-    if (!el) {
-      el = document.createElement('style')
-      el.id = STYLE_ID
-      document.head.appendChild(el)
-    }
-    el.textContent = css
-    return () => {
-      el?.remove()
-    }
-  }, [])
-}
 
 /** The native session sidebar duplicates the rail: fold it once per app session, and never toggle it back from a
  *  cleanup (a layout change remounts the route, and a restore-on-unmount would ping-pong forever). */
@@ -67,11 +51,14 @@ export function App({ ctx }: { ctx: any }) {
   const gateway = useValue(host.state.gateway)
   const asideOpen = useStore(view, s => s.asideOpen)
   const railOpen = useStore(view, s => s.railOpen)
+  const prefs = useStore(settings, s => s)
   const narrowAside = useMediaQuery('(max-width: 1099px)')
   const narrowRail = useMediaQuery('(max-width: 759px)')
+  const systemLight = useMediaQuery('(prefers-color-scheme: light)')
 
   useEffect(() => {
     initView(ctx)
+    loadSettings(ctx)
   }, [ctx])
 
   useEffect(() => {
@@ -102,9 +89,18 @@ export function App({ ctx }: { ctx: any }) {
 
   // The column widths switch without animating: the centre widens at once, and only the panel's content moves in.
   const columns = `${narrowRail ? 0 : RAIL_W}px minmax(0, 1fr) ${asideOpen && !narrowAside ? ASIDE_W : 0}px`
+  // Settings ▸ Appearance, applied here: theme (System follows the OS), density, the reading measure and the motion
+  // switch. The `.glaze` root owns all four, so nothing reaches the native chrome.
+  const theme = prefs.theme === 'system' ? (systemLight ? 'light' : 'dark') : prefs.theme
 
   return (
-    <div className="glaze absolute inset-0 bg-page text-text-1" data-theme="dark">
+    <div
+      className="glaze absolute inset-0 bg-page text-text-1"
+      data-theme={theme}
+      data-density={prefs.density}
+      data-motion={prefs.motion}
+      style={{ '--measure': `${prefs.measure}px` } as CSSProperties}
+    >
       <GlazePortalProvider>
         {/* grid-rows-1: one row that fills the frame. With an auto row the columns would size to their content and the
             paper would stop in the middle of the page, which is what lot 2 showed. */}

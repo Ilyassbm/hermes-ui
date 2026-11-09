@@ -16,6 +16,7 @@ import { installNativeChrome } from './app/native-chrome'
 import { installTakeover, setReplaceNative } from './app/native-takeover'
 import { installTheme } from './app/theme'
 import { goToBot } from './app/bot-order'
+import { SettingsPage } from './app/settings'
 import { GlazeDemo } from './ui/glaze-demo/GlazeDemo'
 import { bindContext, handleEvent, newConversation } from './lib/hermes'
 import { openPicker, toggleAside } from './app/ui-state'
@@ -173,6 +174,20 @@ export default {
         }
       }
     ])
+
+    // Settings ▸ Plugins ▸ Hermes UI: the page the rail's gear opens (Settings ▸ Plugins), registered through the
+    // SDK's own door (contrib/settings-pages.ts). Feature-detected: an older desktop has no such registry, and the
+    // gear then falls back to the app's #/settings route.
+    try {
+      ctx.registerSettingsPage?.({
+        id: 'settings',
+        title: UI.settings.title,
+        icon: 'settings-gear',
+        render: () => <SettingsPage ctx={ctx} />
+      })
+    } catch (e) {
+      console.warn('[hermes-ui] settings page refused', e)
+    }
 
     // The rest of the app: the theme first (it needs to be registered before it can be requested), then the chrome,
     // then the takeover — its first pass waits for the gateway by itself. The bot keys' own listener goes with them:

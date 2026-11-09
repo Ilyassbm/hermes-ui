@@ -56,6 +56,59 @@ export const UI = {
     modelAndEffort: (trigger: string) => `Model and effort, ${trigger}`
   },
 
+  /** The model picker at the foot of the composer: the trigger, the provider groups, the effort. */
+  model: {
+    trigger: (model: string, effort: string) => `Model: ${model}, effort ${effort}`,
+    effortShort: { low: 'Low', medium: 'Med', high: 'High' } as Record<string, string>,
+    allModels: (name: string) => `All ${name} models…`,
+    filterModels: (name: string) => `Filter ${name} models`,
+    unavailable: 'Models unavailable',
+    noModel: 'No model'
+  },
+
+  /** The settings page registered in Settings ▸ Plugins. */
+  settings: {
+    title: 'Hermes UI',
+    intro: 'How the workspace looks and behaves. These are the same preferences the page and the rail read.',
+    appearance: 'Appearance',
+    theme: 'Theme',
+    themeSystem: 'System',
+    themeDark: 'Dark',
+    themeLight: 'Light',
+    density: 'Density',
+    densityComfortable: 'Comfortable',
+    densityCompact: 'Compact',
+    measure: 'Reading width',
+    measureValue: (px: number) => `${px} px`,
+    animations: 'Animations',
+    animationsOn: 'On',
+    animationsReduced: 'Reduced',
+    chat: 'Chat',
+    chatDefaults: (name: string) => `Defaults for ${name}`,
+    chatDefaultsHint: 'The model and the effort the composer starts with for the bot that is open in the rail.',
+    model: 'Default model',
+    modelHint: 'Follow the profile, or pin one model for this bot.',
+    modelProfileDefault: 'Bot default',
+    effort: 'Default effort',
+    sendKey: 'Send with',
+    sendKeyEnter: 'Enter',
+    sendKeyModEnter: '⌘ Enter',
+    sendKeyHint: '⌘ Enter keeps Enter for a new line. Ctrl Enter on Windows and Linux.',
+    activity: 'Activity line',
+    activityHint: 'Show what the bot is doing above its reply while it works.',
+    shortcuts: 'Shortcuts',
+    shortcutsHint: 'The plugin’s own bindings, with the combo the app really dispatches.',
+    changeKeybindings: 'Change in keybindings',
+    about: 'About',
+    version: 'Version',
+    repository: 'Repository',
+    license: 'License',
+    licenseName: 'MIT',
+    network: 'Network',
+    networkBody: 'The workspace talks to your Hermes gateway only — sessions, models, approvals — and to its own /usage endpoint. No analytics, no third-party requests.',
+    openRepository: 'Open the repository'
+  },
+
   /** The bot picker dialog (⌘⌥N). */
   picker: {
     searchTitle: 'Search a bot or a conversation',
@@ -91,14 +144,22 @@ export const UI = {
     unreadableTitle: 'Path unreadable'
   },
 
-  /** The subscription cards at the foot of the rail. */
+  /** The subscription meters at the foot of the rail: one compact row each, and the panel a row opens. */
   usage: {
     title: (provider: string, plan: string) => `Usage limits · ${provider}${plan ? ` · ${plan}` : ''}`,
     fiveHour: '5-hour limit',
     weekly: 'Weekly · all models',
     monthly: 'Monthly',
     resetsAt: (time: string) => `Resets at ${time}`,
-    resetsOn: (day: string, time: string) => `Resets ${day} ${time}`
+    resetsOn: (day: string, time: string) => `Resets ${day} ${time}`,
+    /** The compact row's window: 5h when there is one, else the window that is closest to its limit. */
+    short: { session: '5h', week: 'Wk', month: 'Mo' },
+    /** The two providers the foot draws, when the gateway sends no label of its own. */
+    providerNames: { claude: 'Claude', opencode_go: 'OpenCode Go' } as Record<string, string>,
+    compact: (window: string, percent: number) => `${window} · ${percent} %`,
+    expand: (provider: string) => `Show the usage limits of ${provider}`,
+    collapse: (provider: string) => `Hide the usage limits of ${provider}`,
+    noReset: 'No reset date'
   },
 
   /** The composer, and every state Glaze's PromptInput can print. */
@@ -154,9 +215,12 @@ export const UI = {
     suggestions: ['What are you working on?', 'What did you ship today?', 'Suggest the next step'],
     conversationWith: (name: string) => `Conversation with ${name}`,
     connecting: 'Connecting to Hermes…',
+    loading: 'Opening the conversation',
     emptyTitle: (name: string) => `What are we doing with ${name}?`,
     suggestionsLabel: 'Suggestions',
     retry: 'Retry',
+    /** The banner after `session.resume` timed out twice; its Retry replays the resume, not the last prompt. */
+    resumeFailed: "Couldn't open this conversation — the bot's backend didn't answer in time.",
     jumpLatest: 'Jump to latest',
     waitingOnYou: 'Waiting on you',
     viewport: { complete: 'Response complete', stopped: 'Stopped', failed: 'Response failed' }

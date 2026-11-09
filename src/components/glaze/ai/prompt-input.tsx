@@ -196,6 +196,8 @@ type PromptInputProps = Omit<React.ComponentProps<'div'>, 'onSubmit' | 'children
   voice?: Omit<PromptInputMicProps, 'size'>;
   /** The model picker and its mode preset: the toolbar's left side when stacked, a quiet chip before Send when inline. */
   tools?: React.ReactNode;
+  /** Stacked layout only: puts `tools` before the paperclip. The model picker leads the composer (lot 14). */
+  toolsFirst?: boolean;
   /** Before the send button: the context meter. */
   meta?: React.ReactNode;
   /** The messages queued while the agent works, as a PromptQueue: a second panel in the shell, above the text. */
@@ -210,6 +212,9 @@ type PromptInputProps = Omit<React.ComponentProps<'div'>, 'onSubmit' | 'children
   onReviewWaiting?: () => void;
   /** Names the editor for assistive tech. */
   label?: string;
+  /** What sends. `enter` (the default): Enter sends, Shift+Enter breaks the line. `mod+enter`: Enter breaks the line,
+   *  ⌘/Ctrl+Enter sends — a composer that carries long prompts. */
+  submitKey?: 'enter' | 'mod+enter';
   /** The composer's other words, for another language. The placeholder and `label` are their own props. */
   labels?: PromptInputLabels;
   ref?: React.Ref<PromptInputHandle>;
@@ -220,8 +225,8 @@ type Notice = {id: number; text: string; undo?: () => void};
 function PromptInput({
   ref, onSubmit, onValueChange, defaultValue, draftKey, placeholder = 'Ask the agent to do something', layout = 'stacked', status = 'ready', onStop, generation,
   disabled, disabledReason, disabledAction, mentions = [], commands = [], shell = false, mode: modeProp, onModeChange,
-  attachments = [], onAttach, onRemoveAttachment, onRetryAttachment, accept, maxLength = 100_000, voice, tools, meta, queue,
-  onEditQueued, onSendQueuedNow, waitingCount = 0, onReviewWaiting, label = 'Prompt', labels, className, ...props
+  attachments = [], onAttach, onRemoveAttachment, onRetryAttachment, accept, maxLength = 100_000, voice, tools, toolsFirst = false, meta, queue,
+  onEditQueued, onSendQueuedNow, waitingCount = 0, onReviewWaiting, label = 'Prompt', submitKey = 'enter', labels, className, ...props
 }: PromptInputProps) {
   const words = {...labels, ...promptLabels, ...withoutUndefined(labels), types: {...mentionTypeLabels, ...labels?.types} as Record<MentionType, string>};
   // Chips are made in callbacks that outlive a render; they read the words through a ref.
@@ -671,8 +676,14 @@ function PromptInput({
       return;
     }
     if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      if (event.repeat) return;
+      // Enter is a line break when the caller chose ⌘/Ctrl+Enter to send: the modifier is the send.
+      const sending = submitKey !== 'mod+enter' || event.metaKey || event.ctrlKey
+      event.preventDefault()
+      if (!sending) {
+        if (!document.execCommand('insertLineBreak')) insertFragment(fragmentFrom('\n'))
+        return
+      }
+      if (event.repeat) return
       if (empty && !hasDone && working && onSendQueuedNow) { onSendQueuedNow(); return; }
       send();
       return;
@@ -950,9 +961,8 @@ function PromptInput({
     </div>
 
     {!inline && <div data-hui-part="prompt-input-toolbar" className="@container/prompt-toolbar flex min-h-(--control-sm) min-w-0 flex-wrap items-center gap-1 pt-(--shell-inset)">
-      {attachEl}
-      {/* The tools sit between attach and send and take the free space, scrolling sideways when they run out of it. */}
-      {toolsEl('flex-1 basis-0 overflow-x-auto [scrollbar-width:none]')}
+      {/* The tools lead when the caller says so (the model picker, lot 14): DOM, visual and focus order agree. */}
+      {toolsFirst && tools ? <>{toolsEl('shrink-0')}{attachEl}</> : <>{attachEl}{toolsEl('flex-1 basis-0 overflow-x-auto [scrollbar-width:none]')}</>}
       {!tools && <span aria-hidden className="flex-1"/>}
       {statusEl}
       {/* Meta, the mic and Send stay together at the end of the row. */}

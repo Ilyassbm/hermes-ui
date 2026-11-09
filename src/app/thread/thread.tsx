@@ -9,7 +9,8 @@ import { Response } from '@/components/glaze/ai/response'
 import type { PromptInputHandle } from '@/components/glaze/ai/prompt-input'
 import { Attachment, AttachmentContent, AttachmentGlyph, AttachmentGroup, AttachmentMedia, AttachmentTitle } from '@/components/glaze/ui/attachment'
 import { Chip, ChipGroup } from '@/components/glaze/ui/chip'
-import { retryLast, store } from '@/lib/hermes'
+import { Skeleton, SkeletonText } from '@/components/glaze/ui/skeleton'
+import { openConversation, retryLast, store } from '@/lib/hermes'
 import { hourOf } from '@/lib/labels'
 import { useStore } from '@/lib/store'
 import { botIdentity } from '../format'
@@ -32,6 +33,9 @@ export function Thread({ bot, name, input }: ThreadProps) {
   const sid = useStore(store, s => s.sid)
   const ready = useStore(store, s => s.ready)
   const error = useStore(store, s => s.error)
+  const loading = useStore(store, s => s.loading)
+  const retryOpen = useStore(store, s => s.retryOpen)
+  const storedId = useStore(store, s => s.storedId)
   const identity = botIdentity(bot || 'default')
 
   const last = messages[messages.length - 1]
@@ -58,6 +62,8 @@ export function Thread({ bot, name, input }: ThreadProps) {
 
             {!ready ? (
               <p className="py-10 text-center type-body-sm text-text-3">{UI.thread.connecting}</p>
+            ) : loading ? (
+              <LoadingThread />
             ) : messages.length ? (
               <MessageGroup>
                 {messages.map(m =>
@@ -108,7 +114,16 @@ export function Thread({ bot, name, input }: ThreadProps) {
               </div>
             )}
 
-            {error ? <ConversationError kind="server" message={error} onRetry={() => void retryLast()} labels={{ retry: UI.thread.retry }} className="mx-0" /> : null}
+            {error ? (
+              <ConversationError
+                kind="server"
+                message={error}
+                // A failed resume has no prompt to replay: its Retry opens the same conversation again.
+                onRetry={() => (retryOpen && storedId ? void openConversation(storedId) : void retryLast())}
+                labels={{ retry: UI.thread.retry }}
+                className="mx-0"
+              />
+            ) : null}
           </ConversationContent>
         </ConversationViewport>
 
@@ -118,6 +133,33 @@ export function Thread({ bot, name, input }: ThreadProps) {
       {/* The composer sits inside the provider so a send can snap the thread back to the end. */}
       <ComposerWithSnap bot={bot} name={name} input={input} sid={sid} status={composerStatus} generation={generation} />
     </ConversationProvider>
+  )
+}
+
+/**
+ * `session.resume` answered nothing yet: the shapes the turns will take, so the thread never reads as empty while a
+ * conversation opens (a cold backend can take seconds). No words beyond the status label: a skeleton is a shape.
+ */
+function LoadingThread() {
+  return (
+    <div className="flex flex-col gap-8" role="status" aria-busy="true" aria-label={UI.thread.loading}>
+      <div className="flex flex-col items-end gap-2">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-9 w-64 rounded-panel" />
+      </div>
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-3 w-24" />
+        <SkeletonText type="body" lines={2} last={0.82} />
+      </div>
+      <div className="flex flex-col items-end gap-2">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-9 w-48 rounded-panel" />
+      </div>
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-3 w-24" />
+        <SkeletonText type="body" lines={3} last={0.55} />
+      </div>
+    </div>
   )
 }
 

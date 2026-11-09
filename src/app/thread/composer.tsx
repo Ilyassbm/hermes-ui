@@ -1,13 +1,18 @@
 // The composer: one Glaze PromptInput on a single paper surface — the editor on top, the toolbar at its foot — as wide
 // as the thread's reading measure and 16px off the sheet's bottom edge.
 //
-// The model pill is gone: the model and the effort are chosen in the header now (lot 6 moved them there). What the
-// composer adds is the `/` list, fed by the gateway's `complete.slash` 120ms after the last keystroke; a picked command
-// becomes a chip, and a prompt that starts with `/` is run as a command instead of being sent (src/app/slash-run.ts).
+// Lot 14 brought the model picker back to the toolbar's start, left of the attach button: its provider mark, the
+// model's short name and the effort, opening the same menu /model does. What the composer adds is the `/` list, fed by
+// the gateway's `complete.slash` 120ms after the last keystroke; a picked command becomes a chip, and a prompt that
+// starts with `/` is run as a command instead of being sent (src/app/slash-run.ts). The send key follows the settings
+// page (Enter, or ⌘/Ctrl+Enter).
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { host } from '@hermes/plugin-sdk'
 import { PromptInput, type Attachment, type CommandItem, type PromptInputHandle } from '@/components/glaze/ai/prompt-input'
 import { send, stop, store } from '@/lib/hermes'
+import { useStore } from '@/lib/store'
+import { ModelMenu } from '../model-menu'
+import { settings } from '../settings-state'
 import { runCommand } from '../slash-run'
 import { UI } from '../strings'
 
@@ -32,6 +37,7 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
   const [files, setFiles] = useState<Picked[]>([])
   const [commands, setCommands] = useState<CommandItem[]>([])
   const asked = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const submitKey = useStore(settings, s => s.sendKey)
 
   // The caret belongs in the editor when the conversation changes, and when the bot does.
   useEffect(() => {
@@ -88,6 +94,10 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
           draftKey={`hermes-ui-${bot || 'default'}-${sid || 'new'}`}
           status={status}
           generation={generation}
+          submitKey={submitKey}
+          // The toolbar's left side: the model picker, before the paperclip (toolsFirst puts it there in the DOM too).
+          tools={<ModelMenu />}
+          toolsFirst
           onStop={() => void stop()}
           commands={commands}
           attachments={attachments}

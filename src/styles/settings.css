@@ -1,0 +1,166 @@
+/* Settings ▸ Plugins ▸ Hermes UI, and the two page-level switches the settings own (density, motion).
+
+   The page is drawn inside the native Settings view, not inside our route: it brings its own `.glaze` root, the
+   compiled sheet is injected by useGlazeStyle, and every rule here stays under `.glaze` so the settings rail, its
+   breadcrumb and the app's own tokens are never touched.
+
+   Shapes: a 640px reading column, a 12px gap between sections, a hairline between rows, the control at the inline end
+   of its label. No cards: the page is a form, and a box around every section would be a box in a box with Settings'
+   own frame. */
+
+.glaze .hui-set {
+  min-height: 100%;
+  background: var(--page);
+  color: var(--text-1);
+}
+
+.glaze .hui-set-inner {
+  max-width: 640px;
+  padding: 24px 24px 40px;
+}
+
+.glaze .hui-set-head {
+  padding-bottom: 16px;
+}
+
+.glaze .hui-set-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 500;
+  color: var(--text-1);
+}
+
+.glaze .hui-set-intro {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--text-2);
+}
+
+.glaze .hui-set-section {
+  padding: 16px 0 4px;
+  border-top: 1px solid var(--line-faint);
+}
+
+.glaze .hui-set-h {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--text-1);
+}
+
+.glaze .hui-set-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 40px;
+  padding: 6px 0;
+}
+
+.glaze .hui-set-text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.glaze .hui-set-label {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--text-1);
+}
+
+.glaze .hui-set-hint {
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.glaze .hui-set-hint-block {
+  margin: 0 0 8px;
+}
+
+.glaze .hui-set-control {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  max-width: 320px;
+}
+
+.glaze .hui-set-value {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.glaze .hui-set-bot {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--text-2);
+}
+
+/* The shortcuts: one row per action, the caps at the inline end, on a hairline. */
+.glaze .hui-set-keys {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line-faint);
+}
+
+.glaze .hui-set-key-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 34px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.glaze .hui-set-key-row .hui-set-label {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.glaze .hui-set-actions {
+  display: flex;
+  padding-top: 12px;
+}
+
+/* ---------- Settings ▸ Appearance, applied to the chat page ---------- */
+
+/* Compact: the same rows, 10px shorter, and a tighter composer. Nothing is hidden, nothing is resized by a scale. */
+.glaze[data-density='compact'] .hui-bot-row {
+  height: 52px;
+  padding: 6px;
+}
+.glaze[data-density='compact'] .hui-bot-row .hui-avatar,
+.glaze[data-density='compact'] .hui-bot-row .hui-avatar > .hui-bot {
+  width: 38px;
+  height: 38px;
+}
+.glaze[data-density='compact'] .hui-tile {
+  height: 88px;
+}
+.glaze[data-density='compact'] .hui-usage-row {
+  height: 30px;
+}
+.glaze[data-density='compact'] .hui-composer [data-hui-part='prompt-input'] {
+  min-height: 80px;
+  padding: 8px;
+}
+
+/* Reduced motion: the page's transitions and its two keyframe entrances cut, whatever the OS preference says. */
+.glaze[data-motion='reduced'] *,
+.glaze[data-motion='reduced'] *::before,
+.glaze[data-motion='reduced'] *::after {
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+}

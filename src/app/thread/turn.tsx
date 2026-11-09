@@ -14,6 +14,7 @@ import { CopyButton } from '@/components/glaze/ui/copy-button'
 import { humanDuration, modelLabel } from '@/lib/labels'
 import { replyApproval, store } from '@/lib/hermes'
 import { useStore } from '@/lib/store'
+import { settings } from '../settings-state'
 import { UI } from '../strings'
 import { IUI_TAGS } from '../iui/block'
 import { BotAvatar } from '../bot-avatar'
@@ -45,6 +46,8 @@ type TurnProps = {
 export function AssistantTurn({ message, name, identity }: TurnProps) {
   const calls = useTurnCalls(message.toolActions || [])
   const approval = useStore(store, s => s.approval)
+  // Settings ▸ Chat: the activity line can be turned off; the reasoning, the calls and the answer stay.
+  const activity = useStore(settings, s => s.activity)
   const streaming = message.status === 'streaming'
   const failed = message.status === 'failed'
   const reasoning = typeof message.reasoning === 'string' ? message.reasoning : ''
@@ -75,7 +78,7 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
         ) : null}
       </div>
 
-      {waiting ? <Activity waiting announce={false} label={UI.turn.thinking(name)} className="py-1" /> : null}
+      {waiting && activity ? <Activity waiting announce={false} label={UI.turn.thinking(name)} className="py-1" /> : null}
 
       {reasoning ? (
         <Reasoning

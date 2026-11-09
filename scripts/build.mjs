@@ -61,6 +61,12 @@ if (keybinds.status !== 0) process.exit(keybinds.status ?? 1)
 const overlay = spawnSync(process.execPath, [resolve(root, 'scripts/check-overlay-unmount.mjs')], { stdio: 'inherit' })
 if (overlay.status !== 0) process.exit(overlay.status ?? 1)
 
+// 0g. The timeout gate (lot 14): `host.request` dies at 30 s, and a session call whose backend is cold needs minutes.
+//     session.resume / session.create / prompt.submit must ask for 60 s or more; the helper in src/lib/hermes.js is the
+//     one door. Cheap (regex + a small argument scanner), so it runs with the other static gates.
+const timeouts = spawnSync(process.execPath, [resolve(root, 'scripts/check-request-timeouts.mjs')], { stdio: 'inherit' })
+if (timeouts.status !== 0) process.exit(timeouts.status ?? 1)
+
 // 1. Tailwind v4 → one stylesheet. app.css pulls `tailwindcss/theme` + `tailwindcss/utilities` in (never the full
 //    `tailwindcss`, whose Preflight is a global reset) and Glaze's own scoped entry.
 const compiled = await postcss([tailwind()]).process(readFileSync(from, 'utf8'), { from, to: cssOut })

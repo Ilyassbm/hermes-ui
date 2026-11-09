@@ -8,7 +8,7 @@
 // The styles live in src/styles/rail.css, on Glaze's tokens, scoped to .glaze: the shapes the spec pins (280, 38, 62,
 // 72×102) are hand-set, and the lint stays at zero because no rule of it is restyled through a className.
 import { cloneElement, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactElement, type ReactNode } from 'react'
-import { Icon, Add, ChevronDown, ChevronRight, Search, Time } from '@/components/glaze/icon'
+import { Icon, Add, ChevronDown, ChevronRight, Search, Settings, Time } from '@/components/glaze/icon'
 import { ActivityArc } from '@/components/glaze/ai/activity'
 import { Badge } from '@/components/glaze/ui/badge'
 import { Button } from '@/components/glaze/ui/button'
@@ -32,9 +32,10 @@ import { setReplaceNative } from './native-takeover'
 import { BotAvatar } from './bot-avatar'
 import { botIdentity, botRole, sinceLabel } from './format'
 import { capsOf } from './keys'
+import { openSettings } from './settings-link'
 import { UI } from './strings'
 import { openPicker } from './ui-state'
-import { usageCards, UsageCards } from './usage'
+import { usageCards, UsageMeters } from './usage'
 import { useBots } from './use-bots'
 
 type Row = {
@@ -127,6 +128,16 @@ export function Rail({ ctx }: { ctx: any }) {
       <div className="hui-rail-top">
         <AppMenu ctx={ctx} />
         <div className="hui-rail-actions">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={<div role="button" tabIndex={0} className="hui-icon-btn hui-rail-gear" aria-label={UI.rail.settings} onClick={() => openSettings()} onKeyDown={enter(() => openSettings())} />}
+              >
+                <Icon icon={Settings} size={14} />
+              </TooltipTrigger>
+              <TooltipContent>{UI.rail.settings}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger
@@ -256,7 +267,7 @@ export function Rail({ ctx }: { ctx: any }) {
       </div>
 
       <div className="hui-rail-foot">
-        <UsageCards cards={usageCards(usage)} />
+        <UsageMeters cards={usageCards(usage)} ctx={ctx} />
       </div>
     </aside>
   )
@@ -286,7 +297,7 @@ function AppMenu({ ctx }: { ctx: any }) {
       <DropdownMenuContent align="start" side="bottom" size="sm">
         <DropdownMenuGroup>
           <DropdownMenuLabel>Hermes</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => run('nav.settings')}>
+          <DropdownMenuItem onClick={() => openSettings()}>
             {UI.rail.settings}
             <DropdownMenuShortcut keys={['⌘', ',']} />
           </DropdownMenuItem>
