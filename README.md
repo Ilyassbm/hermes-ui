@@ -125,6 +125,16 @@ node scripts/build.mjs --install   # publish into a local Hermes home
 `desktop/plugin.js` is a committed artefact: the app loads it as-is, so it is rebuilt and committed with every change
 under `src/`.
 
+The UI linter reads `ui-policy.json` (fonts, sizes, control gaps, viewports) and the `data-ui-*` markers in the JSX.
+Serve the page, then check it at a viewport and a colour scheme:
+
+```bash
+npm run lint:ui -- --url http://localhost:3000 --viewport 390x844 --scheme light
+```
+
+`--out` writes the JSON report (default `cache/lint-ui.json`), `--keep` saves the screenshot beside it, `--ready` sets
+the selector that marks the page ready (default `.glaze`). Exit codes: 0 passed, 1 findings, 2 did not finish.
+
 ## Credits
 
 - Glaze design system by design.how (MIT).

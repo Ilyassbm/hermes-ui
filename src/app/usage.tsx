@@ -163,7 +163,7 @@ export function UsageMeters({ cards, ctx }: { cards: UsageCard[]; ctx: any }) {
             >
               <ProviderLogo provider={card.id} size={12} className="hui-usage-logo" />
               <span className="hui-usage-name">{card.name}</span>
-              <span className="hui-usage-value">{UI.usage.compact(card.binding.short, card.binding.used)}</span>
+              <span className="hui-usage-value" data-ui-number="">{UI.usage.compact(card.binding.short, card.binding.used)}</span>
               <span className="hui-usage-bar" aria-hidden="true">
                 <span
                   className={`hui-usage-bar-fill ${fillClass(card.binding.used)}`}
@@ -178,7 +178,7 @@ export function UsageMeters({ cards, ctx }: { cards: UsageCard[]; ctx: any }) {
                   {/* The whole label across the panel, then the reset and the percentage at the inline end. */}
                   <div className="hui-usage-meta">
                     <p className="hui-usage-label">{row.label}</p>
-                    <p className="hui-usage-reset">{row.reset ? `${row.reset}  ${row.used} %` : `${row.used} %`}</p>
+                    <p className="hui-usage-reset" data-ui-number="">{row.reset ? `${row.reset}  ${row.used} %` : `${row.used} %`}</p>
                   </div>
                   <div className="hui-usage-track" role="presentation">
                     <div

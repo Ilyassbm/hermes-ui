@@ -960,7 +960,7 @@ function PromptInput({
         : <div data-hui-part="prompt-input-body" className="flex min-w-0 gap-1.5 px-3 pt-2.5 pb-2">{shellPrompt}{editorEl}</div>}
     </div>
 
-    {!inline && <div data-hui-part="prompt-input-toolbar" className="@container/prompt-toolbar flex min-h-(--control-sm) min-w-0 flex-wrap items-center gap-1 pt-(--shell-inset)">
+    {!inline && <div data-hui-part="prompt-input-toolbar" data-ui-container="" data-ui-actions="" className="@container/prompt-toolbar flex min-h-(--control-sm) min-w-0 flex-wrap items-center gap-1 pt-(--shell-inset)">
       {/* The tools lead when the caller says so (the model picker, lot 14): DOM, visual and focus order agree. */}
       {toolsFirst && tools ? <>{toolsEl('shrink-0')}{attachEl}</> : <>{attachEl}{toolsEl('flex-1 basis-0 overflow-x-auto [scrollbar-width:none]')}</>}
       {!tools && <span aria-hidden className="flex-1"/>}

@@ -216,7 +216,7 @@ export function Rail({ ctx }: { ctx: any }) {
           </div>
           <div className="hui-team-body" id="hui-team-body">
             <div>
-              <div role="listbox" aria-label={UI.rail.teamLabel}>
+              <div role="listbox" aria-label={UI.rail.teamLabel} data-ui-stack="">
                 {team.map(row => (
                   <BotContextMenu
                     key={row.name}
@@ -252,7 +252,7 @@ export function Rail({ ctx }: { ctx: any }) {
                               {UI.rail.waiting}
                             </Badge>
                           ) : sinceLabel(row.active) ? (
-                            <span className="hui-row-time">{sinceLabel(row.active)}</span>
+                            <span className="hui-row-time" data-ui-number="">{sinceLabel(row.active)}</span>
                           ) : null}
                         </span>
                         {row.output ? <span className="hui-row-output">{row.output}</span> : null}

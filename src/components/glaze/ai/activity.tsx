@@ -340,7 +340,7 @@ function ActivityGroup({summary, meta, live = false, open, defaultOpen = false, 
   >
     <CollapsiblePrimitive.Trigger data-hui-part="activity-group-trigger" className={rowVariants({size})} {...force}>
       <Disclosure open/>
-      <span data-hui-part="activity-group-summary" className="min-w-0 truncate text-text-2">{summary}</span>
+      <span data-hui-part="activity-group-summary" data-ui-number="" className="min-w-0 truncate text-text-2 data">{summary}</span>
       <span data-hui-part="activity-group-meta" className="flex shrink-0 items-center gap-2 text-text-2 data empty:hidden">
         {meta ?? (live ? <ActivityArc/> : null)}
       </span>

@@ -73,18 +73,23 @@ function Choice({
   label,
   value,
   options,
+  numbered = false,
   onChange
 }: {
   label: string
   value: string
   options: Option[]
+  /** The options print a number (a reading measure): tabular digits, marked for the UI linter. */
+  numbered?: boolean
   onChange: (next: string) => void
 }) {
   return (
     <SegmentedControl size="sm" value={value} onValueChange={onChange} aria-label={label}>
       {options.map(([option, text]) => (
         <Fragment key={option}>
-          <SegmentedControlItem value={option}>{text}</SegmentedControlItem>
+          <SegmentedControlItem value={option}>
+            {numbered ? <span className="data" data-ui-number="">{text}</span> : text}
+          </SegmentedControlItem>
         </Fragment>
       ))}
     </SegmentedControl>
@@ -163,7 +168,7 @@ export function SettingsPage({ ctx }: { ctx: any }) {
           <p className="hui-set-intro">{UI.settings.intro}</p>
         </header>
 
-        <section className="hui-set-section" aria-labelledby="hui-set-appearance">
+        <section className="hui-set-section" data-ui-stack="" aria-labelledby="hui-set-appearance">
           <h2 className="hui-set-h" id="hui-set-appearance">
             {UI.settings.appearance}
           </h2>
@@ -177,7 +182,7 @@ export function SettingsPage({ ctx }: { ctx: any }) {
           />
           <Row
             label={UI.settings.measure}
-            control={<Choice label={UI.settings.measure} value={String(prefs.measure)} options={MEASURES} onChange={measure => saveSettings(ctx, { measure: Number(measure) as MeasureChoice })} />}
+            control={<Choice label={UI.settings.measure} value={String(prefs.measure)} options={MEASURES} numbered onChange={measure => saveSettings(ctx, { measure: Number(measure) as MeasureChoice })} />}
           />
           <Row
             label={UI.settings.animations}
@@ -185,7 +190,7 @@ export function SettingsPage({ ctx }: { ctx: any }) {
           />
         </section>
 
-        <section className="hui-set-section" aria-labelledby="hui-set-chat">
+        <section className="hui-set-section" data-ui-stack="" aria-labelledby="hui-set-chat">
           <h2 className="hui-set-h" id="hui-set-chat">
             {UI.settings.chat}
           </h2>
@@ -234,7 +239,7 @@ export function SettingsPage({ ctx }: { ctx: any }) {
           />
         </section>
 
-        <section className="hui-set-section" aria-labelledby="hui-set-shortcuts">
+        <section className="hui-set-section" data-ui-stack="" aria-labelledby="hui-set-shortcuts">
           <h2 className="hui-set-h" id="hui-set-shortcuts">
             {UI.settings.shortcuts}
           </h2>
@@ -254,11 +259,11 @@ export function SettingsPage({ ctx }: { ctx: any }) {
           </div>
         </section>
 
-        <section className="hui-set-section" aria-labelledby="hui-set-about">
+        <section className="hui-set-section" data-ui-stack="" aria-labelledby="hui-set-about">
           <h2 className="hui-set-h" id="hui-set-about">
             {UI.settings.about}
           </h2>
-          <Row label={UI.settings.version} control={<span className="hui-set-value">{pkg.version}</span>} />
+          <Row label={UI.settings.version} control={<span className="hui-set-value" data-ui-number="">{pkg.version}</span>} />
           <Row
             label={UI.settings.repository}
             control={

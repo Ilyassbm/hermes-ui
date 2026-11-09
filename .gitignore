@@ -3,3 +3,5 @@ dist/
 __pycache__/
 # Tailwind output, rebuilt by scripts/build.mjs
 src/styles/.compiled.css
+# lintapple reports (npm run lint:ui)
+cache/

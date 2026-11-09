@@ -200,7 +200,7 @@ function ReasoningTrigger({className, label, children, ...props}: TriggerProps) 
   >
     <Disclosure open/>
     {children ?? <>
-      <ActivityText active={streaming} className={cn('max-w-full min-w-0 shrink-0 truncate text-text-2')}>{text}</ActivityText>
+      <ActivityText active={streaming} data-ui-number="" className={cn('max-w-full min-w-0 shrink-0 truncate text-text-2 data')}>{text}</ActivityText>
       {/* Folded, the newest heading follows the time spent; streaming, it is the label itself. */}
       <span data-hui-part="reasoning-heading" className="min-w-0 truncate text-text-2 empty:hidden">{!streaming && !label ? heading : null}</span>
       <span data-hui-part="reasoning-status" className="flex shrink-0 items-center justify-end whitespace-nowrap text-text-2">

@@ -290,7 +290,7 @@ function FileBlock({code, language = 'text', filename, header = true, lineNumber
             const n = startLine + i;
             const on = marked.has(n);
             return <span key={i} data-hui-part="code-block-line" data-highlighted={on || undefined} className={cn('flex pe-3', !lineNumbers && 'ps-3', on && 'bg-pressed forced-colors:outline forced-colors:outline-1 forced-colors:-outline-offset-1')}>
-              {lineNumbers && <span aria-hidden className={cn('sticky start-0 w-(--gutter) shrink-0 ps-3 pe-3 text-end text-text-2 select-none', on ? 'bg-transparent text-text-1' : 'bg-code-surface')} style={{'--gutter': `calc(${digits}ch + var(--space-6))`} as CSSProperties}>{n}</span>}
+              {lineNumbers && <span aria-hidden data-ui-number="" className={cn('sticky start-0 w-(--gutter) shrink-0 ps-3 pe-3 text-end text-text-2 select-none', on ? 'bg-transparent text-text-1' : 'bg-code-surface')} style={{'--gutter': `calc(${digits}ch + var(--space-6))`} as CSSProperties}>{n}</span>}
               {/* "Highlighted" is generated content: read aloud, never selected or copied. */}
               <span className={cn('min-w-0 flex-1', wrap ? 'whitespace-pre-wrap [overflow-wrap:anywhere]' : 'whitespace-pre', on && "before:sr-only before:content-['Highlighted:_']")}><TokenLine tokens={tokens}/></span>
             </span>;

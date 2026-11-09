@@ -101,6 +101,7 @@ function MessageMeta({className, ...props}: React.ComponentProps<'span'>) {
 function MessageTime({className, ...props}: React.ComponentProps<'time'>) {
   return <time
     data-hui-part="message-time"
+    data-ui-number=""
     className={cn('ms-auto w-12 shrink-0 truncate text-end type-caption text-text-2 data [[data-hui-part=message-status]~&]:ms-0', className)}
     {...props}
   />;
@@ -195,7 +196,7 @@ function MessageWorked({duration, time, labels, className, ...props}: Omit<React
   labels?: MessageWorkedLabels;
 }) {
   const words = {...workedLabels, ...labels};
-  return <span data-hui-part="message-worked" className={cn('ms-2 me-1 inline-flex min-w-0 items-baseline gap-1.5 truncate type-caption text-text-2 data', className)} {...props}>
+  return <span data-hui-part="message-worked" data-ui-number="" className={cn('ms-2 me-1 inline-flex min-w-0 items-baseline gap-1.5 truncate type-caption text-text-2 data', className)} {...props}>
     {duration && <span className="min-w-0 truncate">{words.worked(duration)}{time && ','}</span>}
     {time && <span className="shrink-0">{time}</span>}
   </span>;

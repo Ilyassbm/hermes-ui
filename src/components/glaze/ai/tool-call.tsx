@@ -443,7 +443,7 @@ function CappedOutput({text, lines, chars = 20_000, labels}: {text: string; line
 
 /** "+12 −3": the lines a patch added and removed, with the words a screen reader hears instead of the signs. */
 function DiffCount({added, removed, addedLabel = 'added', removedLabel = 'removed', className}: {added: number; removed: number; addedLabel?: string; removedLabel?: string; className?: string}) {
-  return <span data-hui-part="diff-count" dir="ltr" className={cn('data', className)}><span aria-hidden>+</span>{added}<span className="sr-only"> {addedLabel}</span> <span aria-hidden>−</span>{removed}<span className="sr-only"> {removedLabel}</span></span>;
+  return <span data-hui-part="diff-count" data-ui-number="" dir="ltr" className={cn('data', className)}><span aria-hidden>+</span>{added}<span className="sr-only"> {addedLabel}</span> <span aria-hidden>−</span>{removed}<span className="sr-only"> {removedLabel}</span></span>;
 }
 
 /** The first lines of a unified patch, signed, with counts. */
@@ -573,11 +573,11 @@ function ToolCall({call, size = 'default', onReply, actions, label, doneLabel, d
     const full = command ?? patterns ?? (call.input && firstOf(call.input, useful)) ?? detail;
     const question = typeof r.confirm === 'function' ? r.confirm(call.input ?? {}, call) : r.confirm ?? `${r.ask} this ${r.noun}?`;
     const footer = onReply
-      ? <CardFooter data-hui-part="tool-call-actions">
+      ? <CardFooter data-hui-part="tool-call-actions" data-ui-container="" data-ui-actions="">
           <Button size="sm" variant="secondary" onClick={() => onReply('reject')}>{words.deny}</Button>
           <Button size="sm" variant="confirm" onClick={() => onReply('once')}>{words.allow}</Button>
         </CardFooter>
-      : actions ? <CardFooter data-hui-part="tool-call-actions">{actions}</CardFooter> : null;
+      : actions ? <CardFooter data-hui-part="tool-call-actions" data-ui-container="" data-ui-actions="">{actions}</CardFooter> : null;
     return <div {...shared} {...props} ref={rootRef} className={cn(rootClass, 'my-1')}>
       <Card data-hui-part="tool-call-approval" role="group" aria-labelledby={titleId}>
         <CardHeader><CardTitle id={titleId} data-hui-part="tool-call-title">{question}</CardTitle></CardHeader>
@@ -617,7 +617,7 @@ function ToolCall({call, size = 'default', onReply, actions, label, doneLabel, d
       title={typeof detail === 'string' ? detail : undefined}
       className={cn('min-w-12 truncate text-start text-text-1 max-sm:overflow-visible max-sm:whitespace-normal max-sm:[overflow-wrap:anywhere]', mono && 'mono', !detail && 'min-w-0')}
     >{detailShown}</span>
-    <span data-hui-part="tool-call-end" className="flex shrink-0 items-center gap-2 whitespace-nowrap text-text-2 data empty:hidden">{end}</span>
+    <span data-hui-part="tool-call-end" data-ui-number="" className="flex shrink-0 items-center gap-2 whitespace-nowrap text-text-2 data empty:hidden">{end}</span>
     <Disclosure open={expands} end/>
   </>;
 

@@ -209,7 +209,7 @@ function PromptQueue({items, onEdit, onSendNow, onRemove, onRetry, onMove, editi
     className={cn('panel relative flex min-w-0 flex-col overflow-hidden', className)}
     {...props}
   >
-    <p id={id} className="flex min-h-(--control) items-center px-3 type-caption text-text-2 data rule-row" aria-live="polite">{words.summary(items.length, halted)}</p>
+    <p id={id} className="flex min-h-(--control) items-center px-3 type-caption text-text-2 data rule-row" data-ui-number="" aria-live="polite">{words.summary(items.length, halted)}</p>
     <ol aria-labelledby={id} className="flex flex-col">
       {items.map((item, i) => <QueueRow
         key={item.id}

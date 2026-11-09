@@ -63,7 +63,7 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
   }
 
   return (
-    <div className="hui-hdr">
+    <div className="hui-hdr" data-ui-container="" data-ui-actions="">
       <div className="hui-hdr-tabs" role="tablist" aria-label={UI.header.conversations(name)}>
         <div
           role="tab"
@@ -124,7 +124,7 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
                     {inGroup.map(s => (
                       <DropdownMenuItem key={s.id} onClick={() => void openConversation(s.id)}>
                         <span className="hui-conv-title">{s.title || UI.header.conversation}</span>
-                        <span className="hui-conv-time">{sinceLabel(s.at)}</span>
+                        <span className="hui-conv-time" data-ui-number="">{sinceLabel(s.at)}</span>
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuGroup>

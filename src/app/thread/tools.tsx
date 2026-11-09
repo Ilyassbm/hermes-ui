@@ -315,6 +315,11 @@ registerTool(
       const tasks = Array.isArray(input.tasks) ? input.tasks : null
       if (tasks) return UI.tools.tasks(tasks.length)
       return str(input.description)
+    },
+    // The count of tasks is a number the person reads: tabular digits, marked for the UI linter.
+    detailNode: input => {
+      const tasks = Array.isArray(input.tasks) ? input.tasks : null
+      return tasks ? <span className="data" data-ui-number="">{UI.tools.tasks(tasks.length)}</span> : undefined
     }
   }
 )

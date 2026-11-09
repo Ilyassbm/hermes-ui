@@ -94,7 +94,7 @@ export const { registry, handlers } = defineRegistry(catalog, {
           </CardHeader>
           {body.length ? <CardContent>{body}</CardContent> : null}
           {actions.length || props.meta ? (
-            <CardFooter>
+            <CardFooter data-ui-container="" data-ui-actions="">
               {props.meta ? <CardMeta>{props.meta}</CardMeta> : null}
               {actions}
             </CardFooter>
