@@ -212,6 +212,14 @@ export function toTurns(raw) {
       closeTurn()
       const text = stripAttachmentMarkers(textOf(m.content))
       if (!text.trim()) continue
+      // A system notice the gateway delivered as a user row ("[IMPORTANT: 2 background processes completed…]") is not
+      // something the person said. It keeps its place in the transcript as one quiet line, never as a bubble with the
+      // whole payload printed inside it.
+      if (/^\s*\[IMPORTANT:/i.test(text)) {
+        const head = text.split('\n').find(line => line.trim()) || text
+        turns.push({ id: m.message_uid || nid('u'), role: 'note', text: head.trim().slice(0, 160), at: (m.timestamp || 0) * 1000 })
+        continue
+      }
       turns.push({ id: m.message_uid || nid('u'), role: 'user', text, at: (m.timestamp || 0) * 1000 })
       continue
     }
