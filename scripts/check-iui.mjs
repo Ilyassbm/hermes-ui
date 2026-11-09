@@ -94,7 +94,7 @@ const deep = { root: 'd0', elements: {} }
 for (let i = 0; i < 40; i++) deep.elements[`d${i}`] = { type: i ? 'Text' : 'Stack', props: i ? { text: `niveau ${i}` } : { direction: 'column' }, ...(i < 39 ? { children: [`d${i + 1}`] } : {}) }
 const deepClean = sanitizeSpec(deep)
 const deepCount = deepClean.spec ? Object.keys(deepClean.spec.elements).length : 0
-check('profondeur coupée à 12 niveaux', deepCount === LIMITS.depth + 1 && deepClean.issues.some(issue => issue.reason.includes('niveaux')), `${deepCount} niveaux gardés`)
+check('profondeur coupée à 12 niveaux', deepCount === LIMITS.depth && deepClean.issues.some(issue => /level/i.test(issue.reason)), `${deepCount} niveaux gardés`)
 
 // 5. A string past the limit is cut, not dropped.
 const longText = sanitizeSpec({ root: 'r', elements: { r: { type: 'Text', props: { text: 'a'.repeat(5000) } } } })

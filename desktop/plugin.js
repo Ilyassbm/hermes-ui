@@ -51331,7 +51331,7 @@ function SY(e) {
   for (; s.length; ) {
     let { key: u, depth: d } = s.shift();
     if (i.has(u)) continue;
-    if (i.add(u), d > pp.depth) {
+    if (i.add(u), d >= pp.depth) {
       t.push({ at: `/${u}`, reason: `deeper than ${pp.depth} levels` });
       continue;
     }
@@ -60168,7 +60168,7 @@ import { Fragment as eve, useEffect as tve, useMemo as rve, useState as uX } fro
 var cX = {
   name: "hermes-ui",
   private: !0,
-  version: "1.2.3",
+  version: "1.2.4",
   type: "module",
   scripts: {
     build: "node scripts/build.mjs",

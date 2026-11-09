@@ -54,7 +54,8 @@ export function sanitizeSpec(raw: unknown): IuiResult {
     const { key, depth } = queue.shift()!
     if (seen.has(key)) continue
     seen.add(key)
-    if (depth > LIMITS.depth) {
+    // Depths are 0-based: a chain of 12 levels is depths 0…11. Letting depth 12 through made a 13-level chain.
+    if (depth >= LIMITS.depth) {
       issues.push({ at: `/${key}`, reason: `deeper than ${LIMITS.depth} levels` })
       continue
     }

@@ -2,7 +2,7 @@
   "name": "hermes-ui",
   "label": "Hermes UI",
   "description": "Backend of the Hermes UI chat page (subscription usage).",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "tab": {
     "hidden": true
   },
