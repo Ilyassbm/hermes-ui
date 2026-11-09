@@ -134,7 +134,26 @@ export function checkNativeSkin(css) {
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]
 if (isMain) {
   const file = process.argv[2] ?? DEFAULT_FILE
-  const css = readFileSync(file, 'utf8')
+  // `.compiled.css` is a build artifact and is not committed, so on a fresh clone this standalone run has nothing to
+  // read yet. Say so and still check the one sheet that ships by hand rather than failing a gate nobody can satisfy
+  // without a build. `npm run build` runs the same assertion on the real output, and fails it there.
+  let css = ''
+  try {
+    css = readFileSync(file, 'utf8')
+  } catch (e) {
+    if (e?.code !== 'ENOENT') throw e
+    console.log(`check-css: ${file} is not built yet — skipping the compiled assertion (npm run build enforces it)`)
+  }
+  if (!css) {
+    const skinOnly = checkNativeSkin(readFileSync(NATIVE_SKIN_FILE, 'utf8'))
+    if (skinOnly.errors.length) {
+      console.error(`check-css: ${skinOnly.errors.length} problem(s) in ${NATIVE_SKIN_FILE}`)
+      for (const error of skinOnly.errors.slice(0, 20)) console.error(`  ${error}`)
+      process.exit(1)
+    }
+    console.log(`check-css: OK — ${NATIVE_SKIN_FILE} is ${skinOnly.bytes} bytes, ${skinOnly.rules} rules, all guarded`)
+    process.exit(0)
+  }
   const found = findGlobalSelectors(css)
   if (found.length) {
     console.error(`check-css: ${found.length} global selector(s) escape .glaze in ${file}`)
