@@ -147,6 +147,7 @@ the selector that marks the page ready (default `.glaze`). Exit codes: 0 passed,
 
 - Glaze design system by design.how (MIT).
 - aicss avatar engine (MIT, vendored with its LICENSE in `src/vendor/aicss`).
+- thinking-state and thinking-reasoning motion adapted from aicss (MIT).
 - Layout inspiration from OpenBot (no code copied, PolyForm Noncommercial).
 
 ## License

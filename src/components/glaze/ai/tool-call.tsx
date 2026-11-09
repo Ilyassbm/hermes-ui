@@ -609,7 +609,8 @@ function ToolCall({call, size = 'default', onReply, actions, label, doneLabel, d
 
   const row = <>
     <StepGlyph state={glyph}/>
-    <span data-hui-part="tool-call-label" className="shrink-0 text-text-2">{denied ? word : text}</span>
+    {/* The verb of a running call carries the live shimmer; its target and its time stay plain ink (lot 21). */}
+    <span data-hui-part="tool-call-label" className={running ? 'hui-shimmer shrink-0 text-text-2' : 'shrink-0 text-text-2'}>{denied ? word : text}</span>
     {/* The target truncates first, down to 48px. On a phone it wraps to a second line instead, so the meaning stays. */}
     <span
       data-hui-part="tool-call-detail"

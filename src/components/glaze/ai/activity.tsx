@@ -63,12 +63,13 @@ type ActivityTextProps = useRender.ComponentProps<'span'> & {
   active?: boolean;
 };
 
-/** A live phrase. It stays still in its own colour; the arc beside it shows the work is live. */
+/** A live phrase. While the work is live it carries aicss's label-shine (a 300% gradient swept under the glyphs, 2.25s,
+ *  cut under reduced motion); a settled phrase is plain ink. The arc beside it is the other half of "running". */
 function ActivityText({active = true, className, render, children, ...props}: ActivityTextProps) {
   return useRender({
     defaultTagName: 'span',
     props: mergeProps<'span'>(
-      {className: cn(className), children},
+      {className: cn(active && 'hui-shimmer', className), children},
       {'data-hui-part': 'activity-text', 'data-active': active || undefined} as React.ComponentProps<'span'>,
       props,
     ),

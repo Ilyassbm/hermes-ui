@@ -16,6 +16,8 @@
 @import "./aside.css";
 /* The Settings ▸ Plugins page, and the density / motion switches it owns. */
 @import "./settings.css";
+/* Lot 21: the aicss shimmer on a live label and the reasoning block it folds into (40px lines, 180px pane, 320ms). */
+@import "./thinking.css";
 /* The vendored aicss avatar: its identity colours, scoped to .hui-bot. */
 @import "./bot.css";
 

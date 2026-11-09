@@ -3,10 +3,9 @@
 // The order is Glaze's fixed one — reasoning, tool calls, the answer, the footer — and every section but the answer is
 // optional. The turn owns its own tool-call list: the store appends the actions (`tool-events`), this component replays
 // them through Glaze's reducer, so a finished call folds away without a state machine of its own.
-import { useEffect, useReducer, useRef, useState } from 'react'
+import { useEffect, useReducer, useRef } from 'react'
 import { Activity } from '@/components/glaze/ai/activity'
 import { AgentTurn, MessageFooter } from '@/components/glaze/ai/message'
-import { Reasoning } from '@/components/glaze/ai/reasoning'
 import { Response } from '@/components/glaze/ai/response'
 import { ToolCallList, toolCallsReducer, type ToolCallData } from '@/components/glaze/ai/tool-call'
 import { Button } from '@/components/glaze/ui/button'
@@ -18,6 +17,7 @@ import { settings } from '../settings-state'
 import { UI } from '../strings'
 import { IUI_TAGS } from '../iui/block'
 import { BotAvatar } from '../bot-avatar'
+import { Thinking } from './thinking'
 import { emptyCalls, turnReducer, type ToolAction } from './tool-events'
 import { TOOL_LABELS } from './tools'
 
@@ -56,9 +56,6 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
   // the turn says what it is doing itself, so the line goes.
   const waiting = streaming && !text && !reasoning && calls.length === 0
   const thinking = message.thinkStart && message.thinkEnd ? Math.max(0, (message.thinkEnd - message.thinkStart) / 1000) : undefined
-  // The reasoning stays folded while it streams: the header already says "Thinking…" with the arc, and a wall of
-  // thought scrolling under the answer is not what the turn is for. Opening it is the person's click alone.
-  const [reasoningOpen, setReasoningOpen] = useState(false)
 
   return (
     <AgentTurn
@@ -81,15 +78,13 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
       {waiting && activity ? <Activity waiting announce={false} label={UI.turn.thinking(name)} className="py-1" /> : null}
 
       {reasoning ? (
-        <Reasoning
+        <Thinking
+          id={String(message.id ?? '')}
+          text={reasoning}
           streaming={streaming && !text}
           duration={thinking}
-          open={reasoningOpen}
-          onOpenChange={setReasoningOpen}
           labels={{ thinking: UI.turn.reasoning.thinking, thoughtFor: time => UI.turn.reasoning.thoughtFor(humanDuration(time)), moment: UI.turn.reasoning.moment, stoppedEarly: UI.turn.reasoning.stoppedEarly }}
-        >
-          {reasoning}
-        </Reasoning>
+        />
       ) : null}
 
       {calls.length ? (

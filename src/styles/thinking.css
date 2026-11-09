@@ -1,0 +1,240 @@
+/* Lot 21 — the two pieces of aicss's thinking pair, on Glaze's tokens: the live label's shimmer (thinking-state) and
+   the reasoning block (thinking-reasoning). Plain CSS beside rail.css and shell.css, every selector under .glaze, so
+   nothing reaches the native app and the build's check-css gate stays green.
+
+   Colour comes from the theme only: --text-2 for the label, the line and the chevron, --text-3 for the chevron at rest,
+   --hover for the wash under the pointer. No hex anywhere; the one `black` below is a mask's opaque stop, which is an
+   alpha channel, not ink.
+
+   Geometry from aicss, kept as the spec pins it: a reasoning line is 40px (2 × 20px), lines sit 4px apart, the pane
+   stops growing at 180px and then scrolls, each soft edge is 16px tall, the fold is 320ms on cubic-bezier(.22, 1, .36,
+   1), and the shimmer sweeps a 300% gradient over 2.25s. */
+
+/* ---------- 1. The shimmer (aicss thinking-state) ---------- */
+
+/* A soft brightness valley crossing the words: the gradient is three times the label's width, clipped to the glyphs,
+   and slides from 100% to 0% — 2.25s, the same curve and the same 18%/82% holds as aicss's label-shine. */
+.glaze .hui-shimmer {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(
+    90deg,
+    var(--text-2) 0%,
+    var(--text-2) 30%,
+    color-mix(in srgb, var(--text-2) 45%, transparent) 45%,
+    color-mix(in srgb, var(--text-2) 45%, transparent) 55%,
+    var(--text-2) 70%,
+    var(--text-2) 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: hui-label-shine 2.25s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+}
+
+@keyframes hui-label-shine {
+  0%, 18% { background-position: 100% 0; }
+  82%, 100% { background-position: 0% 0; }
+}
+
+/* ---------- 2. The reasoning block (aicss thinking-reasoning) ---------- */
+
+/* Header (32px, the turn's row), then the pane. The block fades in on 320ms while it is live, like tr-block-in. */
+.glaze .hui-think {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.glaze .hui-think[data-state='streaming'] {
+  animation: hui-think-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes hui-think-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* The row bleeds 8px into the gutter so the wash has room, exactly as the turn's other rows do. Only the finished
+   block is a button; while the thought streams the line is words, and nothing pretends to open. */
+.glaze .hui-think-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  max-width: calc(100% + 16px);
+  min-height: var(--control);
+  margin-inline: -8px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-tag);
+  background: transparent;
+  font: inherit;
+  color: var(--text-2);
+  text-align: start;
+  cursor: default;
+}
+
+.glaze .hui-think-head.is-clickable {
+  cursor: pointer;
+  transition: background-color var(--dur-state) var(--ease-out);
+}
+
+.glaze .hui-think-head.is-clickable:hover {
+  background: var(--hover);
+}
+
+.glaze .hui-think-label {
+  /* --type-label is 13px/1.35; aicss's label sits on 18px, which is what the chevron aligns to. */
+  font: var(--type-label);
+  line-height: 18px;
+  letter-spacing: -0.005em;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Base path points up; folded, the chevron points down. Turning it is the 320ms fold's companion. */
+.glaze .hui-think-chevron {
+  flex: none;
+  color: var(--text-3);
+  transform: rotate(180deg);
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1), color var(--dur-state) var(--ease-out);
+}
+
+.glaze .hui-think-head[aria-expanded='true'] .hui-think-chevron {
+  transform: rotate(0deg);
+}
+
+.glaze .hui-think-head.is-clickable:hover .hui-think-chevron {
+  color: var(--text-2);
+}
+
+/* The fold: a grid row from 1fr to 0fr, so the pane keeps its measured height throughout the 320ms and the words
+   slide shut instead of jumping. Opacity follows on 220ms, as aicss has it. */
+.glaze .hui-think-body {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms ease;
+}
+
+.glaze .hui-think-body[data-open='false'] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.glaze .hui-think-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The pane: its height is set inline (content up to 180px), and it grows on the same curve aicss grows it. The JS
+   writes --hui-think-h, --hui-think-y and --hui-think-mask, the three values only the stream knows (how many lines
+   arrived, how far it is pinned, which soft edges show); everything else stays in this sheet. */
+.glaze .hui-think-viewport {
+  height: var(--hui-think-h, 0px);
+  margin-top: 6px;
+  overflow: hidden;
+  -webkit-mask-image: var(--hui-think-mask, none);
+  mask-image: var(--hui-think-mask, none);
+  transition: height 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Handed to the person (the block is open after the thought): the pane scrolls natively and draws no scrollbar, so the
+   words are reachable without a stripe across the column. */
+.glaze .hui-think-viewport[data-scroll='true'] {
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.glaze .hui-think-viewport[data-scroll='true']::-webkit-scrollbar {
+  display: none;
+}
+
+/* The stream is pinned to its newest line while the thought streams: --hui-think-y is what the JS sets, and its 560ms
+   curve is aicss's — the pane's growth and the lines' travel settle together. */
+.glaze .hui-think-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transform: translateY(var(--hui-think-y, 0px));
+  transition: transform 560ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+/* One line: 40px of box on 20px of leading, cut at two lines. */
+.glaze .hui-think-line {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  height: 40px;
+  margin: 0;
+  overflow: hidden;
+  font: var(--type-body-sm);
+  line-height: 20px;
+  letter-spacing: -0.005em;
+  color: var(--text-2);
+  animation: hui-think-line-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes hui-think-line-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------- Reduced motion ---------- */
+
+/* No sweep, no entrance, no turn, no growth: the label is plain --text-2 and every line is there at once. The JS drops
+   its reveal beat too (Settings ▸ Appearance ▸ Motion reads the same preference). The media query answers the OS; the
+   data-motion rules answer the app's own switch, which sets data-motion="reduced" on the .glaze root whatever the OS
+   says. Cutting the gradient is what makes the label readable when it no longer moves: the sweep's base is --text-2
+   already, and `currentColor` paints the glyphs with it instead of leaving them transparent. */
+@media (prefers-reduced-motion: reduce) {
+  .glaze .hui-shimmer {
+    animation: none;
+    background-image: none;
+    color: var(--text-2);
+    -webkit-text-fill-color: currentColor;
+  }
+
+  .glaze .hui-think[data-state='streaming'],
+  .glaze .hui-think-line {
+    animation: none;
+  }
+
+  .glaze .hui-think-chevron,
+  .glaze .hui-think-body,
+  .glaze .hui-think-viewport,
+  .glaze .hui-think-stream,
+  .glaze .hui-think-head.is-clickable {
+    transition: none;
+  }
+}
+
+.glaze[data-motion='reduced'] .hui-shimmer {
+  animation: none;
+  background-image: none;
+  color: var(--text-2);
+  -webkit-text-fill-color: currentColor;
+}
+
+.glaze[data-motion='reduced'] .hui-think[data-state='streaming'],
+.glaze[data-motion='reduced'] .hui-think-line {
+  animation: none;
+}
+
+.glaze[data-motion='reduced'] .hui-think-chevron,
+.glaze[data-motion='reduced'] .hui-think-body,
+.glaze[data-motion='reduced'] .hui-think-viewport,
+.glaze[data-motion='reduced'] .hui-think-stream,
+.glaze[data-motion='reduced'] .hui-think-head.is-clickable {
+  transition: none;
+}
+
+
