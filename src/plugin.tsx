@@ -192,9 +192,19 @@ export default {
     // The rest of the app: the theme first (it needs to be registered before it can be requested), then the chrome,
     // then the takeover — its first pass waits for the gateway by itself. The bot keys' own listener goes with them:
     // the app's dispatcher skips a contributed action inside the composer (see src/app/bot-keys.ts).
-    installBotKeys(ctx, PATH)
-    installTheme(ctx)
-    installNativeChrome(ctx)
-    installTakeover(ctx)
+    // One failing installer must never take the page down with it: the route is registered above, and a throw here
+    // would leave the app on its own home with no Hermes UI at all — which is what a reload occasionally produced.
+    for (const [name, install] of [
+      ['bot keys', installBotKeys],
+      ['theme', installTheme],
+      ['chrome', installNativeChrome],
+      ['takeover', installTakeover]
+    ] as const) {
+      try {
+        ;(install as (c: unknown, path?: string) => void)(ctx, PATH)
+      } catch (e) {
+        console.warn(`[hermes-ui] ${name} installer failed`, e)
+      }
+    }
   }
 }

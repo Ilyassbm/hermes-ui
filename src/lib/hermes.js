@@ -451,7 +451,21 @@ export async function openConversation(storedId) {
         { long: true, bot }
       )
     )
-    const { turns, files } = toTurns(res?.messages)
+    // A resume that answers with no history is not a blank conversation: it is a refusal we would otherwise paint as
+    // "new chat" under an active tab. Try the same call without the profile hint once (a session can live on the
+    // gateway's own profile), then say so instead of showing nothing.
+    let payload = res
+    if (!Array.isArray(payload?.messages) || (!payload.messages.length && (payload?.message_count || 0) > 0)) {
+      const retry = await retryOnce(() =>
+        requestReady('session.resume', { session_id: storedId, cols: 96, source: 'desktop' }, { long: true })
+      ).catch(() => null)
+      if (Array.isArray(retry?.messages) && retry.messages.length) payload = retry
+    }
+    const { turns, files } = toTurns(payload?.messages)
+    if (!turns.length && (payload?.message_count || 0) > 0) {
+      store.set({ loading: false, error: UI.thread.emptyHistory, retryOpen: true })
+      return
+    }
     store.set({
       sid: res?.session_id || storedId,
       storedId: res?.stored_session_id || storedId,

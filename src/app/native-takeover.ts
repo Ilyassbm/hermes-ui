@@ -24,7 +24,10 @@ const GUARD_MS = 500
 /** The launch watch: 20 passes, 400ms apart (8 s). Long enough for the app's own router to restore, short enough
  *  that it is over before a person can miss it. */
 const WATCH_MS = 400
-const WATCH_TRIES = 20
+/** 100 passes, 400 ms apart: 40 s. The app's own router restores its hash late on a cold start (a 2 MB plugin to
+ * evaluate, then the gateway), and it restores it with `replaceState`, which fires no `hashchange` — so a watch that
+ * ends early leaves the app on its native home and the page nowhere. */
+const WATCH_TRIES = 100
 
 type Ctx = any
 

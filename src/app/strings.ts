@@ -265,6 +265,8 @@ export const UI = {
     retry: 'Retry',
     /** The banner after `session.resume` timed out twice; its Retry replays the resume, not the last prompt. */
     resumeFailed: "Couldn't open this conversation — the bot's backend didn't answer in time.",
+    /** The gateway answered, but with no history: a silent blank page under an active tab is the worst answer. */
+    emptyHistory: "This conversation came back empty — the backend knows it but returned no history. Try again, or open it in the native view.",
     /** `prompt.submit` left no session event behind within 5 s: the turn never started. */
     turnNotStarted: "The turn didn't start — no answer came back from the gateway.",
     jumpLatest: 'Jump to latest',
