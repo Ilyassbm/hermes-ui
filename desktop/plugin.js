@@ -13409,8 +13409,8 @@ function hne(e) {
 function bne(e) {
   let t = [], n = [], o = (e || []).map((l) => {
     if (!l || typeof l != "object") return l;
-    let c = l.message && typeof l.message == "object" ? l.message : l, u = c.role ?? l.role ?? l.type, d = u === "human" ? "user" : u === "ai" ? "assistant" : u === "tool_result" ? "tool" : u;
-    return c === l ? { ...l, role: d } : { ...l, ...c, role: d };
+    let c = l.message && typeof l.message == "object" ? l.message : l, u = c.role ?? l.role ?? l.type, d = u === "human" ? "user" : u === "ai" ? "assistant" : u === "tool_result" ? "tool" : u, p = (c.content == null || c.content === "") && typeof c.text == "string" ? c.text : c.content;
+    return { ...l, ...c, role: d, content: p };
   }), r = /* @__PURE__ */ new Map();
   for (let l of o) {
     if (!l || l.role !== "tool") continue;
@@ -60327,7 +60327,7 @@ import { Fragment as tve, useEffect as rve, useMemo as nve, useState as cX } fro
 var lX = {
   name: "hermes-ui",
   private: !0,
-  version: "1.3.5",
+  version: "1.3.6",
   type: "module",
   scripts: {
     build: "node scripts/build.mjs",

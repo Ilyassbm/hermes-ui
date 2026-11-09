@@ -175,7 +175,11 @@ export function toTurns(raw) {
     const inner = m.message && typeof m.message === 'object' ? m.message : m
     const rawRole = inner.role ?? m.role ?? m.type
     const role = rawRole === 'human' ? 'user' : rawRole === 'ai' ? 'assistant' : rawRole === 'tool_result' ? 'tool' : rawRole
-    return inner === m ? { ...m, role } : { ...m, ...inner, role }
+    // Some resume paths answer a display projection: `{role, text, timestamp, row_id}` — no `content` at all. The words
+    // are in `text`, so it becomes the content rather than every row reading as empty (2624 messages, 0 turns).
+    const body = inner.content == null || inner.content === '' ? (typeof inner.text === 'string' ? inner.text : inner.content) : inner.content
+    const next = { ...m, ...inner, role, content: body }
+    return next
   })
   // A tool's result comes as its own message, keyed by the call it answers: index them before walking the turns.
   const results = new Map()
