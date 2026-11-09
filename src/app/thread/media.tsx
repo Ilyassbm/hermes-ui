@@ -77,6 +77,12 @@ function blobFromDataUrl(dataUrl: string): Blob {
 /** Saves a data URL under the file's real name through a temporary `<a download>`, then drops the object URL. */
 function save(dataUrl: string, name: string) {
   const url = URL.createObjectURL(blobFromDataUrl(dataUrl))
+  saveLink(url, name)
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+/** Saves an address the page already owns (a sent File's blob URL): nothing to decode, nothing to revoke here. */
+function saveLink(url: string, name: string) {
   const link = document.createElement('a')
   link.href = url
   link.download = name
@@ -84,7 +90,6 @@ function save(dataUrl: string, name: string) {
   document.body.appendChild(link)
   link.click()
   link.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 // ---------- The split ----------
@@ -271,12 +276,61 @@ function MediaBlock({ path }: { key?: string; path: string }) {
 
   return (
     <FileCard
+      name={fileNameOf(path)}
       path={path}
       size={state.status === 'ready' ? state.size : undefined}
       loading={state.status === 'loading'}
       tooLarge={state.status === 'ready' && Boolean(state.tooLarge)}
       previewable={state.status === 'ready' && !state.tooLarge}
     />
+  )
+}
+
+// ---------- What the person just sent ----------
+
+/** One file of an optimistic user message: the File's own blob URL, no gateway path behind it yet. */
+export type SentFile = {
+  name: string
+  size?: number
+  kind?: string
+  type?: string
+  /** `URL.createObjectURL(file)`, owned and revoked by `src/lib/hermes.js`. */
+  url?: string
+}
+
+/**
+ * The block a sent File gets above the person's text: exactly lot 22's, the image thumbnail with its full-screen
+ * dialog or the file card, except that every byte is local. A file the host could not place gives no URL and is left
+ * to the caller's older rendering — the thread never pretends to hold an image it does not have.
+ */
+export function SentAttachments({ files }: { files: SentFile[] }) {
+  const local = files.filter(file => file.url)
+  if (!local.length) return null
+  return (
+    <div data-hui-part="media-group" data-count={local.length} className={local.length > 1 ? 'hui-media-grid' : 'hui-media-single'}>
+      {local.map((file, index) =>
+        file.kind === 'image' ? (
+          <ImageCard
+            key={`${file.name}-${index}`}
+            name={file.name}
+            src={file.url as string}
+            size={file.size}
+            title={file.name}
+            blob={file.url}
+          />
+        ) : (
+          <FileCard
+            key={`${file.name}-${index}`}
+            name={file.name}
+            size={file.size}
+            loading={false}
+            tooLarge={false}
+            previewable={false}
+            blob={file.url}
+          />
+        )
+      )}
+    </div>
   )
 }
 
@@ -297,39 +351,46 @@ function Unavailable({ path }: { path: string }) {
   )
 }
 
-/** The file card: type, name, size, then Open preview and Download, 8px apart. */
+/**
+ * The file card: type, name, size, then Open preview and Download, 8px apart. `path` is the gateway's own address and
+ * `blob` the URL of a File the person just sent: a sent card has no preview and no route, only that blob.
+ */
 function FileCard({
+  name,
   path,
   size,
   loading,
   tooLarge,
-  previewable
+  previewable,
+  blob
 }: {
-  path: string
+  key?: string
+  name: string
+  path?: string
   size?: number
   loading: boolean
   tooLarge: boolean
   previewable: boolean
+  blob?: string
 }) {
-  const name = fileNameOf(path)
   return (
     <div data-hui-part="media-file" className="hui-media hui-media-file" aria-busy={loading || undefined}>
       <span className="hui-media-glyph" aria-hidden="true">
-        <Icon icon={iconFor(path)} size={16} />
+        <Icon icon={iconFor(path || name)} size={16} />
       </span>
       <div className="hui-media-text">
-        <span className="hui-media-name" title={path}>
+        <span className="hui-media-name" title={path || name}>
           {name}
         </span>
         {loading ? <Skeleton className="h-3 w-12" /> : <span className="hui-media-size">{sizeLabel(size)}</span>}
       </div>
       <div className="hui-media-actions">
-        {previewable ? (
+        {previewable && path ? (
           <Button size="sm" variant="secondary" onClick={() => openPreview(path)}>
             {UI.media.openPreview}
           </Button>
         ) : null}
-        <DownloadButton path={path} disabled={tooLarge} />
+        <DownloadButton name={name} path={path} blob={blob} disabled={tooLarge} />
       </div>
     </div>
   )
@@ -337,20 +398,41 @@ function FileCard({
 
 /** The image: thumbnail, then the name and its size small, and Download beside them. */
 function ImageBlock({ path, dataUrl, size }: { path: string; dataUrl: string; size?: number }) {
-  const name = fileNameOf(path)
+  return <ImageCard name={fileNameOf(path)} src={dataUrl} size={size} title={path} path={path} dataUrl={dataUrl} />
+}
+
+/** One picture, wherever its bytes come from: a `/blob` data URL or a sent File's object URL. */
+function ImageCard({
+  name,
+  src,
+  size,
+  title,
+  path,
+  dataUrl,
+  blob
+}: {
+  key?: string
+  name: string
+  src: string
+  size?: number
+  title: string
+  path?: string
+  dataUrl?: string
+  blob?: string
+}) {
   const [open, setOpen] = useState(false)
   const [zoomed, setZoomed] = useState(false)
   return (
     <figure data-hui-part="media-image" className="hui-media hui-media-image">
       <Button variant="ghost" size="sm" className="hui-media-thumb" aria-label={`${UI.media.openPreview} ${name}`} onClick={() => setOpen(true)}>
-        <img src={dataUrl} alt={name} loading="lazy" />
+        <img src={src} alt={name} loading="lazy" />
       </Button>
       <figcaption className="hui-media-meta">
-        <span className="hui-media-name" title={path}>
+        <span className="hui-media-name" title={title}>
           {name}
         </span>
         <span className="hui-media-size">{sizeLabel(size)}</span>
-        <DownloadButton path={path} dataUrl={dataUrl} />
+        <DownloadButton name={name} path={path} dataUrl={dataUrl} blob={blob} />
       </figcaption>
 
       <Dialog
@@ -362,11 +444,11 @@ function ImageBlock({ path, dataUrl, size }: { path: string; dataUrl: string; si
       >
         <DialogContent className="hui-media-dialog">
           <DialogTitle className="hui-sr">{name}</DialogTitle>
-          <DialogDescription className="hui-sr">{path}</DialogDescription>
+          <DialogDescription className="hui-sr">{title}</DialogDescription>
           <DialogBody className="hui-media-dialog-body">
             {/* A click toggles the size, no transition: reduced motion has nothing to cut. */}
             <Button variant="ghost" size="sm" className={zoomed ? 'hui-media-zoom is-zoom' : 'hui-media-zoom'} aria-label={zoomed ? UI.media.zoomOut : UI.media.zoom} onClick={() => setZoomed(value => !value)}>
-              <img src={dataUrl} alt={name} />
+              <img src={src} alt={name} />
             </Button>
           </DialogBody>
         </DialogContent>
@@ -376,21 +458,26 @@ function ImageBlock({ path, dataUrl, size }: { path: string; dataUrl: string; si
 }
 
 /**
- * Download: the image's data URL is already here; any other file is read from `/blob` on the click. A refused read
- * says so in a toast. Over 8 MiB the button is disabled and its tooltip says why — a wrapper carries the tooltip
- * because a disabled button receives no pointer events.
+ * Download: the image's data URL is already here; any other file is read from `/blob` on the click, and a file the
+ * person just sent downloads from its own blob URL without asking the backend at all. A refused read says so in a
+ * toast. Over 8 MiB the button is disabled and its tooltip says why — a wrapper carries the tooltip because a disabled
+ * button receives no pointer events.
  */
-function DownloadButton({ path, dataUrl, disabled = false }: { path: string; dataUrl?: string; disabled?: boolean }) {
+function DownloadButton({ name, path, dataUrl, blob, disabled = false }: { name: string; path?: string; dataUrl?: string; blob?: string; disabled?: boolean }) {
   const [busy, setBusy] = useState(false)
   const download = async () => {
     if (busy) return
     setBusy(true)
     try {
-      const url = dataUrl || (await rest(`/blob?path=${encodeURIComponent(path)}`))?.dataUrl
+      if (blob) {
+        saveLink(blob, name)
+        return
+      }
+      const url = dataUrl || (await rest(`/blob?path=${encodeURIComponent(path || '')}`))?.dataUrl
       if (!url) throw new Error('no blob')
-      save(url, fileNameOf(path))
+      save(url, name)
     } catch {
-      toast.fail(UI.media.unavailable, { description: path })
+      toast.fail(UI.media.unavailable, { description: path || name })
     } finally {
       setBusy(false)
     }

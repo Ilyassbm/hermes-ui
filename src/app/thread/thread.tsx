@@ -17,7 +17,7 @@ import { botIdentity } from '../format'
 import { BotAvatar } from '../bot-avatar'
 import { Composer } from './composer'
 import { UI } from '../strings'
-import { MediaGroup, splitMedia } from './media'
+import { MediaGroup, SentAttachments, splitMedia } from './media'
 import { AssistantTurn } from './turn'
 import { WorkingLine } from './working'
 
@@ -81,20 +81,7 @@ export function Thread({ bot, name, input }: ThreadProps) {
                           Ilyass
                           <MessageTime>{hourOf(m.at)}</MessageTime>
                         </MessageHeader>
-                        {m.attachments?.length ? (
-                          <AttachmentGroup layout="wrap" className="justify-end">
-                            {m.attachments.map((file: any, i: number) => (
-                              <Attachment key={`${file.name}-${i}`} size="sm">
-                                <AttachmentMedia>
-                                  <AttachmentGlyph type={file.kind === 'image' ? 'image/png' : ''} name={file.name} />
-                                </AttachmentMedia>
-                                <AttachmentContent>
-                                  <AttachmentTitle>{file.name}</AttachmentTitle>
-                                </AttachmentContent>
-                              </Attachment>
-                            ))}
-                          </AttachmentGroup>
-                        ) : null}
+                        {m.attachments?.length ? <UserAttachments files={m.attachments} /> : null}
                         <UserText text={m.text} />
                       </MessageContent>
                     </Message>
@@ -173,6 +160,35 @@ function LoadingThread() {
         <SkeletonText type="body" lines={3} last={0.55} />
       </div>
     </div>
+  )
+}
+
+/**
+ * What a user message carries above its text. A File the person sent in this session has a blob URL: it gets lot 22's
+ * media block, thumbnail or card, and its Download reads the blob the page already holds. A message rebuilt from the
+ * history has no blob — nothing local to draw — so its files keep the older chip, name and type, and no claim is made
+ * that the picture is here.
+ */
+function UserAttachments({ files }: { files: any[] }) {
+  const older = files.filter(file => !file?.url)
+  return (
+    <>
+      <SentAttachments files={files} />
+      {older.length ? (
+        <AttachmentGroup layout="wrap" className="justify-end">
+          {older.map((file, i) => (
+            <Attachment key={`${file.name}-${i}`} size="sm">
+              <AttachmentMedia>
+                <AttachmentGlyph type={file.kind === 'image' ? 'image/png' : ''} name={file.name} />
+              </AttachmentMedia>
+              <AttachmentContent>
+                <AttachmentTitle>{file.name}</AttachmentTitle>
+              </AttachmentContent>
+            </Attachment>
+          ))}
+        </AttachmentGroup>
+      ) : null}
+    </>
   )
 }
 

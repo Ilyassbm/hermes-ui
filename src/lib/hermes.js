@@ -480,6 +480,87 @@ export function savePrefs(botName, patch) {
 
 // ── sending ──────────────────────────────────────────────────────────────────
 
+/** How long a submitted prompt may leave the thread without one session event before it reads as failed. */
+const TURN_START_MS = 5_000
+
+/** The last event the open session sent: the watchdog tells a slow turn from a lost one by comparing it to `sentAt`. */
+let lastEventAt = 0
+let turnWatchdog = null
+
+/**
+ * The failure the spec asks for after `prompt.submit`: a gateway that took the prompt and then said nothing leaves the
+ * thread's "thinking" line spinning forever. Five seconds without a single event of the session is a lost turn, not a
+ * slow one — the gateway emits `message.start` before the first token in every other case.
+ */
+function armTurnWatchdog(sentAt) {
+  if (turnWatchdog) clearTimeout(turnWatchdog)
+  turnWatchdog = setTimeout(() => {
+    turnWatchdog = null
+    const s = store.get()
+    if (!s.live || lastEventAt >= sentAt) return
+    failTurn(UI.thread.turnNotStarted)
+  }, TURN_START_MS)
+}
+
+/**
+ * The File a person just sent, with the blob URL the thread draws above their text. The URL belongs to this module:
+ * `releaseMedia` revokes it the moment the message leaves the store, and the message keeps the File itself so the
+ * banner's Retry can send it again instead of the text alone.
+ */
+function localAttachment(file) {
+  let url = ''
+  try {
+    if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') url = URL.createObjectURL(file)
+  } catch {
+    url = ''
+  }
+  return {
+    name: file?.name || '',
+    size: file?.size,
+    kind: String(file?.type || '').startsWith('image/') ? 'image' : 'file',
+    type: file?.type || '',
+    url,
+    file
+  }
+}
+
+function releaseMedia(message) {
+  for (const file of message?.attachments || []) {
+    if (!file?.url) continue
+    try {
+      URL.revokeObjectURL(file.url)
+    } catch {
+      /* already revoked, or no object URLs in this host */
+    }
+  }
+}
+
+/**
+ * A sent message's blob URL is only useful while the message is in the thread. Every store write goes through here:
+ * the messages that are gone from the new list give their URLs back (a new conversation, `openConversation`, Retry
+ * dropping the failed prompt), and a message that merely changed shape keeps its pictures.
+ */
+let shownMessages = []
+store.subscribe(() => {
+  const next = store.get().messages
+  if (next === shownMessages) return
+  const alive = new Set(next)
+  for (const message of shownMessages) if (!alive.has(message)) releaseMedia(message)
+  shownMessages = next
+})
+
+/** The page going away takes its object URLs with it; stated once so the teardown is not left to chance. */
+export function releaseLocalMedia() {
+  for (const message of store.get().messages) releaseMedia(message)
+}
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  // A page restored from the back/forward cache keeps its messages: their URLs must survive the pagehide.
+  window.addEventListener('pagehide', event => {
+    if (!event?.persisted) releaseLocalMedia()
+  })
+}
+
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const r = new FileReader()
@@ -541,12 +622,14 @@ export async function send(text, attachments = []) {
   if (!body && !attachments.length) return
   const s = store.get()
   if (s.live) return
+  // The thread draws what leaves the composer before any gateway call: same File, a blob URL of its own.
+  const files = attachments.map(localAttachment)
   store.set(st => ({
     error: '',
     retryOpen: false,
     // A new prompt starts a new clock: the previous stop's "Worked for" line goes with it.
     worked: null,
-    messages: [...st.messages, { id: nid('u'), role: 'user', text: body, at: Date.now(), attachments: attachments.map(a => ({ name: a.name, kind: a.type?.startsWith('image/') ? 'image' : 'file' })) }],
+    messages: [...st.messages, { id: nid('u'), role: 'user', text: body, at: Date.now(), attachments: files }],
     live: { phase: 'thinking', verb: '', subagents: 0, startedAt: Date.now(), reasoning: '' }
   }))
   // The turn exists from the moment the prompt leaves, so "thinking…" has a turn to sit in before the first token.
@@ -559,14 +642,27 @@ export async function send(text, attachments = []) {
     for (const file of attachments) {
       const dataUrl = await fileToBase64(file)
       if (file.type?.startsWith('image/')) {
-        await host.request('image.attach_bytes', { session_id: sid, content_base64: dataUrl.split(',')[1] || '', filename: file.name })
+        // The reply is the proof: `attached: true` and the marker the native composer submits. Anything else keeps
+        // the message in the thread and says the failure, rather than submitting a prompt the model sees no image in.
+        const res = await host.request('image.attach_bytes', {
+          session_id: sid,
+          content_base64: dataUrl.split(',')[1] || '',
+          filename: file.name
+        })
+        if (!res || res.attached !== true || res.error) throw new Error(UI.media.attachFailed(file.name))
+        if (typeof res.text === 'string' && res.text.trim()) refs.push(res.text.trim())
       } else {
         const r = await host.request('file.attach', { session_id: sid, name: file.name, data_url: dataUrl })
+        if (!r || r.attached === false || r.error) throw new Error(UI.media.attachFailed(file.name))
         if (r?.ref_text) refs.push(r.ref_text)
       }
     }
+    // The marker travels in the body too: the queue of staged images is emptied by some refusals, and the model then
+    // still reads the reference the native UI sends.
     const full = [body, ...refs].filter(Boolean).join('\n\n')
+    const sentAt = Date.now()
     await longRequest('prompt.submit', { session_id: sid, text: full })
+    armTurnWatchdog(sentAt)
     startApprovalPoll()
   } catch (e) {
     failTurn(e?.message || String(e))
@@ -614,8 +710,10 @@ export async function retryLast() {
   for (let i = msgs.length - 1; i >= 0; i--) {
     if (msgs[i].role === 'user') {
       const text = msgs[i].text
+      // A prompt that failed on its file goes back with the same File: the banner's Retry must not lose the picture.
+      const files = (msgs[i].attachments || []).map(a => a.file).filter(Boolean)
       store.set({ messages: msgs.slice(0, i), error: '' })
-      return send(text)
+      return send(text, files)
     }
   }
 }
@@ -786,6 +884,8 @@ export function handleEvent(ev) {
     return
   }
   if (!s.sid || ev.session_id !== s.sid) return
+  // Any event of the open session tells the watchdog the submitted prompt did reach a turn.
+  lastEventAt = Date.now()
 
   switch (ev.type) {
     case 'session.info':
