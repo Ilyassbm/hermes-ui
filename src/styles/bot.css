@@ -44,7 +44,7 @@
 }
 .hui-bot .stop1,
 .hui-bot .stop2 {
-  transition: stop-color 450ms ease;
+  transition: stop-color 400ms ease;
 }
 .hui-bot .stop1 { stop-color: var(--bot-1); }
 .hui-bot .stop2 { stop-color: var(--bot-2); }

@@ -94,7 +94,9 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
           labels={TOOL_LABELS}
           actions={call =>
             call.status === 'awaiting-permission' && approval?.allowPermanent !== false ? (
-              <>
+              // `approval-actions` carries the entrance: these three are the one moment the page is waiting on a
+              // click, so they fade in by 2px rather than appear under the cursor (src/styles/motion.css).
+              <div data-hui-part="approval-actions" className="flex flex-wrap items-center gap-2">
                 {/* The third answer: this command, from now on. Flat, beside the one green Allow. */}
                 <Button size="sm" variant="secondary" onClick={() => replyApproval(call.id, 'once', true)}>
                   {UI.turn.always}
@@ -105,7 +107,7 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
                 <Button size="sm" variant="confirm" onClick={() => replyApproval(call.id, 'once')}>
                   {UI.turn.allow}
                 </Button>
-              </>
+              </div>
             ) : approval && call.status === 'awaiting-permission' ? (
               <>
                 <Button size="sm" variant="secondary" onClick={() => replyApproval(call.id, 'reject')}>

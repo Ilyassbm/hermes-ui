@@ -77,6 +77,12 @@ if (timeouts.status !== 0) process.exit(timeouts.status ?? 1)
 const copy = spawnSync(process.execPath, [resolve(root, 'scripts/check-copy.mjs')], { stdio: 'inherit' })
 if (copy.status !== 0) process.exit(copy.status ?? 1)
 
+// 0i. The motion gate (lot 27): the rules of the motion pass, enforced. `transition: all`, `scale(0)`, a bare `ease-in`,
+//     a UI animation over 400ms, a keyframe with no reduced-motion answer, a hover outside a fine pointer, or a layout
+//     property moved without saying why — each one fails the build here, not in review.
+const motion = spawnSync(process.execPath, [resolve(root, 'scripts/check-motion.mjs')], { stdio: 'inherit' })
+if (motion.status !== 0) process.exit(motion.status ?? 1)
+
 // 1. Tailwind v4 → one stylesheet. app.css pulls `tailwindcss/theme` + `tailwindcss/utilities` in (never the full
 //    `tailwindcss`, whose Preflight is a global reset) and Glaze's own scoped entry.
 const compiled = await postcss([tailwind()]).process(readFileSync(from, 'utf8'), { from, to: cssOut })

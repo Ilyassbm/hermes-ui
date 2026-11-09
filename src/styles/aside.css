@@ -39,8 +39,10 @@
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out);
 }
-.glaze .hui-aside-row:hover {
-  background: var(--hover);
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-aside-row:hover {
+    background: var(--hover);
+  }
 }
 .glaze .hui-aside-row:active {
   background: var(--pressed);
@@ -90,8 +92,10 @@
   color: var(--text-2);
   transition: background-color var(--dur-state) var(--ease-out);
 }
-.glaze .hui-aside-fold:hover {
-  background: var(--hover);
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-aside-fold:hover {
+    background: var(--hover);
+  }
 }
 .glaze .hui-aside-fold:focus-visible {
   outline: 2px solid var(--line-focus);

@@ -149,6 +149,15 @@ function addFiles(rows) {
 }
 
 /** session.resume messages → display turns (user / assistant, tools folded into the turn). */
+/** The marker the page appends to a prompt so the vision tool can resolve the file ("[User attached image: /abs]") is
+ *  for the model, not for the person: it is stripped wherever a user row is rendered or replayed. */
+export function stripAttachmentMarkers(text) {
+  return String(text || '')
+    .replace(/^\s*\[User attached image:[^\]]*\]\s*$/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 export function toTurns(raw) {
   const turns = []
   const files = []
@@ -181,7 +190,7 @@ export function toTurns(raw) {
     if (!m || m.display_kind === 'hidden' || m.role === 'system') continue
     if (m.role === 'user') {
       closeTurn()
-      const text = textOf(m.content)
+      const text = stripAttachmentMarkers(textOf(m.content))
       if (!text.trim()) continue
       turns.push({ id: m.message_uid || nid('u'), role: 'user', text, at: (m.timestamp || 0) * 1000 })
       continue

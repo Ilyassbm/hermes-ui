@@ -173,11 +173,13 @@
 }
 
 /* Stop is ink like the primary's glass; only the pointer turns it to the danger ink, and only while a turn runs. */
-.glaze .hui-composer [data-hui-part='send-button'][data-state='streaming']:hover,
-.glaze .hui-composer [data-hui-part='send-button'][data-state='streaming']:focus-visible,
-.glaze .hui-composer [data-hui-part='send-button'][data-state='submitted']:hover,
-.glaze .hui-composer [data-hui-part='send-button'][data-state='submitted']:focus-visible {
-  color: var(--fail);
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-composer [data-hui-part='send-button'][data-state='streaming']:hover,
+  .glaze .hui-composer [data-hui-part='send-button'][data-state='streaming']:focus-visible,
+  .glaze .hui-composer [data-hui-part='send-button'][data-state='submitted']:hover,
+  .glaze .hui-composer [data-hui-part='send-button'][data-state='submitted']:focus-visible {
+    color: var(--fail);
+  }
 }
 
 /* ---------- Reduced motion ---------- */

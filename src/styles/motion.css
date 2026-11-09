@@ -1,0 +1,186 @@
+/* Motion — the pass that makes the page feel right without being felt (lot 27).
+   Method: emilkowalski/skills (MIT), the four-question gate. What is here earned its place; what did not is named at
+   the bottom of the file so the next person does not re-add it.
+
+   House rules this sheet follows, and scripts/check-motion.mjs enforces:
+     - transform and opacity only; the one exception is the usage bar, which carries a number and pushes nothing;
+     - entering or exiting is ease-out; the house curves live in Glaze (--ease-out, --ease-in-out);
+     - nothing starts from scale(0); nothing is a `transition: all`;
+     - hover is gated on a fine pointer, so a tap never leaves a hover behind;
+     - reduced motion keeps the fade and drops the movement. */
+
+/* ---------- A line arriving in the thread ------------------------------------------------ */
+/* A message is occasional, and it teleports in with no bridge today. 180ms: long enough to read as motion, short
+   enough that a fast conversation never waits on it. `@starting-style` means no JS, and the rule only fires on
+   MOUNT — a streaming reply updates its own node, so the text growing never re-triggers this. */
+.glaze [data-hui-part='message-stack'] > * {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 180ms var(--ease-out),
+    translate 180ms var(--ease-out);
+}
+@starting-style {
+  .glaze [data-hui-part='message-stack'] > * {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+
+/* ---------- The working line ------------------------------------------------------------- */
+/* "runs a command 3s…" appears under the last message: same reasoning as a message, one step smaller (it is a status,
+   not content). Folding back to "Worked for 21s" reuses the same node, so the words change in place — no exit to
+   animate, and none invented. */
+.glaze .hui-working {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 160ms var(--ease-out),
+    translate 160ms var(--ease-out);
+}
+@starting-style {
+  .glaze .hui-working {
+    opacity: 0;
+    translate: 0 2px;
+  }
+}
+
+/* ---------- Conversation tabs ------------------------------------------------------------ */
+/* A new tab shifts its neighbours. 150ms on mount, and never on close: a close must land on the frame the person
+   clicked, not after a fade. The selected state is a colour change, 120ms — the palette's own `ease`, not a curve
+   that draws attention to a background. */
+.glaze .hui-tab {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    scale 140ms var(--ease-out),
+    background-color 120ms ease,
+    color 120ms ease,
+    opacity 150ms var(--ease-out),
+    translate 150ms var(--ease-out);
+}
+@starting-style {
+  .glaze .hui-tab {
+    opacity: 0;
+    translate: 0 2px;
+  }
+}
+
+/* ---------- Press feedback --------------------------------------------------------------- */
+/* Every control that presses answers within a frame. 140ms, scale 0.97 — the range Emil pins (0.95–0.98); anything
+   smaller is invisible, anything larger reads as a bounce. `scale`, not `transform`, so it composes with the layout
+   transforms already on these rows. */
+.glaze .hui-bot-row,
+.glaze .hui-tile,
+.glaze .hui-icon-btn,
+.glaze .hui-model-trigger,
+.glaze .hui-usage-refresh,
+.glaze .hui-send,
+.glaze .hui-stop,
+.glaze .hui-aside-row,
+.glaze .hui-aside-fold,
+.glaze .hui-think-head.is-clickable,
+.glaze [data-hui-part='send-button'] {
+  transition:
+    scale 140ms var(--ease-out),
+    background-color 120ms ease,
+    color 120ms ease;
+}
+.glaze .hui-tab:active,
+.glaze .hui-bot-row:active,
+.glaze .hui-tile:active,
+.glaze .hui-icon-btn:active,
+.glaze .hui-model-trigger:active,
+.glaze .hui-usage-refresh:active,
+.glaze .hui-send:active,
+.glaze .hui-stop:active,
+.glaze .hui-aside-row:active,
+.glaze .hui-aside-fold:active,
+.glaze .hui-think-head.is-clickable:active,
+.glaze [data-hui-part='send-button']:active {
+  scale: 0.97;
+}
+
+/* ---------- The approval that stops a turn ----------------------------------------------- */
+/* The three answers appear inside the tool row that asked for them. They are the one moment where the page is
+   literally waiting on a click: 160ms, fade plus 2px, so the eye finds them without the row jumping. */
+.glaze [data-hui-part='approval-actions'] {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 160ms var(--ease-out),
+    translate 160ms var(--ease-out);
+}
+@starting-style {
+  .glaze [data-hui-part='approval-actions'] {
+    opacity: 0;
+    translate: 0 2px;
+  }
+}
+
+/* ---------- The usage bar ---------------------------------------------------------------- */
+/* The one width allowed to move: it carries a percentage and pushes nothing. 400ms on the fill, because a bar that
+   snaps reads as an error; the number beside it is tabular (Glaze's type-caption) so the two never fight.
+   motion:data-bar — the marker scripts/check-motion.mjs looks for before it lets a width through. */
+.glaze .hui-usage-bar-fill {
+  /* motion:data-bar */
+  transition: width 400ms var(--ease-out);
+}
+/* Refresh: the icon turns while the request is out, and stops when it lands. Linear, because it loops. The class is
+   only on the icon while the request is running (src/app/usage.tsx), so no state attribute is needed. */
+.glaze .hui-usage-refresh-icon {
+  animation: hermes-ui-spin 700ms linear infinite;
+}
+@keyframes hermes-ui-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* ---------- Reduced motion --------------------------------------------------------------- */
+/* The fade stays — it is the part that tells you something changed — and every translation, scale and rotation goes.
+   Nothing disappears abruptly for someone who asked for calm. */
+@media (prefers-reduced-motion: reduce) {
+  .glaze [data-hui-part='message-stack'] > *,
+  .glaze .hui-working,
+  .glaze .hui-tab,
+  .glaze [data-hui-part='approval-actions'] {
+    transition-property: opacity;
+  }
+  @starting-style {
+    .glaze [data-hui-part='message-stack'] > *,
+    .glaze .hui-working,
+    .glaze .hui-tab,
+    .glaze [data-hui-part='approval-actions'] {
+      opacity: 0;
+      translate: 0 0;
+    }
+  }
+  .glaze .hui-tab:active,
+  .glaze .hui-bot-row:active,
+  .glaze .hui-tile:active,
+  .glaze .hui-icon-btn:active,
+  .glaze .hui-model-trigger:active,
+  .glaze .hui-usage-refresh:active,
+  .glaze .hui-send:active,
+  .glaze .hui-stop:active,
+  .glaze .hui-aside-row:active,
+  .glaze .hui-aside-fold:active,
+  .glaze .hui-think-head.is-clickable:active,
+  .glaze [data-hui-part='send-button']:active {
+    scale: 1;
+  }
+  .glaze .hui-usage-bar-fill {
+    transition-duration: 0ms;
+  }
+  .glaze .hui-usage-refresh-icon {
+    animation: none;
+  }
+}
+
+/* ---------- Deliberately not animated ---------------------------------------------------- */
+/* The slash palette opens on a keystroke, dozens of times a day: no fade, no scale, nothing. Raycast has none either.
+   Switching bot with ⌥1…⌥9 replaces the whole thread on a keystroke: the same rule, so the thread cuts. The three
+   suggestion chips on an empty conversation are seen at every new chat: no stagger, no cascade. The thread never
+   smooth-scrolls to the last message; it sticks to the bottom on the frame it changes. The clock in the working line
+   counts — a number that changes gets tabular figures, never an animation. */

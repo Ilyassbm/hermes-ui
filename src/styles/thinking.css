@@ -81,8 +81,10 @@
   transition: background-color var(--dur-state) var(--ease-out);
 }
 
-.glaze .hui-think-head.is-clickable:hover {
-  background: var(--hover);
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-think-head.is-clickable:hover {
+    background: var(--hover);
+  }
 }
 
 .glaze .hui-think-label {
@@ -108,8 +110,10 @@
   transform: rotate(0deg);
 }
 
-.glaze .hui-think-head.is-clickable:hover .hui-think-chevron {
-  color: var(--text-2);
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-think-head.is-clickable:hover .hui-think-chevron {
+    color: var(--text-2);
+  }
 }
 
 /* The fold: a grid row from 1fr to 0fr, so the pane keeps its measured height throughout the 320ms and the words

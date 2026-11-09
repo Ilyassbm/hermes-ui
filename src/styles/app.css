@@ -22,6 +22,8 @@
 @import "./media.css";
 /* Lot 23: the visible sign of work — the activity line, its clock, the rail's and tab's dot, the usage refresh. */
 @import "./working.css";
+/* Lot 27: the motion pass — message entrance, tab entrance, press feedback, the usage bar. */
+@import "./motion.css";
 /* The vendored aicss avatar: its identity colours, scoped to .hui-bot. */
 @import "./bot.css";
 

@@ -56,8 +56,10 @@
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out);
 }
-.glaze .hui-rail-app:hover {
-  background: var(--hover);
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-rail-app:hover {
+    background: var(--hover);
+  }
 }
 .glaze .hui-rail-app svg {
   color: var(--text-3);
@@ -102,9 +104,11 @@
   transition: background-color var(--dur-state) var(--ease-out), color var(--dur-state) var(--ease-out),
     scale var(--dur-state) var(--ease-out);
 }
-.glaze .hui-icon-btn:hover {
-  background: var(--hover);
-  color: var(--text-1);
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-icon-btn:hover {
+    background: var(--hover);
+    color: var(--text-1);
+  }
 }
 .glaze .hui-icon-btn:active {
   scale: 0.96;
@@ -141,8 +145,10 @@
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out);
 }
-.glaze .hui-search:hover {
-  background: var(--paper);
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-search:hover {
+    background: var(--paper);
+  }
 }
 .glaze .hui-search:focus-visible {
   outline: 2px solid var(--line-focus);
@@ -227,8 +233,10 @@
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out), scale var(--dur-state) var(--ease-out);
 }
-.glaze .hui-tile:hover {
-  background: var(--hover);
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-tile:hover {
+    background: var(--hover);
+  }
 }
 .glaze .hui-tile:active {
   scale: 0.96;
@@ -270,9 +278,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.glaze .hui-tile:hover .hui-tile-name {
-  /* --hover (--ink at 6%) over the rail's page, flattened: the same pixels, an opaque colour. */
-  background-color: color-mix(in srgb, var(--ink) 6%, var(--page));
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-tile:hover .hui-tile-name {
+    /* --hover (--ink at 6%) over the rail's page, flattened: the same pixels, an opaque colour. */
+    background-color: color-mix(in srgb, var(--ink) 6%, var(--page));
+  }
 }
 .glaze .hui-tile[aria-selected='true'] .hui-tile-name {
   /* --pressed (--ink at 10%) over the rail's page, flattened. */
@@ -323,9 +333,11 @@
   opacity: 0;
   transition: opacity var(--dur-state) var(--ease-out), rotate 200ms var(--ease-out);
 }
-.glaze .hui-team-head:hover svg,
-.glaze .hui-team-head:focus-visible svg {
-  opacity: 1;
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-team-head:hover svg,
+  .glaze .hui-team-head:focus-visible svg {
+    opacity: 1;
+  }
 }
 .glaze .hui-team[data-open='false'] .hui-team-head svg {
   rotate: -90deg;
@@ -368,8 +380,10 @@
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out), scale var(--dur-state) var(--ease-out);
 }
-.glaze .hui-bot-row:hover {
-  background: var(--hover);
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-bot-row:hover {
+    background: var(--hover);
+  }
 }
 .glaze .hui-bot-row:active {
   scale: 0.99;
@@ -546,8 +560,10 @@
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out);
 }
-.glaze .hui-usage-row:hover {
-  background: var(--hover);
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-usage-row:hover {
+    background: var(--hover);
+  }
 }
 .glaze .hui-usage-row:focus-visible {
   outline: 2px solid var(--line-focus);
@@ -597,6 +613,7 @@
   height: 100%;
   border-radius: 1px;
   background: var(--ink-80);
+  /* motion:data-bar — a percentage, not a layout. */
   transition: width 300ms var(--ease-out);
 }
 .glaze .hui-usage-bar-fill.hui-fill-warn {
@@ -662,6 +679,7 @@
   height: 100%;
   border-radius: 999px;
   background: var(--ink-80);
+  /* motion:data-bar — a percentage, not a layout. */
   transition: width 300ms var(--ease-out);
 }
 .glaze .hui-usage-fill.hui-fill-warn {

@@ -70,7 +70,7 @@ export function Thread({ bot, name, input }: ThreadProps) {
             ) : loading ? (
               <LoadingThread />
             ) : messages.length ? (
-              <MessageGroup data-ui-stack="">
+              <MessageGroup data-ui-stack="" data-hui-part="message-stack">
                 {messages.map(m =>
                   m.role === 'note' ? (
                     <NoteLine key={m.id} text={m.text} />

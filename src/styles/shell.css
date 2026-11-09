@@ -54,9 +54,11 @@
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out), color var(--dur-state) var(--ease-out);
 }
-.glaze .hui-tab:hover {
-  background: var(--hover);
-  color: var(--text-1);
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-tab:hover {
+    background: var(--hover);
+    color: var(--text-1);
+  }
 }
 .glaze .hui-tab[aria-selected='true'] {
   background: var(--pressed);
@@ -104,8 +106,10 @@
   max-width: 240px;
   transition: background-color var(--dur-state) var(--ease-out), color var(--dur-state) var(--ease-out);
 }
-.glaze .hui-model-trigger:hover {
-  background: var(--hover);
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-model-trigger:hover {
+    background: var(--hover);
+  }
 }
 .glaze .hui-model-trigger:focus-visible {
   outline: 2px solid var(--line-focus);
@@ -225,6 +229,7 @@
   /* Height animates between auto values in Chromium 129+, which is what the desktop app runs on. */
   height: auto;
   interpolate-size: allow-keywords;
+  /* motion:layout — the box grows with what is typed into it; an auto height cannot be a transform. */
   transition: height 300ms var(--ease-out);
 }
 .glaze .hui-composer [data-hui-part='prompt-input-panel'] {
