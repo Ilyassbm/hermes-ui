@@ -35,7 +35,7 @@ const messageVariants = cva('group/message relative flex w-full min-w-0 px-4 py-
 });
 
 function MessageGroup({className, ...props}: React.ComponentProps<'div'>) {
-  return <div data-slot="message-group" className={cn('flex min-w-0 flex-col gap-4', className)} {...props}/>;
+  return <div data-hui-part="message-group" className={cn('flex min-w-0 flex-col gap-4', className)} {...props}/>;
 }
 
 type MessageProps = React.ComponentProps<'div'> & VariantProps<typeof messageVariants> & {
@@ -45,7 +45,7 @@ type MessageProps = React.ComponentProps<'div'> & VariantProps<typeof messageVar
 
 function Message({className, from = 'agent', size = 'default', ...props}: MessageProps) {
   return <div
-    data-slot="message"
+    data-hui-part="message"
     data-from={from}
     data-size={size}
     className={cn(messageVariants({size}), from === 'user' && 'justify-end', className)}
@@ -71,11 +71,11 @@ function AgentTurn({name, time, state = 'done', children, ...props}: Omit<React.
 /** Turns of the same speaker. The person's is a column at the end; the agent's sections sit 8px apart. */
 function MessageContent({className, ...props}: React.ComponentProps<'div'>) {
   return <div
-    data-slot="message-content"
+    data-hui-part="message-content"
     className={cn(
       'flex min-w-0 flex-1 flex-col break-words text-text-1',
       'group-data-[from=user]/message:max-w-[85%] group-data-[from=user]/message:flex-none group-data-[from=user]/message:items-end group-data-[from=user]/message:gap-1',
-      'group-data-[from=user]/message:*:data-[slot=message-header]:sr-only',
+      'group-data-[from=user]/message:*:data-[hui-part=message-header]:sr-only',
       'group-data-[from=agent]/message:gap-2',
       className,
     )}
@@ -86,7 +86,7 @@ function MessageContent({className, ...props}: React.ComponentProps<'div'>) {
 /** The speaker's name, then MessageStatus and MessageTime at the end: one quiet caption line above the content. */
 function MessageHeader({className, ...props}: React.ComponentProps<'div'>) {
   return <div
-    data-slot="message-header"
+    data-hui-part="message-header"
     className={cn('flex min-h-(--control-sm) min-w-0 shrink-0 items-center gap-2 type-label-sm text-text-1', className)}
     {...props}
   />;
@@ -94,14 +94,14 @@ function MessageHeader({className, ...props}: React.ComponentProps<'div'>) {
 
 /** A quiet value beside the name or in the footer: a count, a summary. */
 function MessageMeta({className, ...props}: React.ComponentProps<'span'>) {
-  return <span data-slot="message-meta" className={cn('min-w-0 truncate type-caption text-text-2 data', className)} {...props}/>;
+  return <span data-hui-part="message-meta" className={cn('min-w-0 truncate type-caption text-text-2 data', className)} {...props}/>;
 }
 
 /** The turn's time, in a fixed end column, so times line up down the thread. */
 function MessageTime({className, ...props}: React.ComponentProps<'time'>) {
   return <time
-    data-slot="message-time"
-    className={cn('ms-auto w-12 shrink-0 truncate text-end type-caption text-text-2 data [[data-slot=message-status]~&]:ms-0', className)}
+    data-hui-part="message-time"
+    className={cn('ms-auto w-12 shrink-0 truncate text-end type-caption text-text-2 data [[data-hui-part=message-status]~&]:ms-0', className)}
     {...props}
   />;
 }
@@ -117,7 +117,7 @@ function MessageModel({model, requested, forModel = name => `for ${name}`, class
   forModel?: (requested: string) => string;
 }) {
   const switched = requested !== undefined && requested !== model;
-  return <span data-slot="message-model" data-switched={switched || undefined} className={cn('inline-flex min-w-0 items-baseline gap-1.5 type-caption text-text-2', className)} title={switched ? `${model} ${forModel(requested)}` : model} {...props}>
+  return <span data-hui-part="message-model" data-switched={switched || undefined} className={cn('inline-flex min-w-0 items-baseline gap-1.5 type-caption text-text-2', className)} title={switched ? `${model} ${forModel(requested)}` : model} {...props}>
     <span className="mono min-w-0 truncate">{model}</span>
     {switched && <span className="min-w-0 truncate">{forModel(requested)}</span>}
   </span>;
@@ -148,7 +148,7 @@ function MessageStatus({state, label, labels, className, ...props}: MessageStatu
         : state === 'waiting' ? <span className="sr-only">{label ?? words.paused}</span>
           : label ? <span className="sr-only">{label}</span> : null;
   return <span
-    data-slot="message-status"
+    data-hui-part="message-status"
     data-state={state}
     className={cn('ms-auto inline-flex shrink-0 items-center justify-end type-caption whitespace-nowrap text-text-2', className)}
     {...props}
@@ -163,17 +163,17 @@ function MessageStatus({state, label, labels, className, ...props}: MessageStatu
  */
 function MessageFooter({className, ...props}: React.ComponentProps<'div'>) {
   return <div
-    data-slot="message-footer"
+    data-hui-part="message-footer"
     className={cn(
       'flex min-h-(--control) max-w-full min-w-0 shrink-0 items-center gap-0.5 type-caption text-text-2',
-      '-ms-2 *:data-[slot=message-model]:ms-auto *:data-[slot=message-meta]:ms-auto [&>[data-slot=message-model]+[data-slot=message-meta]]:ms-3',
+      '-ms-2 *:data-[hui-part=message-model]:ms-auto *:data-[hui-part=message-meta]:ms-auto [&>[data-hui-part=message-model]+[data-hui-part=message-meta]]:ms-3',
       // The buttons wait for a pointer to arrive on the turn or a key to land in the footer; a keyboard user is never left without them.
-      // Buttons and CopyButton (data-slot ending in button) fade in on the turn's hover, or when a key lands in the footer.
-      '[&>[data-slot$=button]]:transition-opacity [&>[data-slot$=button]]:duration-(--dur-state)',
-      'pointer-fine:group-data-[from=agent]/message:[&>[data-slot$=button]]:opacity-0',
-      'pointer-fine:group-data-[from=agent]/message:group-hover/message:[&>[data-slot$=button]]:opacity-100',
-      'pointer-fine:group-data-[from=agent]/message:has-[:focus-visible,[data-force-focus-visible]]:[&>[data-slot$=button]]:opacity-100',
-      'group-has-[[data-slot=message-status]:is([data-state=live],[data-state=waiting])]/message:hidden',
+      // Buttons and CopyButton (data-hui-part ending in button) fade in on the turn's hover, or when a key lands in the footer.
+      '[&>[data-hui-part$=button]]:transition-opacity [&>[data-hui-part$=button]]:duration-(--dur-state)',
+      'pointer-fine:group-data-[from=agent]/message:[&>[data-hui-part$=button]]:opacity-0',
+      'pointer-fine:group-data-[from=agent]/message:group-hover/message:[&>[data-hui-part$=button]]:opacity-100',
+      'pointer-fine:group-data-[from=agent]/message:has-[:focus-visible,[data-force-focus-visible]]:[&>[data-hui-part$=button]]:opacity-100',
+      'group-has-[[data-hui-part=message-status]:is([data-state=live],[data-state=waiting])]/message:hidden',
       className,
     )}
     {...props}
@@ -195,7 +195,7 @@ function MessageWorked({duration, time, labels, className, ...props}: Omit<React
   labels?: MessageWorkedLabels;
 }) {
   const words = {...workedLabels, ...labels};
-  return <span data-slot="message-worked" className={cn('ms-2 me-1 inline-flex min-w-0 items-baseline gap-1.5 truncate type-caption text-text-2 data', className)} {...props}>
+  return <span data-hui-part="message-worked" className={cn('ms-2 me-1 inline-flex min-w-0 items-baseline gap-1.5 truncate type-caption text-text-2 data', className)} {...props}>
     {duration && <span className="min-w-0 truncate">{words.worked(duration)}{time && ','}</span>}
     {time && <span className="shrink-0">{time}</span>}
   </span>;
@@ -212,8 +212,8 @@ const bubbleVariants = cva(
   {
     variants: {
       variant: {
-        default: '*:data-[slot=message-bubble-content]:border-line-faint *:data-[slot=message-bubble-content]:bg-shell',
-        outline: '*:data-[slot=message-bubble-content]:border-line-control *:data-[slot=message-bubble-content]:bg-paper',
+        default: '*:data-[hui-part=message-bubble-content]:border-line-faint *:data-[hui-part=message-bubble-content]:bg-shell',
+        outline: '*:data-[hui-part=message-bubble-content]:border-line-control *:data-[hui-part=message-bubble-content]:bg-paper',
       },
     },
     defaultVariants: {variant: 'default'},
@@ -227,10 +227,10 @@ type MessageBubbleProps = React.ComponentProps<'div'> & VariantProps<typeof bubb
 
 function MessageBubble({variant = 'default', status, className, ...props}: MessageBubbleProps) {
   return <div
-    data-slot="message-bubble"
+    data-hui-part="message-bubble"
     data-variant={variant}
     data-status={status}
-    className={cn(bubbleVariants({variant}), status === 'fail' && '*:data-[slot=message-bubble-content]:border-fail', className)}
+    className={cn(bubbleVariants({variant}), status === 'fail' && '*:data-[hui-part=message-bubble-content]:border-fail', className)}
     {...props}
   />;
 }
@@ -258,7 +258,7 @@ function MessageBubbleContent({className, render, ...props}: useRender.Component
 /** A 20px strip under the text for reactions or a read receipt: each one a small tag with the control line. */
 function MessageReactions({className, ...props}: React.ComponentProps<'div'>) {
   return <div
-    data-slot="message-reactions"
+    data-hui-part="message-reactions"
     dir="auto"
     className={cn('flex min-h-5 w-fit flex-wrap items-center gap-1 type-label-sm text-text-1 data *:inline-flex *:h-5 *:items-center *:gap-1 *:rounded-tag *:border *:border-line-control *:px-1.5', className)}
     {...props}
@@ -281,7 +281,7 @@ function MessageSendState({state, onRetry, labels, className, ...props}: Omit<Re
   const words = {...sendStateLabels, ...labels};
   if (state === 'sent') return null;
   return <div
-    data-slot="message-send-state"
+    data-hui-part="message-send-state"
     data-state={state}
     className={cn('flex min-h-(--control-sm) items-center gap-2 type-caption text-text-2', className)}
     {...props}
@@ -336,10 +336,10 @@ function MessageDivider({className, variant, reason, to = 'person', labels, rend
         role: 'separator',
         className: cn(dividerVariants({variant: v}), className),
         children: v === 'handoff'
-          ? <Status data-slot="message-divider-content" status="waiting" size="sm" className="min-w-0 shrink">{text}</Status>
+          ? <Status data-hui-part="message-divider-content" status="waiting" size="sm" className="min-w-0 shrink">{text}</Status>
           : <>
-              {glyph && <span data-slot="message-divider-icon" aria-hidden className="flex size-4 shrink-0 items-center justify-center text-text-3"><Icon icon={glyph} size={12}/></span>}
-              <span data-slot="message-divider-content" className="min-w-0 shrink break-words">{text}</span>
+              {glyph && <span data-hui-part="message-divider-icon" aria-hidden className="flex size-4 shrink-0 items-center justify-center text-text-3"><Icon icon={glyph} size={12}/></span>}
+              <span data-hui-part="message-divider-content" className="min-w-0 shrink break-words">{text}</span>
             </>,
       },
       {'data-reason': reason, 'data-variant': v, 'aria-label': typeof children === 'string' ? children : reasonText} as React.ComponentProps<'div'>,

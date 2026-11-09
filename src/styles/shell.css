@@ -159,7 +159,7 @@
 /* PromptInput is a grey shell holding a white panel with the toolbar under it. The spec asks for the opposite: one
    paper surface, the editor on top and the toolbar at its foot. The shell and the panel are neutralised here, scoped
    to our composer (`.hui-composer`), so the component itself is untouched and every other user of it keeps its look. */
-.glaze .hui-composer [data-slot='prompt-input'] {
+.glaze .hui-composer [data-hui-part='prompt-input'] {
   background: var(--paper);
   border: 0.5px solid var(--line-faint);
   border-radius: 12px;
@@ -170,24 +170,24 @@
   interpolate-size: allow-keywords;
   transition: height 300ms var(--ease-out);
 }
-.glaze .hui-composer [data-slot='prompt-input-panel'] {
+.glaze .hui-composer [data-hui-part='prompt-input-panel'] {
   background: transparent;
   border: 0;
   border-radius: 0;
   padding: 0;
   box-shadow: none;
 }
-.glaze .hui-composer [data-slot='prompt-input-body'] {
+.glaze .hui-composer [data-hui-part='prompt-input-body'] {
   padding: 0;
 }
-.glaze .hui-composer [data-slot='prompt-input-toolbar'] {
+.glaze .hui-composer [data-hui-part='prompt-input-toolbar'] {
   padding-top: 8px;
 }
-.glaze .hui-composer [data-slot='prompt-input-editor'] {
+.glaze .hui-composer [data-hui-part='prompt-input-editor'] {
   min-height: 44px;
 }
 @media (prefers-reduced-motion: reduce) {
-  .glaze .hui-composer [data-slot='prompt-input'] {
+  .glaze .hui-composer [data-hui-part='prompt-input'] {
     transition: none;
   }
 }
@@ -206,7 +206,7 @@
 
 /* 480px and a fifth of the way down, not the centre: a list that grows downward from near the top reads better than
    one that shifts as it fills. */
-.glaze [data-slot='dialog-content'].hui-picker {
+.glaze [data-hui-part='dialog-content'].hui-picker {
   max-width: 480px;
   top: 18%;
   translate: -50% 0;

@@ -96,7 +96,7 @@ function CopyButton({value, label, showLabel = false, timeout = 1600, onCopy, fo
 
   return <>
     <Button
-      data-slot="copy-button"
+      data-hui-part="copy-button"
       data-state={state}
       variant={variant}
       size={s}
@@ -113,7 +113,7 @@ function CopyButton({value, label, showLabel = false, timeout = 1600, onCopy, fo
         <span className={cn('[grid-area:stack]', state !== 'failed' && 'invisible')}>Failed</span>
       </span>}
     </Button>
-    <span role="status" data-slot="copy-button-status" className="sr-only">{announcement}</span>
+    <span role="status" data-hui-part="copy-button-status" className="sr-only">{announcement}</span>
   </>;
 }
 

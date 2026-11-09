@@ -1,7 +1,7 @@
 // The Intelligent UI catalog: the only components and actions a bot may draw in the thread.
 //
 // json-render turns a flat spec ({root, elements, state}) into React through this catalog: the zod props are the
-// contract the spec must satisfy, and every `description` is what the model reads in the generated skill. French,
+// contract the spec must satisfy, and every `description` is what the model reads in the generated skill. English,
 // short, and about the job of the component rather than its look — the look is the registry's business.
 import { defineCatalog, defineSchema, type PromptContext, type SchemaType } from '@json-render/core'
 import { z } from 'zod'
@@ -51,21 +51,21 @@ function promptTemplate({ catalog, formatZodType }: PromptContext): string {
   const actions = Object.entries(data.actions)
   return [
     'FORMAT',
-    'Tu réponds dans le fil d’une conversation de l’app desktop Hermes. Pour une réponse qui se lit mieux en interface, insère un bloc dans ton texte markdown :',
-    '<hui-ui>{"root":"r","elements":{"r":{"type":"Card","props":{"title":"Réservation"},"children":["n","b"]},"n":{"type":"Stepper","props":{"label":"Personnes","min":1,"max":8,"value":{"$bindState":"/guests"}}},"b":{"type":"Button","props":{"label":"Réserver","variant":"primary","action":{"name":"send","params":{"text":"Réserve pour {{/guests}} personnes"}}}}},"state":{"guests":2}}</hui-ui>',
+    'You are answering in a Hermes desktop app conversation. When the answer reads better as an interface, insert a block in your markdown:',
+    '<hui-ui>{"root":"r","elements":{"r":{"type":"Card","props":{"title":"Booking"},"children":["n","b"]},"n":{"type":"Stepper","props":{"label":"People","min":1,"max":8,"value":{"$bindState":"/guests"}}},"b":{"type":"Button","props":{"label":"Book","variant":"primary","action":{"name":"send","params":{"text":"Book for {{/guests}} people"}}}}}},"state":{"guests":2}}</hui-ui>',
     '',
-    'Un seul objet JSON valide, sur une ligne ou plusieurs, entre <hui-ui> et </hui-ui>. Pas de fence, pas de commentaire, pas de JSONL.',
-    '- "root" : la clé de l’élément racine.',
-    '- "elements" : clé courte → { "type", "props", "children"?, "visible"? }. "children" liste des clés, dans l’ordre d’affichage.',
-    '- "state" : les valeurs de départ des composants interactifs. Un composant lié s’écrit { "$bindState": "/chemin" } et lit sa valeur dans le state.',
-    '- "visible" : une condition, par exemple { "$state": "/tab", "eq": "prix" } — voir CONDITIONS.',
+    'One valid JSON object, on one line or several, between <hui-ui> and </hui-ui>. No fence, no comment, no JSONL.',
+    '- "root": the key of the root element.',
+    '- "elements": short key → { "type", "props", "children"?, "visible"? }. "children" lists keys, in display order.',
+    '- "state": the starting values of interactive components. A bound component is written { "$bindState": "/path" } and reads its value from the state.',
+    '- "visible": a condition, for example { "$state": "/tab", "eq": "price" } — see CONDITIONS.',
     '',
     'CONDITIONS',
-    'visible accepte { "$state": "/chemin", "eq": "valeur" }, { "neq": "valeur" }, { "gt": n }, { "gte": n }, { "lt": n }, { "lte": n }, { "$state": "/chemin" } (vrai si la valeur existe), un tableau (ET), ou { "$and": [...] } / { "$or": [...] }.',
-    'Pour des onglets : un composant Tabs lié à "/tab", et un enfant par onglet avec "visible": { "$state": "/tab", "eq": "<id>" }.',
+    'visible accepts { "$state": "/path", "eq": "value" }, { "neq": "value" }, { "gt": n }, { "gte": n }, { "lt": n }, { "lte": n }, { "$state": "/path" } (true when the value exists), an array (AND), or { "$and": [...] } / { "$or": [...] }.',
+    'For tabs: a Tabs component bound to "/tab", and one child per tab with "visible": { "$state": "/tab", "eq": "<id>" }.',
     '',
-    'VALEURS DÉRIVÉES',
-    'Dans un texte ou un paramètre d’action, {{/chemin}} est remplacé par la valeur du state au moment du clic : "Réserve pour {{/guests}} personnes".',
+    'DERIVED VALUES',
+    'In a text or an action parameter, {{/path}} is replaced by the state value at click time: "Book for {{/guests}} people".',
     '',
     'COMPOSANTS',
     ...components.flatMap(([name, entry]) => [
@@ -78,15 +78,15 @@ function promptTemplate({ catalog, formatZodType }: PromptContext): string {
     'ACTIONS',
     ...actions.map(([name, entry]) => `### ${name} — ${entry.description}\nparams: ${formatZodType(entry.params as never)}`),
     '',
-    'RÈGLES',
-    '1. Du texte d’abord : une ou deux phrases qui disent la réponse, puis un seul bloc <hui-ui> par idée.',
-    '2. Des identifiants courts ("r", "a", "b"). Pas de clé inutile : un élément sans props n’en a pas.',
-    '3. Des données réelles, tirées de la conversation ou des outils. Jamais d’exemple inventé, jamais de lorem ipsum.',
-    '4. Un seul Button "primary" par groupe d’actions ; les autres en "secondary", la confirmation en "confirm".',
-    '5. Un composant interactif sans "state" ni "$bindState" est inerte : seede sa valeur et lie-la.',
-    '6. Le bouton qui propose une suite utilise l’action "send" et reprend les valeurs du state avec {{/chemin}}.',
-    '7. Limites : 200 éléments, 12 niveaux, 4000 caractères par chaîne. Au-delà, le bloc est coupé ou ignoré.',
-    '8. Un type absent de cette liste n’est pas rendu (ses enfants seulement) : n’invente pas de composant.'
+    'RULES',
+    '1. Text first: one or two sentences that give the answer, then one <hui-ui> block per idea.',
+    '2. Short ids ("r", "a", "b"). No useless key: an element with no props has none.',
+    '3. Real data, taken from the conversation or from the tools. Never an invented example, never lorem ipsum.',
+    '4. One "primary" Button per action group; the rest "secondary", the confirmation "confirm".',
+    '5. An interactive component with no "state" or "$bindState" is inert: seed its value and bind it.',
+    '6. The button that offers a next step uses the "send" action and repeats the state values with {{/path}}.',
+    '7. Limits: 200 elements, 12 levels, 4000 characters per string. Beyond that the block is cut or ignored.',
+    '8. A type missing from this list is not rendered (only its children): do not invent a component.'
   ].join('\n')
 }
 
@@ -98,20 +98,20 @@ export const catalog = defineCatalog(schema, {
         description: z.string().max(400).optional(),
         meta: z.string().max(120).optional()
       }),
-      description: 'Une carte : un titre, une phrase, son contenu, et ses boutons dans le pied. Le conteneur d’une réponse qui se lit comme un bloc.',
+      description: 'A card: a title, a sentence, its content, and its buttons in the footer. The container for an answer that reads as one block.',
       slots: ['footer']
     },
     Stack: {
       props: z.object({ direction: z.enum(['row', 'column']), gap: z.enum(['sm', 'md', 'lg']).optional() }),
-      description: 'Empile des éléments en ligne ou en colonne, avec un espacement court, moyen ou large.'
+      description: 'Stacks elements in a row or a column, with small, medium or large spacing.'
     },
     Grid: {
       props: z.object({ columns: z.union([z.literal(2), z.literal(3), z.literal(4)]) }),
-      description: 'Place des éléments côte à côte sur 2, 3 ou 4 colonnes égales. Pour des chiffres ou des cartes courtes.'
+      description: 'Places elements side by side on 2, 3 or 4 equal columns. For numbers or short cards.'
     },
     Text: {
       props: z.object({ text: z.string().max(4000), tone: z.enum(['default', 'muted']).optional() }),
-      description: 'Un paragraphe de markdown court : une ou deux phrases, avec du gras ou du code en ligne. Pas de titre, pas de liste.'
+      description: 'A short markdown paragraph: one or two sentences, with bold or inline code. No heading, no list.'
     },
     Metric: {
       props: z.object({
@@ -121,11 +121,11 @@ export const catalog = defineCatalog(schema, {
         status: z.enum(['ok', 'warn', 'fail', 'neutral']).optional(),
         hint: z.string().max(160).optional()
       }),
-      description: 'Un chiffre qui compte : sa valeur en gros, ce qu’il mesure, son écart, et une note. Le statut colore seulement l’écart.'
+      description: 'A number that matters: its value large, what it measures, its delta, and a note. The status colours only the delta.'
     },
     KeyValue: {
       props: z.object({ items: z.array(z.object({ label: z.string().max(80), value: z.string().max(400) })).min(1).max(20) }),
-      description: 'Une liste de paires libellé / valeur, alignées. Pour les caractéristiques d’une chose : modèle, date, coût, propriétaire.'
+      description: 'A list of aligned label / value pairs. For the facts about one thing: model, date, cost, owner.'
     },
     Table: {
       props: z.object({
@@ -133,7 +133,7 @@ export const catalog = defineCatalog(schema, {
         rows: z.array(z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]))).min(1).max(50),
         title: z.string().max(120).optional()
       }),
-      description: 'Un tableau : ses colonnes et ses lignes. À partir de quatre lignes de données comparables, jamais pour deux valeurs.'
+      description: 'A table: its columns and rows. From four rows of comparable data, never for two values.'
     },
     Chart: {
       props: z.object({
@@ -144,7 +144,7 @@ export const catalog = defineCatalog(schema, {
         title: z.string().max(120).optional(),
         height: z.number().min(80).max(400).optional()
       }),
-      description: 'Un graphique en barres, en courbe ou en aire : une clé pour l’axe des abscisses, une à quatre séries numériques, avec leurs libellés.'
+      description: 'A bar, line or area chart: one key for the x axis, one to four numeric series with their labels.'
     },
     Checklist: {
       props: z.object({
@@ -159,13 +159,13 @@ export const catalog = defineCatalog(schema, {
           .min(1)
           .max(20)
       }),
-      description: 'Un plan ou un suivi d’étapes, une ligne par étape avec son état : fait, en cours, en attente, en échec, à faire.'
+      description: 'A plan or a step tracker, one row per step with its state: done, running, waiting, failed, to do.'
     },
     Steps: {
       props: z.object({
         items: z.array(z.object({ title: z.string().max(200), detail: z.string().max(300).optional(), time: z.string().max(40).optional() })).min(1).max(12)
       }),
-      description: 'Une suite d’étapes numérotées dans l’ordre, avec un détail et une heure par étape. Pour une procédure, pas pour un état.'
+      description: 'A numbered sequence of steps in order, with a detail and a time per step. For a procedure, not for a state.'
     },
     Callout: {
       props: z.object({
@@ -173,14 +173,14 @@ export const catalog = defineCatalog(schema, {
         title: z.string().max(120),
         text: z.string().max(600)
       }),
-      description: 'Un encadré qui signale une chose : une information, un succès, un avertissement ou un échec. Une phrase ou deux, pas un paragraphe.'
+      description: 'A callout that flags one thing: information, success, warning or failure. A sentence or two, not a paragraph.'
     },
     Tabs: {
       props: z.object({
         tabs: z.array(z.object({ id: z.string(), label: z.string().max(40) })).min(2).max(4),
         value: bound(z.string())
       }),
-      description: 'Un sélecteur d’onglets lié à l’état. Les enfants qui portent une condition visible sur le même chemin changent avec l’onglet choisi.'
+      description: 'A tab selector bound to the state. Children whose visible condition reads the same path change with the chosen tab.'
     },
     Image: {
       props: z.object({
@@ -188,11 +188,11 @@ export const catalog = defineCatalog(schema, {
         alt: z.string().max(200),
         caption: z.string().max(200).optional()
       }),
-      description: 'Une image par son adresse https, ou un chemin local servi par l’app. Jamais de data: ni de javascript:.'
+      description: 'An image by its https address, or a local path the app serves. Never data: or javascript:.'
     },
     CodeBlock: {
       props: z.object({ code: z.string().max(4000), language: z.enum(['bash', 'ts', 'tsx', 'js', 'json', 'python', 'yaml', 'text']).optional() }),
-      description: 'Un bloc de code ou de commande, copiable, avec son langage. Court : la sortie d’une commande, pas un fichier entier.'
+      description: 'A copyable code or command block with its language. Short: a command output, not a whole file.'
     },
     Choice: {
       props: z.object({
@@ -200,7 +200,7 @@ export const catalog = defineCatalog(schema, {
         options: z.array(z.object({ value: z.string(), label: z.string().max(60) })).min(2).max(6),
         value: bound(z.string())
       }),
-      description: 'Un choix unique entre deux et six options, lié à l’état. La valeur retenue se relit dans les textes par {{/chemin}}.'
+      description: 'One choice among two to six options, bound to the state. The chosen value is read back in texts with {{/path}}.'
     },
     Stepper: {
       props: z.object({
@@ -210,7 +210,7 @@ export const catalog = defineCatalog(schema, {
         step: z.number().optional(),
         value: bound(z.number())
       }),
-      description: 'Un compteur à moins et plus, lié à l’état. Pour une quantité : personnes, chambres, exemplaires.'
+      description: 'A minus/plus counter bound to the state. For a quantity: people, rooms, copies.'
     },
     Slider: {
       props: z.object({
@@ -221,11 +221,11 @@ export const catalog = defineCatalog(schema, {
         unit: z.string().max(20).optional(),
         value: bound(z.number())
       }),
-      description: 'Un curseur entre un minimum et un maximum, lié à l’état, avec sa valeur affichée. Pour un réglage continu.'
+      description: 'A slider between a minimum and a maximum, bound to the state, with its value shown. For a continuous setting.'
     },
     Switch: {
       props: z.object({ label: z.string().max(120), value: bound(z.boolean()) }),
-      description: 'Un interrupteur oui / non, lié à l’état. Pour activer une option.'
+      description: 'A yes / no switch bound to the state. For turning an option on.'
     },
     TextField: {
       props: z.object({
@@ -233,7 +233,7 @@ export const catalog = defineCatalog(schema, {
         placeholder: z.string().max(120).optional(),
         value: bound(z.string())
       }),
-      description: 'Un champ de texte court, lié à l’état : un nom, une adresse, une recherche.'
+      description: 'A short text field bound to the state: a name, an address, a search.'
     },
     Select: {
       props: z.object({
@@ -241,7 +241,7 @@ export const catalog = defineCatalog(schema, {
         options: z.array(z.object({ value: z.string(), label: z.string().max(60) })).min(2).max(24),
         value: bound(z.string())
       }),
-      description: 'Une liste déroulante à choix unique, liée à l’état. Pour plus de six options.'
+      description: 'A single-choice dropdown bound to the state. For more than six options.'
     },
     Button: {
       props: z.object({
@@ -252,21 +252,21 @@ export const catalog = defineCatalog(schema, {
           params: z.record(z.string(), z.string()).optional()
         })
       }),
-      description: 'Un bouton qui agit : envoyer un message au bot (send, texte avec {{/chemin}}), copier un texte (copy), ouvrir une adresse https (open). Un seul primary par groupe.'
+      description: 'A button that acts: send a message to the bot (send, text with {{/path}}), copy a text (copy), open an https address (open). One primary per group.'
     }
   },
   actions: {
     send: {
       params: z.object({ text: z.string().min(1).max(2000) }),
-      description: 'Envoie text comme prochain message de la personne, avec les valeurs de l’état interpolées ({{/guests}}).'
+      description: 'Sends text as the person’s next message, with the state values interpolated ({{/guests}}).'
     },
     copy: {
       params: z.object({ text: z.string().min(1).max(4000) }),
-      description: 'Copie text dans le presse-papiers et confirme par un toast « Copié ».'
+      description: 'Copies text to the clipboard and confirms with a “Copied” toast.'
     },
     open: {
       params: z.object({ url: z.string().url().startsWith('https://').max(2000) }),
-      description: 'Ouvre une adresse https dans le navigateur du système.'
+      description: 'Opens an https address in the system browser.'
     }
   }
 })

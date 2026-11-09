@@ -98,7 +98,7 @@ function Sparkline({data, label, status, variant = 'line', area, end = variant =
   const tone = status ? statusText[status] : 'text-text-1';
 
   // A div that stays inline-block, so it sits in a line of text; it holds the data table, so never inside a <p>.
-  return <div data-slot="sparkline" data-status={status} data-variant={variant} className={cn(sparklineVariants({size}), 'w-24', tone, className)} {...props}>
+  return <div data-hui-part="sparkline" data-status={status} data-variant={variant} className={cn(sparklineVariants({size}), 'w-24', tone, className)} {...props}>
     <ChartDataTable
       caption={`${label}: ${trendWords(values, valueFormat)}`}
       empty={CHART_EMPTY}
@@ -121,7 +121,7 @@ function Sparkline({data, label, status, variant = 'line', area, end = variant =
       const v = data[i];
       if (v === null || !Number.isFinite(v)) return null;
       // value-ok: the square sits on the value's point, a share of the drawing, so it can only live inline.
-      return <span aria-hidden data-slot="sparkline-end" className="pointer-events-none absolute size-1.5 -translate-x-1/2 -translate-y-1/2 bg-current rtl:translate-x-1/2" style={{insetInlineStart: pct(x(i), viewW), top: pct(y(v), VIEW_H)}}/>;
+      return <span aria-hidden data-hui-part="sparkline-end" className="pointer-events-none absolute size-1.5 -translate-x-1/2 -translate-y-1/2 bg-current rtl:translate-x-1/2" style={{insetInlineStart: pct(x(i), viewW), top: pct(y(v), VIEW_H)}}/>;
     })()}
     {interactive && n > 0 && <>
       <span role="group" aria-label={label} aria-roledescription="chart" className="absolute inset-0 flex" onPointerLeave={hide}>
@@ -214,7 +214,7 @@ function StatusBar({data, label, unit = ['run', 'runs'], range, onBucketClick, s
   const avail = stripWidth - gapPx * (data.length - 1);
   const cellWidth = (i: number) => (stripWidth && avail >= data.length ? Math.floor(((i + 1) * avail) / data.length) - Math.floor((i * avail) / data.length) : undefined);
 
-  return <div ref={ref} data-slot="status-bar" className={cn('flex w-full min-w-0 flex-col gap-1.5', className)} {...props}>
+  return <div ref={ref} data-hui-part="status-bar" className={cn('flex w-full min-w-0 flex-col gap-1.5', className)} {...props}>
     <ChartDataTable
       caption={label}
       rowHeader="Bucket"
@@ -238,7 +238,7 @@ function StatusBar({data, label, unit = ['run', 'runs'], range, onBucketClick, s
           ref={el => { cells.current[i] = el; roving.ref(i)(el); }}
           type="button"
           tabIndex={roving.tabIndex(i)}
-          data-slot="status-bar-cell"
+          data-hui-part="status-bar-cell"
           data-tone={tone}
           aria-label={`${b.label}: ${describe(b)}`}
           onPointerEnter={event => { roving.setCurrent(i); show(i, event.currentTarget); }}

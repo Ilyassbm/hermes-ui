@@ -83,7 +83,7 @@ function summarizeRequests(items: readonly TickerRequest[]) {
 /** The same summary for a row, with the failed count in the failure word colour so it reads as trouble. */
 function RequestSummary({items}: {items: readonly TickerRequest[]}) {
   const {head, failed} = countRequests(items);
-  return failed ? <>{head}, <span data-slot="request-ticker-failed" className="text-fail-text">{failed} failed</span></> : head;
+  return failed ? <>{head}, <span data-hui-part="request-ticker-failed" className="text-fail-text">{failed} failed</span></> : head;
 }
 
 /** The newest `max` items, held for at least `hold` ms per set while live, so a burst never blurs. */
@@ -108,7 +108,7 @@ const codeBadge = {ok: 'outline', warn: 'warn', fail: 'fail'} as const;
 function Row({request, live, as: As = 'div'}: {request: TickerRequest; live: boolean; as?: 'div' | 'li'}) {
   const status = codeClass(request.code);
   return <As
-    data-slot="request-ticker-row"
+    data-hui-part="request-ticker-row"
     data-status={status === 'warn' || status === 'fail' ? status : undefined}
     className="flex h-(--menu-row-sm) min-w-0 items-center gap-3"
   >
@@ -133,17 +133,17 @@ function RequestTicker({items, live = false, max = 3, cap = 10, hold = 300, labe
   const recent = useHeldWindow(items, max, live, hold);
   const [all, setAll] = useState(false);
   if (live) {
-    return <div data-slot="request-ticker" data-live="" aria-hidden className={cn('flex min-w-0 flex-col', className)} {...props}>
+    return <div data-hui-part="request-ticker" data-live="" aria-hidden className={cn('flex min-w-0 flex-col', className)} {...props}>
       {recent.map(r => <Row key={r.id} request={r} live/>)}
     </div>;
   }
   const hidden = all ? 0 : Math.max(0, items.length - cap);
   const shown = hidden ? items.slice(0, cap) : items;
-  return <div data-slot="request-ticker" className={cn('flex min-w-0 flex-col', className)} {...props}>
+  return <div data-hui-part="request-ticker" className={cn('flex min-w-0 flex-col', className)} {...props}>
     <ol aria-label={words.requests} className="flex min-w-0 flex-col">
       {shown.map(r => <Row key={r.id} as="li" request={r} live={false}/>)}
     </ol>
-    {items.length > cap && <ShowMoreRow data-slot="request-ticker-more" onClick={() => setAll(v => !v)}>{all ? words.showLess : words.showMore(hidden)}</ShowMoreRow>}
+    {items.length > cap && <ShowMoreRow data-hui-part="request-ticker-more" onClick={() => setAll(v => !v)}>{all ? words.showLess : words.showMore(hidden)}</ShowMoreRow>}
   </div>;
 }
 

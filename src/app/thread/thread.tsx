@@ -15,9 +15,10 @@ import { useStore } from '@/lib/store'
 import { botIdentity } from '../format'
 import { BotAvatar } from '../bot-avatar'
 import { Composer } from './composer'
+import { UI } from '../strings'
 import { AssistantTurn } from './turn'
 
-const SUGGESTIONS = ['Fais le point sur tes tâches', "Qu'as-tu produit aujourd'hui ?", 'Propose-moi la prochaine action']
+const SUGGESTIONS = UI.thread.suggestions
 
 type ThreadProps = {
   bot: string | null
@@ -49,14 +50,14 @@ export function Thread({ bot, name, input }: ThreadProps) {
         {/* The header above names the bot: no pill floats over the thread any more, so the viewport starts at the top of
             the sheet's remaining height and nothing scrolls under a name. */}
         <ConversationViewport
-          aria-label={`Conversation avec ${name}`}
+          aria-label={UI.thread.conversationWith(name)}
           className="px-4"
-          labels={{ complete: 'Réponse terminée', stopped: 'Arrêté', failed: 'Réponse en échec' }}
+          labels={UI.thread.viewport}
         >
           <ConversationContent className="mx-auto flex w-full max-w-measure flex-col pt-6 pb-6">
 
             {!ready ? (
-              <p className="py-10 text-center type-body-sm text-text-3">Connexion à Hermes…</p>
+              <p className="py-10 text-center type-body-sm text-text-3">{UI.thread.connecting}</p>
             ) : messages.length ? (
               <MessageGroup>
                 {messages.map(m =>
@@ -96,8 +97,8 @@ export function Thread({ bot, name, input }: ThreadProps) {
             ) : (
               <div className="flex flex-col items-center gap-4 py-16 text-center">
                 <BotAvatar size={72} colors={identity.colors} shape={identity.shape} label={name} />
-                <h1 className="type-heading text-text-1">Que fait-on avec {name} ?</h1>
-                <ChipGroup aria-label="Suggestions">
+                <h1 className="type-heading text-text-1">{UI.thread.emptyTitle(name)}</h1>
+                <ChipGroup aria-label={UI.thread.suggestionsLabel}>
                   {SUGGESTIONS.map(s => (
                     <Chip key={s} onClick={() => input.current?.insert(s)}>
                       {s}
@@ -107,11 +108,11 @@ export function Thread({ bot, name, input }: ThreadProps) {
               </div>
             )}
 
-            {error ? <ConversationError kind="server" message={error} onRetry={() => void retryLast()} labels={{ retry: 'Réessayer' }} className="mx-0" /> : null}
+            {error ? <ConversationError kind="server" message={error} onRetry={() => void retryLast()} labels={{ retry: UI.thread.retry }} className="mx-0" /> : null}
           </ConversationContent>
         </ConversationViewport>
 
-        <ConversationJump labels={{ latest: 'Aller en bas', waitingOnYou: 'En attente de toi' }} />
+        <ConversationJump labels={{ latest: UI.thread.jumpLatest, waitingOnYou: UI.thread.waitingOnYou }} />
       </Conversation>
 
       {/* The composer sits inside the provider so a send can snap the thread back to the end. */}

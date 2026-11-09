@@ -94,8 +94,8 @@ function Dialog({role = 'dialog', confirmText, contained = false, open: openProp
 
   return <DialogContext.Provider value={state}>
     {role === 'alertdialog' && !contained
-      ? <AlertDialogPrimitive.Root data-slot="dialog" open={open} onOpenChange={setOpen} {...(props as AlertDialogPrimitive.Root.Props)}>{children}</AlertDialogPrimitive.Root>
-      : <DialogPrimitive.Root data-slot="dialog" open={open} onOpenChange={setOpen} modal={contained ? false : modal} {...props}>{children}</DialogPrimitive.Root>}
+      ? <AlertDialogPrimitive.Root data-hui-part="dialog" open={open} onOpenChange={setOpen} {...(props as AlertDialogPrimitive.Root.Props)}>{children}</AlertDialogPrimitive.Root>
+      : <DialogPrimitive.Root data-hui-part="dialog" open={open} onOpenChange={setOpen} modal={contained ? false : modal} {...props}>{children}</DialogPrimitive.Root>}
   </DialogContext.Provider>;
 }
 
@@ -128,16 +128,16 @@ const dialogVariants = cva(
 // ---------- Parts ----------
 
 function DialogTrigger(props: DialogPrimitive.Trigger.Props) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props}/>;
+  return <DialogPrimitive.Trigger data-hui-part="dialog-trigger" {...props}/>;
 }
 
 function DialogPortal(props: DialogPrimitive.Portal.Props) {
   const container = useGlazePortal();
-  return <DialogPrimitive.Portal data-slot="dialog-portal" container={container} {...props}/>;
+  return <DialogPrimitive.Portal data-hui-part="dialog-portal" container={container} {...props}/>;
 }
 
 function DialogOverlay({className, ...props}: DialogPrimitive.Backdrop.Props) {
-  return <DialogPrimitive.Backdrop data-slot="dialog-overlay" className={mergeClass(scrimClass, className)} {...props}/>;
+  return <DialogPrimitive.Backdrop data-hui-part="dialog-overlay" className={mergeClass(scrimClass, className)} {...props}/>;
 }
 
 type DialogContentProps = DialogPrimitive.Popup.Props & VariantProps<typeof dialogVariants> & {
@@ -166,7 +166,7 @@ function DialogContent({className, size, showCloseButton, children, ref, onKeyDo
   return <DialogPortal>
     <DialogOverlay/>
     <DialogPrimitive.Popup
-      data-slot="dialog-content"
+      data-hui-part="dialog-content"
       data-size={size ?? 'default'}
       data-role={role}
       data-close={withClose || undefined}
@@ -178,10 +178,10 @@ function DialogContent({className, size, showCloseButton, children, ref, onKeyDo
       <FootSlotContext.Provider value={foot}>
       {/* The entrance motion lives here, one level under the popup: an animation on a child cannot hold the popup's
           unmount, which is what a transition on the popup itself did (lot 11). */}
-      <div data-slot="dialog-panel" data-enter="dialog-panel" className={cn(overlayPanel, 'relative')}>
+      <div data-hui-part="dialog-panel" data-enter="dialog-panel" className={cn(overlayPanel, 'relative')}>
         {children}
         {withClose && <DialogPrimitive.Close
-          data-slot="dialog-close-button"
+          data-hui-part="dialog-close-button"
           aria-label="Close"
           disabled={pending}
           render={<Button variant="ghost" size="icon-sm" className="absolute end-3 top-3.5"/>}
@@ -191,7 +191,7 @@ function DialogContent({className, size, showCloseButton, children, ref, onKeyDo
       </div>
       </FootSlotContext.Provider>
       {/* The footer's row on the shell: its children take the grid's rows under the panel. */}
-      <div ref={setFoot} data-slot="dialog-foot" className="contents"/>
+      <div ref={setFoot} data-hui-part="dialog-foot" className="contents"/>
     </DialogPrimitive.Popup>
   </DialogPortal>;
 }
@@ -200,11 +200,11 @@ function DialogContent({className, size, showCloseButton, children, ref, onKeyDo
 function DialogHeader({className, ...props}: React.ComponentProps<'div'>) {
   const {pending, error} = useDialog();
   return <div
-    data-slot="dialog-header"
+    data-hui-part="dialog-header"
     data-pending={pending || undefined}
     data-status={error ? 'fail' : undefined}
     className={cn(
-      'flex shrink-0 flex-col gap-1 p-4 group-data-close/dialog:pe-12 group-has-data-[slot=dialog-body]/dialog:pb-3',
+      'flex shrink-0 flex-col gap-1 p-4 group-data-close/dialog:pe-12 group-has-data-[hui-part=dialog-body]/dialog:pb-3',
       className,
     )}
     {...props}
@@ -219,10 +219,10 @@ function DialogBody({className, ref, ...props}: React.ComponentProps<'div'>) {
   const setRef = useScrollBody<HTMLDivElement>(ref);
   return <div
     ref={setRef}
-    data-slot="dialog-body"
+    data-hui-part="dialog-body"
     className={cn(
       'flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain border-t border-transparent px-4 pt-3 pb-4 type-body-sm text-text-1',
-      'not-group-has-data-[slot=dialog-header]/dialog:pt-4 data-scrolled:border-line-faint focus-visible:focus-ring-inset',
+      'not-group-has-data-[hui-part=dialog-header]/dialog:pt-4 data-scrolled:border-line-faint focus-visible:focus-ring-inset',
       className,
     )}
     {...props}
@@ -244,17 +244,17 @@ function DialogFooter({className, defaultAction, meta, children, ...props}: Dial
   const {error} = useDialog();
   const slot = useDialogFootSlot();
   const row = <>
-    {error && <div data-slot="dialog-error" role="alert" data-status="fail" className="mt-(--shell-inset) flex items-start gap-2 rounded-panel bg-fail-tint px-3 py-2 type-body-sm text-fail-text">
+    {error && <div data-hui-part="dialog-error" role="alert" data-status="fail" className="mt-(--shell-inset) flex items-start gap-2 rounded-panel bg-fail-tint px-3 py-2 type-body-sm text-fail-text">
       <Icon icon={Failed} className="mt-0.5"/>
       <span className="min-w-0 break-words">{error}</span>
     </div>}
     <div
-      data-slot="dialog-footer"
+      data-hui-part="dialog-footer"
       data-default-action={defaultAction ?? 'auto'}
       className={cn('shell-foot justify-end', className)}
       {...props}
     >
-      {meta && <span data-slot="dialog-footer-meta" className="me-auto">{meta}</span>}
+      {meta && <span data-hui-part="dialog-footer-meta" className="me-auto">{meta}</span>}
       {children}
     </div>
   </>;
@@ -264,11 +264,11 @@ function DialogFooter({className, defaultAction, meta, children, ...props}: Dial
 }
 
 function DialogTitle({className, ...props}: DialogPrimitive.Title.Props) {
-  return <DialogPrimitive.Title data-slot="dialog-title" className={mergeClass('type-heading-sm text-text-1 break-words', className)} {...props}/>;
+  return <DialogPrimitive.Title data-hui-part="dialog-title" className={mergeClass('type-heading-sm text-text-1 break-words', className)} {...props}/>;
 }
 
 function DialogDescription({className, ...props}: DialogPrimitive.Description.Props) {
-  return <DialogPrimitive.Description data-slot="dialog-description" className={mergeClass('max-w-(--measure-hint) type-body-sm text-text-2 break-words [&_a]:text-text-1 [&_a]:underline [&_a]:underline-offset-4', className)} {...props}/>;
+  return <DialogPrimitive.Description data-hui-part="dialog-description" className={mergeClass('max-w-(--measure-hint) type-body-sm text-text-2 break-words [&_a]:text-text-1 [&_a]:underline [&_a]:underline-offset-4', className)} {...props}/>;
 }
 
 /**
@@ -278,7 +278,7 @@ function DialogDescription({className, ...props}: DialogPrimitive.Description.Pr
 function DialogClose({disabled, render, ...props}: DialogPrimitive.Close.Props) {
   const {pending} = useDialog();
   return <DialogPrimitive.Close
-    data-slot="dialog-close"
+    data-hui-part="dialog-close"
     data-dialog-action="dismiss"
     disabled={disabled || pending}
     render={render ?? <Button variant="secondary" size="sm"/>}
@@ -307,7 +307,7 @@ function DialogAction({close, onAction, onClick, disabled, size = 'sm', pending:
   const {matched, pending, run} = useDialog();
   const closeAfter = closesAfter({close, onAction, onClick, type: props.type});
   return <Button
-    data-slot="dialog-action"
+    data-hui-part="dialog-action"
     data-dialog-action="primary"
     size={size}
     disabled={disabled || !matched}
@@ -344,7 +344,7 @@ function DialogConfirmField({label = name => <>Type {name} to confirm</>, classN
   if (differs < 0 && value.length > confirmText.length) differs = confirmText.length;
   const good = differs < 0 ? value.length : differs;
   const matchedNow = differs < 0 && value.length === confirmText.length;
-  const name = <span data-slot="dialog-confirm-name" className="mono rounded-tag bg-field px-1 break-all select-all">
+  const name = <span data-hui-part="dialog-confirm-name" className="mono rounded-tag bg-field px-1 break-all select-all">
     {Array.from(confirmText).map((ch, i) => <span
       key={i}
       data-char={i < good ? 'match' : i === differs ? 'differs' : 'rest'}
@@ -354,7 +354,7 @@ function DialogConfirmField({label = name => <>Type {name} to confirm</>, classN
   const hint = differs >= 0
     ? `Differs at character ${differs + 1}. The name is case-sensitive.`
     : matchedNow ? 'Matches. Press the button to confirm; Enter does not.' : 'The name is case-sensitive. Enter does not confirm.';
-  return <div data-slot="dialog-confirm-field" className="flex flex-col gap-2">
+  return <div data-hui-part="dialog-confirm-field" className="flex flex-col gap-2">
     <label htmlFor={fieldId} className="type-body-sm text-text-2 break-words">{label(name)}</label>
     <input
       id={fieldId}

@@ -32,6 +32,7 @@ import { BotAvatar } from './bot-avatar'
 import { botIdentity, sinceLabel } from './format'
 import { capsOf } from './keys'
 import { EFFORTS, effortLabel, loadCatalog, MODEL_MENU_TOP, topModels, type Provider } from './models'
+import { UI } from './strings'
 import { toggleAside, view } from './ui-state'
 
 type HeaderProps = {
@@ -71,7 +72,7 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
 
   return (
     <div className="hui-hdr">
-      <div className="hui-hdr-tabs" role="tablist" aria-label={`Conversations de ${name}`}>
+      <div className="hui-hdr-tabs" role="tablist" aria-label={UI.header.conversations(name)}>
         <div
           role="tab"
           tabIndex={0}
@@ -91,11 +92,11 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
             tabIndex={0}
             aria-selected={s.id === storedId}
             className="hui-tab hui-tab-conv"
-            title={s.title || 'Conversation'}
+            title={s.title || UI.header.conversation}
             onClick={() => void openConversation(s.id)}
             onKeyDown={press(() => void openConversation(s.id))}
           >
-            <span className="hui-tab-text">{s.title || 'Conversation'}</span>
+            <span className="hui-tab-text">{s.title || UI.header.conversation}</span>
           </div>
         ))}
 
@@ -105,7 +106,7 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
                 keypress but let the click's mouseup close it again (lot 7). */}
             <DropdownMenuTrigger
               openOnHover={false}
-              render={<Button variant="ghost" size="icon-sm" className="hui-icon-btn hui-tab-list" aria-label="Toutes les conversations" />}
+              render={<Button variant="ghost" size="icon-sm" className="hui-icon-btn hui-tab-list" aria-label={UI.header.allConversations} />}
             >
               <Icon icon={List} size={14} />
             </DropdownMenuTrigger>
@@ -116,8 +117,8 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
                   size="sm"
                   autoFocus
                   value={query}
-                  placeholder="Filtrer les conversations"
-                  aria-label="Filtrer les conversations"
+                  placeholder={UI.header.filterConversations}
+                  aria-label={UI.header.filterConversations}
                   onChange={e => setQuery(e.target.value)}
                   onKeyDown={e => e.stopPropagation()}
                 />
@@ -130,14 +131,14 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
                     <DropdownMenuLabel>{group}</DropdownMenuLabel>
                     {inGroup.map(s => (
                       <DropdownMenuItem key={s.id} onClick={() => void openConversation(s.id)}>
-                        <span className="hui-conv-title">{s.title || 'Conversation'}</span>
+                        <span className="hui-conv-title">{s.title || UI.header.conversation}</span>
                         <span className="hui-conv-time">{sinceLabel(s.at)}</span>
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuGroup>
                 )
               })}
-              {!shown.length ? <p className="hui-conv-empty">Aucune conversation</p> : null}
+              {!shown.length ? <p className="hui-conv-empty">{UI.header.noConversation}</p> : null}
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}
@@ -145,11 +146,11 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger
-              render={<div role="button" tabIndex={0} className="hui-icon-btn hui-tab-new" aria-label="Nouvelle conversation" onClick={() => newConversation()} onKeyDown={press(() => newConversation())} />}
+              render={<div role="button" tabIndex={0} className="hui-icon-btn hui-tab-new" aria-label={UI.header.newConversation} onClick={() => newConversation()} onKeyDown={press(() => newConversation())} />}
             >
               <Icon icon={Add} size={14} />
             </TooltipTrigger>
-            <TooltipContent shortcut={capsOf('hermes-ui.newConversation')}>Nouvelle conversation</TooltipContent>
+            <TooltipContent shortcut={capsOf('hermes-ui.newConversation')}>{UI.header.newConversation}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>
@@ -160,22 +161,22 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger
-                render={<div role="button" tabIndex={0} className="hui-icon-btn" aria-label="Afficher ou masquer la liste des bots" onClick={() => view.set({ railOpen: !railOpen })} />}
+                render={<div role="button" tabIndex={0} className="hui-icon-btn" aria-label={UI.header.toggleRail} onClick={() => view.set({ railOpen: !railOpen })} />}
               >
                 <Icon icon={SidebarSimple} size={14} />
               </TooltipTrigger>
-              <TooltipContent>Afficher les bots</TooltipContent>
+              <TooltipContent>{UI.header.showBots}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         ) : null}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger
-              render={<Button variant="ghost" size="icon-sm" aria-label={asideOpen ? 'Masquer le panneau' : 'Afficher le panneau'} onClick={() => toggleAside(ctx)} />}
+              render={<Button variant="ghost" size="icon-sm" aria-label={asideOpen ? UI.header.hideAside : UI.header.showAside} onClick={() => toggleAside(ctx)} />}
             >
               <Icon icon={SidebarSimple} size={14} mirrored />
             </TooltipTrigger>
-            <TooltipContent shortcut={capsOf('hermes-ui.toggleAside')}>{asideOpen ? 'Masquer le panneau' : 'Afficher le panneau'}</TooltipContent>
+            <TooltipContent shortcut={capsOf('hermes-ui.toggleAside')}>{asideOpen ? UI.header.hideAside : UI.header.showAside}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>
@@ -191,7 +192,7 @@ function useModelLabel(bot: string | null): string {
   const prefs = prefsFor(bot)
   const model = prefs.model || meta?.model || ''
   const effort = effortLabel(prefs.effort || 'medium')
-  const label = model ? modelLabel(model) : 'Modèle'
+  const label = model ? modelLabel(model) : UI.header.model
   return effort ? `${label} · ${effort}` : label
 }
 
@@ -242,7 +243,7 @@ function ModelMenu() {
     try {
       performance.measure('hui:model-menu', 'hui:model-menu:open')
       const entry = performance.getEntriesByName('hui:model-menu').pop()
-      console.info(`[hui:perf] sélecteur de modèle, premier rendu ouvert : ${Math.round(entry?.duration ?? 0)} ms`)
+      console.info(`[hui:perf] model picker, first open render: ${Math.round(entry?.duration ?? 0)} ms`)
     } catch {
       /* the mark was cleared, or the browser keeps no entries: the timing is a development aid, not a feature */
     }
@@ -301,7 +302,7 @@ function ModelMenu() {
         variant="ghost"
         size="sm"
         className="hui-model-trigger"
-        aria-label={`Modèle et effort, ${trigger}`}
+        aria-label={UI.header.modelAndEffort(trigger)}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => {
@@ -338,9 +339,9 @@ function ModelMenu() {
           className="hui-model-menu"
         >
           <DropdownMenuGroup>
-            <DropdownMenuLabel>Effort</DropdownMenuLabel>
+            <DropdownMenuLabel>{UI.header.effort}</DropdownMenuLabel>
             <div className="hui-model-effort" onKeyDown={e => e.stopPropagation()}>
-              <SegmentedControl size="sm" value={effort} onValueChange={pickEffort} aria-label="Effort de raisonnement">
+              <SegmentedControl size="sm" value={effort} onValueChange={pickEffort} aria-label={UI.header.effortLabel}>
                 {EFFORTS.map(([value, label]) => (
                   <Fragment key={value}>
                     <SegmentedControlItem value={value}>{label}</SegmentedControlItem>
@@ -352,7 +353,7 @@ function ModelMenu() {
           <DropdownMenuSeparator />
           {providers.length === 0 ? (
             <DropdownMenuGroup>
-              <DropdownMenuLabel>Modèles indisponibles</DropdownMenuLabel>
+              <DropdownMenuLabel>{UI.header.modelsUnavailable}</DropdownMenuLabel>
             </DropdownMenuGroup>
           ) : null}
           {providers.map(provider => (
@@ -369,7 +370,7 @@ function ModelMenu() {
               </DropdownMenuRadioGroup>
               {provider.models.length > MODEL_MENU_TOP ? (
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>{`Tous les modèles ${provider.name}…`}</DropdownMenuSubTrigger>
+                  <DropdownMenuSubTrigger>{UI.header.allModels(provider.name)}</DropdownMenuSubTrigger>
                   {/* `AllModels` mounts with the submenu, so the rest of the catalogue is listed — and filtered —
                       only once this level opens. */}
                   <DropdownMenuSubContent size="sm" className="hui-model-sub">
@@ -385,7 +386,7 @@ function ModelMenu() {
   )
 }
 
-/** The whole catalogue of one provider, behind "Tous les modèles…": a filter field on top, then every model. */
+/** The whole catalogue of one provider, behind "All … models…": a filter field on top, then every model. */
 function AllModels({ provider, model, onPick }: { provider: Provider; model: string; onPick: (next: string) => void }) {
   const [query, setQuery] = useState('')
   const needle = query.trim().toLowerCase()
@@ -398,8 +399,8 @@ function AllModels({ provider, model, onPick }: { provider: Provider; model: str
           size="sm"
           autoFocus
           value={query}
-          placeholder={`Filtrer les modèles ${provider.name}`}
-          aria-label={`Filtrer les modèles ${provider.name}`}
+          placeholder={UI.header.filterModels(provider.name)}
+          aria-label={UI.header.filterModels(provider.name)}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => e.stopPropagation()}
         />
@@ -411,7 +412,7 @@ function AllModels({ provider, model, onPick }: { provider: Provider; model: str
           </DropdownMenuRadioItem>
         ))}
       </DropdownMenuRadioGroup>
-      {!shown.length ? <p className="hui-conv-empty">Aucun modèle</p> : null}
+      {!shown.length ? <p className="hui-conv-empty">{UI.header.noModel}</p> : null}
     </>
   )
 }

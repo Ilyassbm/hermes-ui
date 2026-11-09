@@ -80,7 +80,7 @@ function SendButton({status = 'ready', onStop, empty, blockedReason, generation,
 
   return <>
     <Button
-      data-slot="send-button"
+      data-hui-part="send-button"
       data-state={shown}
       data-empty={nothing || undefined}
       variant="primary"
@@ -97,7 +97,7 @@ function SendButton({status = 'ready', onStop, empty, blockedReason, generation,
       {...props}
     >
       {isWorking
-        ? <span aria-hidden data-slot="send-button-stop" className={cn('size-2 rounded-[1.5px] bg-current forced-colors:bg-[CanvasText]', shown === 'stopping' && 'opacity-40')}/>/* value-ok: the stop square's corner is part of the glyph's drawing, not a container radius */
+        ? <span aria-hidden data-hui-part="send-button-stop" className={cn('size-2 rounded-[1.5px] bg-current forced-colors:bg-[CanvasText]', shown === 'stopping' && 'opacity-40')}/>/* value-ok: the stop square's corner is part of the glyph's drawing, not a container radius */
         : <Icon icon={ArrowUp} size={icon}/>}
     </Button>
     {blocked && <span id={reasonId} hidden>{blockedReason}</span>}

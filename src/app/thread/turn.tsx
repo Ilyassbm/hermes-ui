@@ -11,9 +11,10 @@ import { Response } from '@/components/glaze/ai/response'
 import { ToolCallList, toolCallsReducer, type ToolCallData } from '@/components/glaze/ai/tool-call'
 import { Button } from '@/components/glaze/ui/button'
 import { CopyButton } from '@/components/glaze/ui/copy-button'
-import { frDuration, modelLabel } from '@/lib/labels'
+import { humanDuration, modelLabel } from '@/lib/labels'
 import { replyApproval, store } from '@/lib/hermes'
 import { useStore } from '@/lib/store'
+import { UI } from '../strings'
 import { IUI_TAGS } from '../iui/block'
 import { BotAvatar } from '../bot-avatar'
 import { emptyCalls, turnReducer, type ToolAction } from './tool-events'
@@ -52,7 +53,7 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
   // the turn says what it is doing itself, so the line goes.
   const waiting = streaming && !text && !reasoning && calls.length === 0
   const thinking = message.thinkStart && message.thinkEnd ? Math.max(0, (message.thinkEnd - message.thinkStart) / 1000) : undefined
-  // The reasoning stays folded while it streams: the header already says "Réfléchit…" with the arc, and a wall of
+  // The reasoning stays folded while it streams: the header already says "Thinking…" with the arc, and a wall of
   // thought scrolling under the answer is not what the turn is for. Opening it is the person's click alone.
   const [reasoningOpen, setReasoningOpen] = useState(false)
 
@@ -68,13 +69,13 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
         <BotAvatar size={20} colors={identity.colors} shape={identity.shape} label={name} hoverGiggle={false} />
         <span className="truncate type-label-sm text-text-1">{name}</span>
         {message.model ? (
-          <span data-slot="turn-model" title={message.model} className="truncate type-caption text-text-3">
+          <span data-hui-part="turn-model" title={message.model} className="truncate type-caption text-text-3">
             {modelLabel(message.model)}
           </span>
         ) : null}
       </div>
 
-      {waiting ? <Activity waiting announce={false} label={`${name} réfléchit…`} className="py-1" /> : null}
+      {waiting ? <Activity waiting announce={false} label={UI.turn.thinking(name)} className="py-1" /> : null}
 
       {reasoning ? (
         <Reasoning
@@ -82,7 +83,7 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
           duration={thinking}
           open={reasoningOpen}
           onOpenChange={setReasoningOpen}
-          labels={{ thinking: 'Réfléchit…', thoughtFor: time => `A réfléchi ${frDuration(time)}`, moment: 'un instant', stoppedEarly: 'Arrêté avant de réfléchir' }}
+          labels={{ thinking: UI.turn.reasoning.thinking, thoughtFor: time => UI.turn.reasoning.thoughtFor(humanDuration(time)), moment: UI.turn.reasoning.moment, stoppedEarly: UI.turn.reasoning.stoppedEarly }}
         >
           {reasoning}
         </Reasoning>
@@ -98,22 +99,22 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
               <>
                 {/* The third answer: this command, from now on. Flat, beside the one green Allow. */}
                 <Button size="sm" variant="secondary" onClick={() => replyApproval(call.id, 'once', true)}>
-                  Toujours
+                  {UI.turn.always}
                 </Button>
                 <Button size="sm" variant="secondary" onClick={() => replyApproval(call.id, 'reject')}>
-                  Refuser
+                  {UI.turn.refuse}
                 </Button>
                 <Button size="sm" variant="confirm" onClick={() => replyApproval(call.id, 'once')}>
-                  Autoriser
+                  {UI.turn.allow}
                 </Button>
               </>
             ) : approval && call.status === 'awaiting-permission' ? (
               <>
                 <Button size="sm" variant="secondary" onClick={() => replyApproval(call.id, 'reject')}>
-                  Refuser
+                  {UI.turn.refuse}
                 </Button>
                 <Button size="sm" variant="confirm" onClick={() => replyApproval(call.id, 'once')}>
-                  Autoriser
+                  {UI.turn.allow}
                 </Button>
               </>
             ) : null
@@ -129,7 +130,7 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
 
       {text && !streaming ? (
         <MessageFooter>
-          <CopyButton value={text} label="la réponse" />
+          <CopyButton value={text} label={UI.turn.copyResponse} />
         </MessageFooter>
       ) : null}
     </AgentTurn>

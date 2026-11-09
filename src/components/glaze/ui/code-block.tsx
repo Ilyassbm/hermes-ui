@@ -186,7 +186,7 @@ function CopyCodeButton({text, label = 'Copy code', onCopy, className}: CopyCode
     timer.current = setTimeout(() => setState('idle'), 1600);
   };
   return <>
-    <Button data-slot="code-copy" variant="ghost" size="icon-sm" aria-label={label} onClick={copy} className={className}>
+    <Button data-hui-part="code-copy" variant="ghost" size="icon-sm" aria-label={label} onClick={copy} className={className}>
       <Icon icon={state === 'copied' ? Check : Copy} size={12}/>
     </Button>
     <span role="status" className="sr-only">{state === 'copied' ? 'Copied' : state === 'failed' ? 'Copy failed' : ''}</span>
@@ -208,7 +208,7 @@ function Masked({line, secret, revealed}: {line: string; secret?: string; reveal
     const text = <TokenLine key={`t${i}`} tokens={tokenize(part, 'bash')[0]}/>;
     // The dots cannot be selected, and the spoken "hidden secret" is generated content, so a hand selection copies the
     // command around the secret and nothing that looks like a key.
-    return i === 0 ? [text] : [<span key={`s${i}`} data-slot="code-block-secret" className="text-text-2 select-none before:sr-only before:content-['hidden_secret']"><span aria-hidden>{maskSecret(secret)}</span></span>, text];
+    return i === 0 ? [text] : [<span key={`s${i}`} data-hui-part="code-block-secret" className="text-text-2 select-none before:sr-only before:content-['hidden_secret']"><span aria-hidden>{maskSecret(secret)}</span></span>, text];
   })}</>;
 }
 
@@ -261,22 +261,22 @@ function FileBlock({code, language = 'text', filename, header = true, lineNumber
   const name = filename ?? languageLabels[language];
 
   return <figure
-    data-slot="code-block"
+    data-hui-part="code-block"
     data-variant="block"
     data-wrap={wrap || undefined}
     className={cn('code-surface relative flex min-w-0 flex-col overflow-hidden rounded-overlay text-text-1 forced-colors:border forced-colors:border-[CanvasText]', className)}
     {...props}
   >
-    {header && <figcaption data-slot="code-block-header" className="flex min-h-(--control) items-center gap-2 border-b border-line-faint ps-3 pe-1">
+    {header && <figcaption data-hui-part="code-block-header" className="flex min-h-(--control) items-center gap-2 border-b border-line-faint ps-3 pe-1">
       <span className={cn('min-w-0 flex-1 truncate', filename ? 'type-code-block text-text-1' : 'type-caption text-text-2')}>{name}</span>
       {filename && language !== 'text' && <span className="hidden type-caption text-text-2 sm:block">{languageLabels[language]}</span>}
-      <Button data-slot="code-block-wrap" variant="ghost" size="icon-sm" aria-label="Wrap lines" aria-pressed={wrap} onClick={() => setWrap(w => !w)} className="text-text-2 aria-pressed:text-text-1">
+      <Button data-hui-part="code-block-wrap" variant="ghost" size="icon-sm" aria-label="Wrap lines" aria-pressed={wrap} onClick={() => setWrap(w => !w)} className="text-text-2 aria-pressed:text-text-1">
         <Icon icon={Wrap} size={12} weight={wrap ? 'fill' : 'regular'}/>
       </Button>
       <CopyCodeButton text={source} label={copyLabel} onCopy={onCopy}/>
     </figcaption>}
     <div
-      data-slot="code-block-body"
+      data-hui-part="code-block-body"
       tabIndex={0}
       role="region"
       aria-label={name}
@@ -289,7 +289,7 @@ function FileBlock({code, language = 'text', filename, header = true, lineNumber
           {lines.map((tokens, i) => {
             const n = startLine + i;
             const on = marked.has(n);
-            return <span key={i} data-slot="code-block-line" data-highlighted={on || undefined} className={cn('flex pe-3', !lineNumbers && 'ps-3', on && 'bg-pressed forced-colors:outline forced-colors:outline-1 forced-colors:-outline-offset-1')}>
+            return <span key={i} data-hui-part="code-block-line" data-highlighted={on || undefined} className={cn('flex pe-3', !lineNumbers && 'ps-3', on && 'bg-pressed forced-colors:outline forced-colors:outline-1 forced-colors:-outline-offset-1')}>
               {lineNumbers && <span aria-hidden className={cn('sticky start-0 w-(--gutter) shrink-0 ps-3 pe-3 text-end text-text-2 select-none', on ? 'bg-transparent text-text-1' : 'bg-code-surface')} style={{'--gutter': `calc(${digits}ch + var(--space-6))`} as CSSProperties}>{n}</span>}
               {/* "Highlighted" is generated content: read aloud, never selected or copied. */}
               <span className={cn('min-w-0 flex-1', wrap ? 'whitespace-pre-wrap [overflow-wrap:anywhere]' : 'whitespace-pre', on && "before:sr-only before:content-['Highlighted:_']")}><TokenLine tokens={tokens}/></span>
@@ -318,13 +318,13 @@ function CommandBlock({code, prompt = '$', secret, maxLines, copyLabel = 'Copy c
   const copyText = lines.filter(l => l.kind === 'command').map(l => l.text).join('\n');
   const many = lines.filter(l => l.kind === 'command').length > 1;
   return <figure
-    data-slot="code-block"
+    data-hui-part="code-block"
     data-variant="command"
     className={cn('code-surface flex min-w-0 items-start gap-1 rounded-overlay py-1 ps-3 pe-1 text-text-1 forced-colors:border forced-colors:border-[CanvasText]', className)}
     {...props}
   >
     <div
-      data-slot="code-block-body"
+      data-hui-part="code-block-body"
       tabIndex={0}
       role="region"
       aria-label={many ? 'Commands' : 'Command'}
@@ -333,14 +333,14 @@ function CommandBlock({code, prompt = '$', secret, maxLines, copyLabel = 'Copy c
       style={maxLinesStyle(maxLines)}
     >
       <pre className="w-max min-w-full">
-        {lines.map((line, i) => <div key={i} data-slot={line.kind === 'command' ? 'code-block-command' : 'code-block-output'} className={cn('whitespace-pre', line.kind === 'output' && 'text-text-2')}>
-          {line.kind === 'command' && prompt && <span aria-hidden data-slot="code-block-prompt" className="text-text-2 select-none">{prompt} </span>}
+        {lines.map((line, i) => <div key={i} data-hui-part={line.kind === 'command' ? 'code-block-command' : 'code-block-output'} className={cn('whitespace-pre', line.kind === 'output' && 'text-text-2')}>
+          {line.kind === 'command' && prompt && <span aria-hidden data-hui-part="code-block-prompt" className="text-text-2 select-none">{prompt} </span>}
           <code>{line.kind === 'command' ? <Masked line={line.text} secret={secret} revealed={revealed}/> : line.text || ' '}</code>
         </div>)}
       </pre>
     </div>
     <span className="flex shrink-0 items-center gap-0.5">
-      {secret && <Button data-slot="code-block-reveal" variant="ghost" size="icon-sm" aria-label={revealed ? 'Hide secret' : 'Show secret'} aria-pressed={revealed} onClick={() => setRevealed(r => !r)}>
+      {secret && <Button data-hui-part="code-block-reveal" variant="ghost" size="icon-sm" aria-label={revealed ? 'Hide secret' : 'Show secret'} aria-pressed={revealed} onClick={() => setRevealed(r => !r)}>
         <Icon icon={revealed ? Hide : Show} size={12}/>
       </Button>}
       <CopyCodeButton text={copyText} label={copyLabel} onCopy={onCopy}/>

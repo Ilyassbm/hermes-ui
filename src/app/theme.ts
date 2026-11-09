@@ -45,7 +45,7 @@ const dark: DesktopThemeColors = {
 export const glazeNoir: DesktopTheme = {
   name: THEME_NAME,
   label: 'Glaze Noir',
-  description: 'Noir et blanc, le thème de Hermes UI',
+  description: 'Black and white, the Hermes UI theme',
   // Dark is the theme; `colors` carries the same palette so nothing synthesises a light variant from a half-set.
   colors: dark,
   darkColors: dark,
@@ -54,7 +54,7 @@ export const glazeNoir: DesktopTheme = {
     fontSans: '"Glaze Sans", "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
     fontMono: '"Glaze Mono", "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace'
   },
-  // The native pages that stay native (Réglages, Capabilities…) get Glaze's geometry; every rule excludes .glaze.
+  // The native pages that stay native (Settings, Capabilities…) get Glaze's geometry; every rule excludes .glaze.
   customCSS: skin
 }
 

@@ -49,7 +49,7 @@ function Slider({className, defaultValue, value, min = 0, max = 100, step = 1, t
   return <DirectionProvider direction={dir}>
     <SliderPrimitive.Root
       ref={boxRefs}
-      data-slot="slider"
+      data-hui-part="slider"
       className={mergeClass('flex items-center gap-3 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:flex-col', className)}
       defaultValue={defaultValue}
       value={value}
@@ -63,19 +63,19 @@ function Slider({className, defaultValue, value, min = 0, max = 100, step = 1, t
       {...props}
     >
       <SliderPrimitive.Control
-        data-slot="slider-control"
+        data-hui-part="slider-control"
         className="relative flex w-full touch-none items-center select-none data-[orientation=horizontal]:h-6 data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-40 data-[orientation=vertical]:w-6 data-[orientation=vertical]:flex-col data-disabled:cursor-not-allowed"
       >
         <SliderPrimitive.Track
-          data-slot="slider-track"
+          data-hui-part="slider-track"
           className="relative grow rounded-pill bg-line select-none data-[orientation=horizontal]:h-1 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1 forced-colors:border forced-colors:border-solid forced-colors:border-[CanvasText]"
         >
           <SliderPrimitive.Indicator
-            data-slot="slider-range"
+            data-hui-part="slider-range"
             className="glaze-sm glaze-sm-x rounded-pill select-none data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full data-disabled:bg-text-disabled! forced-colors:[forced-color-adjust:none] forced-colors:bg-[Highlight]"
           />
           {values.map((_, index) => <SliderPrimitive.Thumb
-            data-slot="slider-thumb"
+            data-hui-part="slider-thumb"
             key={index}
             index={index}
             getAriaLabel={thumbLabels ? i => thumbLabels[i] ?? '' : undefined}
@@ -91,8 +91,8 @@ function Slider({className, defaultValue, value, min = 0, max = 100, step = 1, t
           />)}
         </SliderPrimitive.Track>
       </SliderPrimitive.Control>
-      {showValue && <span data-slot="slider-value" className="grid shrink-0 justify-items-end type-label text-text-1 tabular-nums [grid-template-areas:'v']">
-        <span aria-hidden data-slot="slider-value-reserve" className="invisible [grid-area:v]">{reserve}</span>
+      {showValue && <span data-hui-part="slider-value" className="grid shrink-0 justify-items-end type-label text-text-1 tabular-nums [grid-template-areas:'v']">
+        <span aria-hidden data-hui-part="slider-value-reserve" className="invisible [grid-area:v]">{reserve}</span>
         <SliderPrimitive.Value className="[grid-area:v] data-disabled:text-text-disabled">
           {formatted => formatted.join(' to ')}
         </SliderPrimitive.Value>

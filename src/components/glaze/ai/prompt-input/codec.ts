@@ -34,7 +34,7 @@ function serialize(root: Node, pastes: Map<string, string>) {
   const walk = (node: Node) => {
     node.childNodes.forEach(child => {
       if (child.nodeType === Node.TEXT_NODE) {
-        add((child.nodeValue ?? '').replace(/ /g, ' ').replace(/​/g, ''));
+        add((child.nodeValue ?? '').replace(/\u00a0/g, ' ').replace(/\u200b/g, ''));
       } else if (child instanceof HTMLElement) {
         const {mentionId: id, mentionType, mentionLabel: label} = child.dataset;
         if (id !== undefined && mentionType && label !== undefined) {

@@ -47,7 +47,7 @@ type EmptyProps = React.ComponentProps<'div'> & VariantProps<typeof emptyVariant
 
 function Empty({className, reason = 'empty', variant = 'panel', size = 'default', role, ...props}: EmptyProps) {
   return <div
-    data-slot="empty"
+    data-hui-part="empty"
     data-reason={reason}
     data-size={size}
     role={role ?? (reason === 'error' ? 'alert' : undefined)}
@@ -58,7 +58,7 @@ function Empty({className, reason = 'empty', variant = 'panel', size = 'default'
 
 /** The title and description, held to a hint's measure. */
 function EmptyHeader({className, ...props}: React.ComponentProps<'div'>) {
-  return <div data-slot="empty-header" className={cn('flex max-w-(--measure-hint) min-w-0 flex-col items-center gap-1', className)} {...props}/>;
+  return <div data-hui-part="empty-header" className={cn('flex max-w-(--measure-hint) min-w-0 flex-col items-center gap-1', className)} {...props}/>;
 }
 
 type EmptyTitleProps = React.ComponentProps<'h3'> & {
@@ -68,14 +68,14 @@ type EmptyTitleProps = React.ComponentProps<'h3'> & {
 
 /** What is missing, as a sentence: "No runs yet", "No runs match timeout". The reason's glyph sits over it. */
 function EmptyTitle({className, icon, children, ...props}: EmptyTitleProps) {
-  return <h3 data-slot="empty-title" className={cn('flex min-w-0 flex-col items-center gap-3 type-label text-text-1 group-data-[reason=error]/empty:text-fail-text group-data-[size=sm]/empty:gap-2', className)} {...props}>
+  return <h3 data-hui-part="empty-title" className={cn('flex min-w-0 flex-col items-center gap-3 type-label text-text-1 group-data-[reason=error]/empty:text-fail-text group-data-[size=sm]/empty:gap-2', className)} {...props}>
     {icon !== false && <EmptyIcon icon={icon}/>}
     <span className="min-w-0 text-pretty">{children}</span>
   </h3>;
 }
 
 function EmptyIcon({icon}: {icon?: GlazeIcon}) {
-  return <span data-slot="empty-icon" className="flex shrink-0 text-text-3 group-data-[reason=error]/empty:text-fail-text">
+  return <span data-hui-part="empty-icon" className="flex shrink-0 text-text-3 group-data-[reason=error]/empty:text-fail-text">
     <EmptyReasonGlyph icon={icon}/>
   </span>;
 }
@@ -98,7 +98,7 @@ function EmptyReasonGlyph({icon}: {icon?: GlazeIcon}) {
 /** One line: why it is empty and what the action does. */
 function EmptyDescription({className, ...props}: React.ComponentProps<'p'>) {
   return <p
-    data-slot="empty-description"
+    data-hui-part="empty-description"
     className={cn(
       'type-body-sm text-pretty text-text-2 [&_a]:text-text-1 [&_a]:underline [&_a]:decoration-1 [&_a]:underline-offset-2',
       className,
@@ -109,12 +109,12 @@ function EmptyDescription({className, ...props}: React.ComponentProps<'p'>) {
 
 /** The way out: one Button, secondary by default, primary only when it is the only way forward. */
 function EmptyContent({className, ...props}: React.ComponentProps<'div'>) {
-  return <div data-slot="empty-content" className={cn('flex min-w-0 flex-wrap items-center justify-center gap-2', className)} {...props}/>;
+  return <div data-hui-part="empty-content" className={cn('flex min-w-0 flex-wrap items-center justify-center gap-2', className)} {...props}/>;
 }
 
 /** error: the request ID in mono. One click selects all of it, for pasting into a support thread. */
 function EmptyCode({className, ...props}: React.ComponentProps<'code'>) {
-  return <code data-slot="empty-code" className={cn('break-all text-text-1 select-all', className)} {...props}/>;
+  return <code data-hui-part="empty-code" className={cn('break-all text-text-1 select-all', className)} {...props}/>;
 }
 
 const clock = (d: Date) => d.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false});
@@ -147,11 +147,11 @@ function EmptyRetry({onRetry, children = 'Retry', variant = 'secondary', size = 
       setPending(false);
     }
   };
-  return <span data-slot="empty-retry" className="inline-flex flex-col items-center gap-1">
+  return <span data-hui-part="empty-retry" className="inline-flex flex-col items-center gap-1">
     <Button variant={variant} size={size} pending={pending} pendingLabel="Retrying" onClick={run} className={className} {...props}>
       <Icon icon={Retry} size={12}/>{children}
     </Button>
-    <span role="status" data-slot="empty-retry-status" className="type-caption text-text-2 data empty:hidden">
+    <span role="status" data-hui-part="empty-retry-status" className="type-caption text-text-2 data empty:hidden">
       {failed && `Retry ${failed.attempt} failed at ${failed.at}`}
     </span>
   </span>;

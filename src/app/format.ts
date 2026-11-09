@@ -1,5 +1,6 @@
 // Copy and numbers the rail turns into words: a bot's role, its last activity as a distance from now.
 import { botLabel, botLook } from '@/lib/labels'
+import { UI } from './strings'
 
 /** The role a bot plays in Ilyass's setup. `description` from the profile is the fallback, then nothing. */
 const ROLES: Record<string, string> = {
@@ -17,7 +18,7 @@ export function botRole(name?: string, description?: string): string {
   return (description || '').trim()
 }
 
-/** "Nom · Rôle", or just the name when the profile says nothing about its role. */
+/** "Name · Role", or just the name when the profile says nothing about its role. */
 export function botHeading(name: string | undefined, description?: string): string {
   const role = botRole(name, description)
   return role ? `${botLabel(name)} · ${role}` : botLabel(name)
@@ -34,7 +35,7 @@ const HOUR = 60 * MIN
 const DAY = 24 * HOUR
 
 /**
- * A time as the rail says it: "maint." under a minute, "4 min", "2 h", "hier", "3 j", then a short date.
+ * A time as the rail says it: "now" under a minute, "4 min", "2h", "yesterday", "3d", then a short date.
  * `ts` is epoch milliseconds; a bot with no `last_active` has no time to show at all, so it returns '' — never a
  * placeholder that reads as "just now" for a bot that never answered.
  */
@@ -42,12 +43,12 @@ export function sinceLabel(ts?: number | null): string {
   if (!ts) return ''
   const delta = Date.now() - ts
   if (!Number.isFinite(delta)) return ''
-  if (delta < MIN) return 'maint.'
+  if (delta < MIN) return UI.time.now
   if (delta < HOUR) return `${Math.floor(delta / MIN)} min`
-  if (delta < DAY) return `${Math.floor(delta / HOUR)} h`
-  if (delta < 2 * DAY) return 'hier'
-  if (delta < 7 * DAY) return `${Math.floor(delta / DAY)} j`
-  return new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+  if (delta < DAY) return `${Math.floor(delta / HOUR)}${UI.time.hourShort}`
+  if (delta < 2 * DAY) return UI.time.yesterday
+  if (delta < 7 * DAY) return `${Math.floor(delta / DAY)}${UI.time.dayShort}`
+  return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
 /** A percentage for a usage meter, clamped to what a bar can draw. */

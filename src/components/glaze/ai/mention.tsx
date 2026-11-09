@@ -120,17 +120,17 @@ function Mention({type, missing, onRemove, removeLabel, missingLabel = ' (no lon
   // The remove button is 20px so the chip's line does not grow, which is why it is not a Button: after:-inset-1 makes
   // its target 28px.
   const label = <>
-    <span data-slot="mention-label" className="min-w-0 truncate" title={text && text.length > 24 ? text : undefined}>{type === 'command' ? '/' : ''}{children}</span>
+    <span data-hui-part="mention-label" className="min-w-0 truncate" title={text && text.length > 24 ? text : undefined}>{type === 'command' ? '/' : ''}{children}</span>
     {missing && <span className="sr-only">{missingLabel}</span>}
     {onRemove && <button
       type="button"
-      data-slot="mention-remove"
+      data-hui-part="mention-remove"
       aria-label={removeLabel ?? `Remove ${text ?? mentionTypeLabels[type]}`}
       onClick={event => {
         // The button unmounts with its chip. Hand focus to the next chip's remove button in the same list, else the
         // previous one; with none left, the caller's onRemove decides (focus your field there).
         const list = event.currentTarget.closest('ul, ol, [role="list"], [role="group"]') ?? event.currentTarget.parentElement?.parentElement;
-        const all = list ? [...list.querySelectorAll<HTMLElement>('[data-slot="mention-remove"]')] : [];
+        const all = list ? [...list.querySelectorAll<HTMLElement>('[data-hui-part="mention-remove"]')] : [];
         const at = all.indexOf(event.currentTarget);
         const next = all[at + 1] ?? all[at - 1];
         onRemove();
@@ -146,7 +146,7 @@ function Mention({type, missing, onRemove, removeLabel, missingLabel = ' (no lon
     defaultTagName: 'span',
     props: mergeProps<'span'>(
       {className: cn(mentionVariants({removable: !!onRemove}), className), children: label},
-      {'data-slot': 'mention', 'data-type': type, 'data-missing': missing || undefined} as React.ComponentProps<'span'>,
+      {'data-hui-part': 'mention', 'data-type': type, 'data-missing': missing || undefined} as React.ComponentProps<'span'>,
       props,
     ),
     render,

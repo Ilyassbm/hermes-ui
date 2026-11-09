@@ -135,7 +135,7 @@
   white-space: nowrap;
 }
 .glaze .hui-search kbd,
-.glaze .hui-search [data-slot='kbd'] {
+.glaze .hui-search [data-hui-part='kbd'] {
   margin-inline-start: auto;
 }
 

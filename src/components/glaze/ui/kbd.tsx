@@ -62,7 +62,7 @@ type KbdProps = ComponentProps<'kbd'> & {
 function Kbd({className, keys, children, ...props}: KbdProps) {
   // keys="" is a shortcut with no keys: it renders nothing, not an empty cap.
   if (keys !== undefined) return <KbdShortcut keys={keys} className={className} {...props}/>;
-  return <kbd data-slot="kbd" className={cn(kbdClass, className)} {...props}>{children}</kbd>;
+  return <kbd data-hui-part="kbd" className={cn(kbdClass, className)} {...props}>{children}</kbd>;
 }
 
 function KbdShortcut({keys, className, ...props}: Omit<KbdProps, 'children'> & {keys: string}) {
@@ -71,17 +71,17 @@ function KbdShortcut({keys, className, ...props}: Omit<KbdProps, 'children'> & {
   // Until the platform is known, a key whose two forms differ is a blank cap of the minimum width.
   const neutral = platform === 'unknown' ? shortcut(keys, 'mac').map((m, i) => m.shown === parts[i].shown) : null;
   if (!parts.length) return null;
-  return <kbd data-slot="kbd-group" data-platform={platform === 'unknown' ? undefined : platform} className={cn('inline-flex max-w-full flex-wrap items-center gap-1 font-[inherit]', className)} {...props}>
+  return <kbd data-hui-part="kbd-group" data-platform={platform === 'unknown' ? undefined : platform} className={cn('inline-flex max-w-full flex-wrap items-center gap-1 font-[inherit]', className)} {...props}>
     {parts.map((p, i) => neutral && !neutral[i]
-      ? <kbd key={i} data-slot="kbd" data-placeholder="" aria-hidden className={kbdClass}/>
-      : <kbd key={i} data-slot="kbd" aria-hidden className={kbdClass}>{p.shown}</kbd>)}
+      ? <kbd key={i} data-hui-part="kbd" data-placeholder="" aria-hidden className={kbdClass}/>
+      : <kbd key={i} data-hui-part="kbd" aria-hidden className={kbdClass}>{p.shown}</kbd>)}
     {platform !== 'unknown' && <span className="sr-only">{parts.map(p => p.spoken).join(' ')}</span>}
   </kbd>;
 }
 
 /** A combination written by hand: keys 4px apart, announced as one. */
 function KbdGroup({className, ...props}: ComponentProps<'kbd'>) {
-  return <kbd data-slot="kbd-group" className={cn('inline-flex max-w-full flex-wrap items-center gap-1 font-[inherit]', className)} {...props}/>;
+  return <kbd data-hui-part="kbd-group" className={cn('inline-flex max-w-full flex-wrap items-center gap-1 font-[inherit]', className)} {...props}/>;
 }
 
 export {Kbd, KbdGroup, shortcut, type KbdProps};

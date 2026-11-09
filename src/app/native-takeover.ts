@@ -6,7 +6,7 @@
 // What we take over, and what we leave alone:
 //   #/                  → /hui, and (except at launch) a fresh conversation on the current bot
 //   #/<session id>      → /hui, then that conversation opened in Hermes UI
-//   #/settings, #/cron, … and anything under them → native, untouched (Réglages, Capabilities… stay the app's)
+//   #/settings, #/cron, … and anything under them → native, untouched (Settings, Capabilities… stay the app's)
 //   #/hui, #/hui/…      → us; never redirected, that is where we send people
 //
 // One guard keeps it from looping: the same hash is only handled once per 500 ms, so our own navigate does not bounce
@@ -15,6 +15,7 @@ import { host } from '@hermes/plugin-sdk'
 import { toast } from '@/components/glaze/ui/toast'
 import { boot, loadBots, newConversation, openConversation, selectBot, store } from '@/lib/hermes'
 import { classifyRoute, HUI_PATH, sessionIdOf, type RouteClass } from './native-routes'
+import { UI } from './strings'
 
 const STORAGE_KEY = 'replaceNative'
 const GUARD_MS = 500
@@ -95,14 +96,14 @@ async function revealSession(id: string): Promise<void> {
   }
 
   // The page mounts on the navigate that has just happened; the toast needs its <Toaster> to be there.
-  ctxRef?.setTimeout?.(() => toast('Conversation introuvable'), 200)
+  ctxRef?.setTimeout?.(() => toast(UI.plugin.sessionMissing), 200)
 }
 
 async function openOn(botName: string, id: string): Promise<void> {
   await selectBot(botName, { keepConversation: true })
   if (store.get().bot !== botName) {
     // The profile is not in the roster any more: opening on whatever bot is selected would be a lie about the owner.
-    ctxRef?.setTimeout?.(() => toast('Conversation introuvable'), 200)
+    ctxRef?.setTimeout?.(() => toast(UI.plugin.sessionMissing), 200)
     return
   }
   await openConversation(id)

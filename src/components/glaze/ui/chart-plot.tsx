@@ -136,14 +136,14 @@ function ChartPlot({data, xKey, series, config, mode, extent, height, label, xFo
 
   // No rows: the sentence, the table still there saying the same, and the baseline, so the chart keeps its shape.
   if (n === 0) {
-    return <div ref={ref} data-slot="chart-plot" className={cn('relative type-body-sm text-text-2', className)} style={box}>
+    return <div ref={ref} data-hui-part="chart-plot" className={cn('relative type-body-sm text-text-2', className)} style={box}>
       {table}
       <span aria-hidden className="block pt-2">{empty}</span>
       <span aria-hidden className="absolute inset-x-0 bottom-6 h-px bg-line"/>
     </div>;
   }
 
-  return <div ref={ref} data-slot="chart-plot" className={cn('relative w-full min-w-0', className)} style={box}>
+  return <div ref={ref} data-hui-part="chart-plot" className={cn('relative w-full min-w-0', className)} style={box}>
     {table}
     {width > 0 && <>
       {/* Coordinates are physical, mirrored above for right to left, so the drawing itself stays left to right. */}
@@ -266,7 +266,7 @@ function LineChartPlot({data, xKey, series, label, height = 200, curve = 'monoto
       const segments = runs(data, key, s.x, s.y);
       const dim = highlight !== null && highlight !== key;
       const base = Math.min(Math.max(s.y(0), s.plot.top), s.plot.bottom);
-      return <g key={key} data-slot="line-chart-series" data-series={key} className={cn(seriesClass(config, key, false, keys), 'transition-opacity duration-(--dur-state)', dim && 'opacity-(--stale)')}>
+      return <g key={key} data-hui-part="line-chart-series" data-series={key} className={cn(seriesClass(config, key, false, keys), 'transition-opacity duration-(--dur-state)', dim && 'opacity-(--stale)')}>
         {area && shown.length === 1 && segments.map((pts, i) => pts.length > 1 && <path
           key={`a${i}`}
           d={`${toPath(pts)}L${pts[pts.length - 1].x},${base}L${pts[0].x},${base}Z`}

@@ -2,7 +2,9 @@
   "name": "hermes-ui",
   "label": "Hermes UI",
   "description": "Backend of the Hermes UI chat page (subscription usage).",
-  "version": "0.1.0",
-  "tab": { "hidden": true },
+  "version": "0.2.0",
+  "tab": {
+    "hidden": true
+  },
   "api": "plugin_api.py"
 }

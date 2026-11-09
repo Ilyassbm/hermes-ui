@@ -69,7 +69,7 @@ function ActivityText({active = true, className, render, children, ...props}: Ac
     defaultTagName: 'span',
     props: mergeProps<'span'>(
       {className: cn(className), children},
-      {'data-slot': 'activity-text', 'data-active': active || undefined} as React.ComponentProps<'span'>,
+      {'data-hui-part': 'activity-text', 'data-active': active || undefined} as React.ComponentProps<'span'>,
       props,
     ),
     render,
@@ -79,7 +79,7 @@ function ActivityText({active = true, className, render, children, ...props}: Ac
 
 /** The pending arc on its own, 12px in a 16px cell, still under reduced motion. Hidden: a word beside it says running. */
 function ActivityArc({className}: {className?: string}) {
-  return <span aria-hidden data-slot="activity-arc" className={cn('flex size-4 shrink-0 items-center justify-center', className)}>
+  return <span aria-hidden data-hui-part="activity-arc" className={cn('flex size-4 shrink-0 items-center justify-center', className)}>
     <Icon icon={Pending} size={12} className="animate-spin motion-reduce:animate-none"/>
   </span>;
 }
@@ -241,7 +241,7 @@ function Activity({
   const trouble = state === 'done' && (status === 'warn' || status === 'fail');
 
   return <span
-    data-slot="activity"
+    data-hui-part="activity"
     data-state={state}
     data-size={size}
     aria-busy={moving || undefined}
@@ -279,7 +279,7 @@ type StepState = 'running' | 'done' | 'fail' | 'stopped';
  */
 function StepGlyph({state, className}: {state: StepState; className?: string}) {
   if (state === 'running') return <ActivityArc className={cn('text-text-2', className)}/>;
-  return <span aria-hidden data-slot="step-glyph" data-state={state} className={cn('flex size-4 shrink-0 items-center justify-center', className)}>
+  return <span aria-hidden data-hui-part="step-glyph" data-state={state} className={cn('flex size-4 shrink-0 items-center justify-center', className)}>
     {state === 'done' ? <Icon icon={Check} size={12} className="text-text-3"/>
       : state === 'fail' ? <Icon icon={Close} size={12} className="text-fail-text"/>
         : <Icon icon={Subtract} size={12} className="text-text-3"/>}
@@ -289,7 +289,7 @@ function StepGlyph({state, className}: {state: StepState; className?: string}) {
 /** The caret of a row that opens, in a 16px cell, turning a quarter when open. A row that does not open draws nothing. */
 function Disclosure({open, end = false}: {open: boolean; end?: boolean}) {
   if (end && !open) return null;
-  return <span aria-hidden data-slot="disclosure" data-end={end || undefined} className="flex size-4 shrink-0 items-center justify-center text-text-3">
+  return <span aria-hidden data-hui-part="disclosure" data-end={end || undefined} className="flex size-4 shrink-0 items-center justify-center text-text-3">
     {open && <Icon icon={ChevronRight} size={12} className="transition-[rotate] duration-(--dur-state) ease-out group-data-panel-open/row:rotate-90 motion-reduce:transition-none rtl:-scale-x-100 rtl:group-data-panel-open/row:-rotate-90"/>}
   </span>;
 }
@@ -330,7 +330,7 @@ type ActivityGroupProps = Omit<React.ComponentProps<'div'>, 'children'> & {
 function ActivityGroup({summary, meta, live = false, open, defaultOpen = false, onOpenChange, size = 'default', className, children, ...props}: ActivityGroupProps) {
   const {force, rest} = splitForce(props);
   return <CollapsiblePrimitive.Root
-    data-slot="activity-group"
+    data-hui-part="activity-group"
     data-live={live || undefined}
     open={open}
     defaultOpen={defaultOpen}
@@ -338,14 +338,14 @@ function ActivityGroup({summary, meta, live = false, open, defaultOpen = false, 
     className={cn('flex min-w-0 flex-col', className)}
     {...rest}
   >
-    <CollapsiblePrimitive.Trigger data-slot="activity-group-trigger" className={rowVariants({size})} {...force}>
+    <CollapsiblePrimitive.Trigger data-hui-part="activity-group-trigger" className={rowVariants({size})} {...force}>
       <Disclosure open/>
-      <span data-slot="activity-group-summary" className="min-w-0 truncate text-text-2">{summary}</span>
-      <span data-slot="activity-group-meta" className="flex shrink-0 items-center gap-2 text-text-2 data empty:hidden">
+      <span data-hui-part="activity-group-summary" className="min-w-0 truncate text-text-2">{summary}</span>
+      <span data-hui-part="activity-group-meta" className="flex shrink-0 items-center gap-2 text-text-2 data empty:hidden">
         {meta ?? (live ? <ActivityArc/> : null)}
       </span>
     </CollapsiblePrimitive.Trigger>
-    <CollapsiblePrimitive.Panel data-slot="activity-group-content" className="flex min-w-0 flex-col ps-6">
+    <CollapsiblePrimitive.Panel data-hui-part="activity-group-content" className="flex min-w-0 flex-col ps-6">
       {children}
     </CollapsiblePrimitive.Panel>
   </CollapsiblePrimitive.Root>;

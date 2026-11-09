@@ -1,4 +1,5 @@
-const ZERO_WIDTH = /​/g;
+// U+200B, escaped: a literal zero-width space in source trips the catalog security scan (invisible_unicode).
+const ZERO_WIDTH = /\u200b/g;
 
 const isChip = (node: Node | null | undefined): node is HTMLElement => node instanceof HTMLElement && !!node.dataset.mentionId;
 

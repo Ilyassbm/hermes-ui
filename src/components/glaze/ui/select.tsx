@@ -89,7 +89,7 @@ function Select({items, native, size = 'default', placeholder, className, childr
     </NativeSelect>;
   }
   return <SelectPrimitive.Root
-    data-slot="select"
+    data-hui-part="select"
     items={items === undefined ? undefined : list.map(i => ({value: i.value, label: i.label}))}
     onValueChange={onValueChange as SelectPrimitive.Root.Props<string>['onValueChange']}
     {...props}
@@ -105,7 +105,7 @@ type SelectTriggerProps = SelectPrimitive.Trigger.Props & {
 
 function SelectTrigger({className, size = 'default', children, 'aria-invalid': invalid, ...props}: SelectTriggerProps) {
   return <SelectPrimitive.Trigger
-    data-slot="select-trigger"
+    data-hui-part="select-trigger"
     data-size={size}
     aria-invalid={invalid || undefined}
     className={mergeClass([fieldTriggerClass, fieldTriggerSize[size]], className)}
@@ -118,7 +118,7 @@ function SelectTrigger({className, size = 'default', children, 'aria-invalid': i
 
 /** The chosen label, or the placeholder in text-3. A block, so a long label ends in an ellipsis. */
 function SelectValue({className, ...props}: SelectPrimitive.Value.Props) {
-  return <SelectPrimitive.Value data-slot="select-value" className={mergeClass('block min-w-0 flex-1 truncate data-placeholder:text-text-3', className)} {...props}/>;
+  return <SelectPrimitive.Value data-hui-part="select-value" className={mergeClass('block min-w-0 flex-1 truncate data-placeholder:text-text-3', className)} {...props}/>;
 }
 
 type SelectContentProps = SelectPrimitive.Popup.Props & Pick<SelectPrimitive.Positioner.Props, 'align' | 'alignOffset' | 'side' | 'sideOffset' | 'alignItemWithTrigger' | 'collisionAvoidance'> & {
@@ -131,7 +131,7 @@ function SelectContent({className, children, side = 'bottom', sideOffset = 6, al
   return <SelectPrimitive.Portal container={container}>
     <SelectPrimitive.Positioner side={side} sideOffset={sideOffset} align={align} alignOffset={alignOffset} alignItemWithTrigger={alignItemWithTrigger} collisionPadding={8} collisionAvoidance={collisionAvoidance} className="isolate z-(--z-overlay) outline-none">
       <SelectPrimitive.Popup
-        data-slot="select-content"
+        data-hui-part="select-content"
         data-size={size}
         // The list recipe, but the list scrolls inside, between the scroll arrows, not the popup.
         className={mergeClass([menuPopupClass, 'min-w-(--anchor-width) max-w-[min(var(--popover),var(--available-width))] overflow-hidden p-0'], className)}
@@ -146,16 +146,16 @@ function SelectContent({className, children, side = 'bottom', sideOffset = 6, al
 }
 
 function SelectGroup(props: SelectPrimitive.Group.Props) {
-  return <SelectPrimitive.Group data-slot="select-group" {...props}/>;
+  return <SelectPrimitive.Group data-hui-part="select-group" {...props}/>;
 }
 
 function SelectLabel({className, ...props}: SelectPrimitive.GroupLabel.Props) {
-  return <SelectPrimitive.GroupLabel data-slot="select-label" className={mergeClass([menuLabelClass, 'ps-7'], className)} {...props}/>;
+  return <SelectPrimitive.GroupLabel data-hui-part="select-label" className={mergeClass([menuLabelClass, 'ps-7'], className)} {...props}/>;
 }
 
 /** One option: the label after a 28px column that holds the check once it is chosen. */
 function SelectItem({className, children, ...props}: SelectPrimitive.Item.Props) {
-  return <SelectPrimitive.Item data-slot="select-item" className={mergeClass([menuItemClass, 'ps-7'], className)} {...props}>
+  return <SelectPrimitive.Item data-hui-part="select-item" className={mergeClass([menuItemClass, 'ps-7'], className)} {...props}>
     <SelectPrimitive.ItemIndicator render={<span className="pointer-events-none absolute start-2 flex size-(--icon) items-center justify-center [&_svg]:text-text-1!"/>}>
       <Icon icon={Check}/>
     </SelectPrimitive.ItemIndicator>
@@ -164,17 +164,17 @@ function SelectItem({className, children, ...props}: SelectPrimitive.Item.Props)
 }
 
 function SelectSeparator({className, ...props}: SelectPrimitive.Separator.Props) {
-  return <SelectPrimitive.Separator data-slot="select-separator" className={mergeClass(menuSeparatorClass, className)} {...props}/>;
+  return <SelectPrimitive.Separator data-hui-part="select-separator" className={mergeClass(menuSeparatorClass, className)} {...props}/>;
 }
 
 const arrowClass = 'z-(--z-raised) flex h-(--menu-row-sm) w-full shrink-0 cursor-default items-center justify-center bg-paper text-text-3 [&_svg]:size-(--icon)';
 
 function SelectScrollUpButton({className, ...props}: React.ComponentProps<typeof SelectPrimitive.ScrollUpArrow>) {
-  return <SelectPrimitive.ScrollUpArrow data-slot="select-scroll-up" className={mergeClass(['top-0', arrowClass], className)} {...props}><Icon icon={ChevronUp}/></SelectPrimitive.ScrollUpArrow>;
+  return <SelectPrimitive.ScrollUpArrow data-hui-part="select-scroll-up" className={mergeClass(['top-0', arrowClass], className)} {...props}><Icon icon={ChevronUp}/></SelectPrimitive.ScrollUpArrow>;
 }
 
 function SelectScrollDownButton({className, ...props}: React.ComponentProps<typeof SelectPrimitive.ScrollDownArrow>) {
-  return <SelectPrimitive.ScrollDownArrow data-slot="select-scroll-down" className={mergeClass(['bottom-0', arrowClass], className)} {...props}><Icon icon={ChevronDown}/></SelectPrimitive.ScrollDownArrow>;
+  return <SelectPrimitive.ScrollDownArrow data-hui-part="select-scroll-down" className={mergeClass(['bottom-0', arrowClass], className)} {...props}><Icon icon={ChevronDown}/></SelectPrimitive.ScrollDownArrow>;
 }
 
 type NativeSelectProps = Omit<React.ComponentProps<'select'>, 'size'> & {
@@ -185,9 +185,9 @@ type NativeSelectProps = Omit<React.ComponentProps<'select'>, 'size'> & {
 /** The platform select on the field pill. Prefer `<Select native items/>`; this is the free-form part. */
 function NativeSelect({className, size = 'default', ...props}: NativeSelectProps) {
   const primitive = props as unknown as Omit<InputPrimitive.Props, 'className' | 'size'>;
-  return <div data-slot="native-select" data-size={size} className={cn('group/native relative w-full min-w-0', className)}>
+  return <div data-hui-part="native-select" data-size={size} className={cn('group/native relative w-full min-w-0', className)}>
     <InputPrimitive
-      data-slot="native-select-control"
+      data-hui-part="native-select-control"
       render={<select/>}
       className={cn(
         fieldTriggerClass, fieldTriggerSize[size],

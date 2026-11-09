@@ -19,7 +19,7 @@ import {cn} from '@/lib/glaze/utils';
 
 function Skeleton({className, ...props}: React.ComponentProps<'div'>) {
   return <div
-    data-slot="skeleton"
+    data-hui-part="skeleton"
     aria-hidden
     className={cn('shrink-0 rounded-tag bg-field forced-colors:bg-[GrayText]', className)}
     {...props}
@@ -45,7 +45,7 @@ type SkeletonTextProps = Omit<React.ComponentProps<'div'>, 'children'> & {
 /** Lines of text: each one line box of the role tall, the bar half of it, the last line shorter. */
 function SkeletonText({className, type = 'body', lines = 1, last = 0.6, ...props}: SkeletonTextProps) {
   const count = Math.max(1, Math.floor(lines));
-  return <div data-slot="skeleton-text" data-type={type} aria-hidden className={cn('flex w-full flex-col', roles[type], className)} {...props}>
+  return <div data-hui-part="skeleton-text" data-type={type} aria-hidden className={cn('flex w-full flex-col', roles[type], className)} {...props}>
     {Array.from({length: count}, (_, i) => <div key={i} className="flex h-lh items-center">
       <Skeleton
         className="h-1/2 w-full data-last:w-(--last)"
@@ -119,7 +119,7 @@ function SkeletonSwap({loading, fallback, children, delay: delayProp, minDuratio
   const holding = !reloading && phase !== 'done';
   return <div
     ref={root}
-    data-slot="skeleton-swap"
+    data-hui-part="skeleton-swap"
     data-phase={reloading ? 'stale' : phase}
     data-stale={(reloading && dim) || undefined}
     aria-busy={holding || reloading || undefined}

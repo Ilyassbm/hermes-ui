@@ -14,7 +14,7 @@ export type Provider = {
 }
 
 /**
- * How many models the picker's first level shows per provider (lot 8). The rest waits behind "Tous les modèles…",
+ * How many models the picker's first level shows per provider (lot 8). The rest waits behind "All … models…",
  * in a submenu whose list is only rendered once it opens: the first render used to lay out ~60 radio rows, block the
  * thread for 1.5 s, and the release of the click closed the menu it had just opened.
  */
@@ -33,14 +33,14 @@ export function topModels(provider: Provider, current: string): string[] {
 
 /** The reasoning efforts the header offers, low to high. */
 export const EFFORTS = [
-  ['low', 'Bas'],
-  ['medium', 'Moyen'],
-  ['high', 'Élevé']
+  ['low', 'Low'],
+  ['medium', 'Medium'],
+  ['high', 'High']
 ] as const
 
-const EFFORT_LABELS: Record<string, string> = { low: 'Bas', medium: 'Moyen', high: 'Élevé' }
+const EFFORT_LABELS: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High' }
 
-/** "Bas", "Moyen", "Élevé". */
+/** "Low", "Medium", "High". */
 export function effortLabel(value?: string | null): string {
   if (!value) return ''
   return EFFORT_LABELS[value] || value

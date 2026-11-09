@@ -15,7 +15,7 @@ import { sanitizeSpec } from './spec'
 /** What a spec looks like while it streams: the footprint of a card, still. */
 export function IuiPending() {
   return (
-    <div data-slot="iui-pending" aria-hidden className="flex flex-col gap-3 rounded-shell border border-line-faint bg-shell p-3">
+    <div data-hui-part="iui-pending" aria-hidden className="flex flex-col gap-3 rounded-shell border border-line-faint bg-shell p-3">
       <Skeleton className="h-4 w-1/3" />
       <Skeleton className="h-20 w-full" />
       <Skeleton className="h-7 w-24 rounded-pill" />

@@ -21,6 +21,7 @@ import { bindContext, handleEvent, newConversation } from './lib/hermes'
 import { openPicker, toggleAside } from './app/ui-state'
 import { installBotKeys } from './app/bot-keys'
 import { toast } from '@/components/glaze/ui/toast'
+import { UI } from './app/strings'
 
 const PATH = '/hui'
 const GLAZE_PATH = '/hui/glaze'
@@ -36,7 +37,7 @@ const BOT_KEYBINDS = Array.from({ length: 9 }, (_, i) => {
     area: KEYBINDS_AREA,
     data: {
       id: `hermes-ui.bot${n}`,
-      label: `Hermes UI : aller au bot ${n}`,
+      label: UI.plugin.goToBot(n),
       category: 'session',
       // Alt+digit, not ⌘⌥+digit: the app spends ⌘⌥1…⌘⌥9 on profile.switch.10..18, and the built-ins come first in
       // `$comboIndex`, so those chords switched profile instead of bot. `editableTargetPolicy: 'modified'` is what
@@ -72,7 +73,7 @@ export default {
       {
         id: 'open',
         area: PALETTE_AREA,
-        data: { id: 'hermes-ui.open', label: 'Ouvrir Hermes UI', keywords: ['hermes', 'ui', 'chat', 'bots'], run: () => host.navigate(PATH) }
+        data: { id: 'hermes-ui.open', label: UI.plugin.open, keywords: ['hermes', 'ui', 'chat', 'bots'], run: () => host.navigate(PATH) }
       },
       // The takeover is a preference, so it is also a pair of rows: the current one is the one that does nothing.
       {
@@ -80,11 +81,11 @@ export default {
         area: PALETTE_AREA,
         data: {
           id: 'hermes-ui.native',
-          label: "Hermes UI : utiliser l'interface native",
-          keywords: ['hermes', 'ui', 'natif', 'native', 'accueil', 'home'],
+          label: UI.plugin.useNative,
+          keywords: ['hermes', 'ui', 'native', 'home'],
           run: () => {
             setReplaceNative(ctx, false)
-            toast("Interface native", { description: 'Les nouveaux chats et les sessions ouvrent les pages du bureau.' })
+            toast(UI.rail.useNativeTitle, { description: UI.rail.useNativeBody })
           }
         }
       },
@@ -93,11 +94,11 @@ export default {
         area: PALETTE_AREA,
         data: {
           id: 'hermes-ui.everywhere',
-          label: 'Hermes UI : utiliser Hermes UI partout',
-          keywords: ['hermes', 'ui', 'partout', 'accueil', 'home'],
+          label: UI.plugin.everywhere,
+          keywords: ['hermes', 'ui', 'everywhere', 'home'],
           run: () => {
             setReplaceNative(ctx, true)
-            toast('Hermes UI partout', { description: 'Les nouveaux chats et les sessions ouvrent Hermes UI.' })
+            toast(UI.plugin.everywhereToast, { description: UI.plugin.everywhereBody })
           }
         }
       },
@@ -106,8 +107,8 @@ export default {
         area: PALETTE_AREA,
         data: {
           id: 'hermes-ui.statusbar',
-          label: 'Hermes UI : barre d’état',
-          keywords: ['hermes', 'ui', 'barre', 'état', 'statusbar'],
+          label: UI.plugin.statusbar,
+          keywords: ['hermes', 'ui', 'statusbar'],
           run: () => void ctx.runAction?.('view.toggleStatusbar')
         }
       },
@@ -116,7 +117,7 @@ export default {
         area: KEYBINDS_AREA,
         data: {
           id: 'hermes-ui.newConversation',
-          label: 'Hermes UI : nouvelle discussion (bot courant)',
+          label: UI.plugin.newConversation,
           category: 'session',
           defaults: ['mod+shift+o'],
           run: () => {
@@ -131,7 +132,7 @@ export default {
         area: KEYBINDS_AREA,
         data: {
           id: 'hermes-ui.newChatWithBot',
-          label: 'Hermes UI : nouvelle discussion avec un bot…',
+          label: UI.plugin.newWithBot,
           category: 'session',
           defaults: ['mod+alt+n'],
           run: () => {
@@ -146,7 +147,7 @@ export default {
         area: KEYBINDS_AREA,
         data: {
           id: 'hermes-ui.search',
-          label: 'Hermes UI : rechercher bots et conversations',
+          label: UI.plugin.search,
           category: 'session',
           defaults: ['mod+alt+k'],
           run: () => {
@@ -162,7 +163,7 @@ export default {
         area: KEYBINDS_AREA,
         data: {
           id: 'hermes-ui.toggleAside',
-          label: 'Hermes UI : afficher ou masquer le panneau',
+          label: UI.plugin.toggleAside,
           category: 'view',
           defaults: ['mod+alt+b'],
           run: () => {

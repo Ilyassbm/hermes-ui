@@ -5,159 +5,159 @@ description: Use when replying in the Hermes desktop app and the answer is clear
 
 # Intelligent UI
 
-Le fil de l’app desktop Hermes sait dessiner une interface : cartes, chiffres, tableaux, graphiques, plans, formulaires, choix. Tu écris du texte, puis un bloc `<hui-ui>`, et le fil le rend avec les composants Glaze.
+The Hermes desktop thread can draw an interface: cards, numbers, tables, charts, plans, forms, choices. You write text, then a `<hui-ui>` block, and the thread renders it with the Glaze components.
 
-## Quand l’utiliser
+## When to use it
 
-- une comparaison : deux options, deux périodes, deux bots ;
-- des chiffres qui se lisent mieux alignés qu’en phrase : coûts, durées, taux ;
-- un plan d’action, ou le suivi de ses étapes ;
-- un choix à faire, ou un réglage avec des quantités ;
-- des données tabulaires de plus de quatre lignes ;
-- un tableau de bord : deux ou trois chiffres, un graphique, une liste.
+- a comparison: two options, two periods, two bots;
+- numbers that read better aligned than in a sentence: costs, durations, rates;
+- an action plan, or the tracking of its steps;
+- a choice to make, or a setting with quantities;
+- tabular data of more than four rows;
+- a dashboard: two or three numbers, a chart, a list.
 
-## Quand ne pas l’utiliser
+## When not to use it
 
-- une réponse courte : une phrase suffit, une carte l’alourdit ;
-- une conversation : une question, une relance, un remerciement ;
-- Telegram, Slack, Discord, l’e-mail, ou toute session dont la source n’est pas l’app desktop : le tag s’afficherait brut, avec son JSON. Dans le doute, écris du texte.
+- a short answer: one sentence is enough, a card only weighs it down;
+- a conversation: a question, a follow-up, a thank-you;
+- Telegram, Slack, Discord, email, or any session whose source is not the desktop app: the tag would print raw, with its JSON. When in doubt, write text.
 
-## Règles
+## Rules
 
-1. Du texte d’abord : une ou deux phrases qui donnent la réponse. L’interface la complète, elle ne la remplace pas.
-2. Un seul bloc `<hui-ui>` par idée. Deux idées, deux blocs, séparés par du texte.
-3. Un JSON compact et valide, sur une ligne ou plusieurs, jamais dans un fence.
-4. Des identifiants courts : `"r"`, `"a"`, `"b"`.
-5. Des données réelles, prises dans la conversation ou dans ce que les outils ont rendu. Rien d’inventé, aucun jeu d’exemple.
-6. Un bouton `send` pour proposer la suite, avec les valeurs du state interpolées : « Réserve pour {{/guests}} personnes ».
-7. Un seul bouton `primary` par groupe d’actions ; le reste en `secondary`.
-8. Si un composant manque, écris du texte : le catalogue est fermé, un type inconnu n’est pas rendu.
+1. Text first: one or two sentences that give the answer. The interface completes it, it does not replace it.
+2. One `<hui-ui>` block per idea. Two ideas, two blocks, separated by text.
+3. Compact, valid JSON, on one line or several, never inside a fence.
+4. Short ids: `"r"`, `"a"`, `"b"`.
+5. Real data, taken from the conversation or from what the tools returned. Nothing invented, no sample set.
+6. A `send` button to offer the next step, with the state values interpolated: "Book for {{/guests}} people".
+7. One `primary` button per action group; the rest `secondary`.
+8. If a component is missing, write text: the catalogue is closed and an unknown type is not rendered.
 
-## Exemples
+## Examples
 
-### Plan avec Checklist et boutons
+### Plan with a Checklist and buttons
 
-Une réponse à « pourquoi nightly-report échoue », et la suite proposée en deux boutons.
-
-```
-<hui-ui>{"root":"r","elements":{"r":{"type":"Card","props":{"title":"Réparer nightly-report","description":"Trois étapes avant la relance de cette nuit.","meta":"3 étapes · 44 s"},"children":["c","b1","b2"]},"c":{"type":"Checklist","props":{"items":[{"label":"Lire le journal du dernier passage","status":"done","detail":"38 s"},{"label":"Repérer la fuite de mémoire du worker","status":"running","detail":"en cours"},{"label":"Relancer sur le bot Branco","status":"todo","detail":"23:00"}]}},"b1":{"type":"Button","props":{"label":"Relancer maintenant","variant":"primary","action":{"name":"send","params":{"text":"Relance nightly-report maintenant"}}}},"b2":{"type":"Button","props":{"label":"Montrer le journal","variant":"secondary","action":{"name":"send","params":{"text":"Montre les 20 dernières lignes du journal de nightly-report"}}}}}}</hui-ui>
-```
-
-### Comparaison : Table et Metric
-
-Deux chiffres qui comptent, puis le tableau des cinq dernières lignes comparables.
+An answer to "why does nightly-report fail", and the next step offered as two buttons.
 
 ```
-<hui-ui>{"root":"r","elements":{"r":{"type":"Stack","props":{"direction":"column","gap":"md"},"children":["g","t"]},"g":{"type":"Grid","props":{"columns":2},"children":["m1","m2"]},"m1":{"type":"Metric","props":{"label":"Coût par passage, Preto","value":"0,42 €","delta":"−18 % sur 7 jours","status":"ok"}},"m2":{"type":"Metric","props":{"label":"Durée médiane, Branco","value":"38 s","delta":"+6 s","status":"warn"}},"t":{"type":"Table","props":{"title":"Trois routines, dernier passage","columns":[{"key":"routine","label":"Routine"},{"key":"bot","label":"Bot"},{"key":"duree","label":"Durée","align":"end"},{"key":"cout","label":"Coût","align":"end"},{"key":"etat","label":"État"}],"rows":[{"routine":"nightly-report","bot":"Branco","duree":"38 s","cout":"0,41 €","etat":"Échec"},{"routine":"inbox-triage","bot":"Dex","duree":"12 s","cout":"0,08 €","etat":"Réussi"},{"routine":"veille-prix","bot":"Preto","duree":"54 s","cout":"0,42 €","etat":"Lent"},{"routine":"backup-cache","bot":"Branco","duree":"67 s","cout":"0,19 €","etat":"Réussi"},{"routine":"digest-slack","bot":"Preto","duree":"21 s","cout":"0,12 €","etat":"Réussi"}]}}}}</hui-ui>
+<hui-ui>{"root":"r","elements":{"r":{"type":"Card","props":{"title":"Fix nightly-report","description":"Three steps before tonight’s rerun.","meta":"3 steps · 44 s"},"children":["c","b1","b2"]},"c":{"type":"Checklist","props":{"items":[{"label":"Read the log of the last run","status":"done","detail":"38 s"},{"label":"Find the worker’s memory leak","status":"running","detail":"running"},{"label":"Rerun on the Branco bot","status":"todo","detail":"23:00"}]}},"b1":{"type":"Button","props":{"label":"Run it now","variant":"primary","action":{"name":"send","params":{"text":"Run nightly-report now"}}}},"b2":{"type":"Button","props":{"label":"Show the log","variant":"secondary","action":{"name":"send","params":{"text":"Show the last 20 lines of the nightly-report log"}}}}}}</hui-ui>
 ```
 
-### Formulaire : Stepper, Choice et envoi
+### Comparison: Table and Metric
 
-Un compteur, un choix, et un bouton qui envoie le state interpolé au bot.
+Two numbers that matter, then the table of the last five comparable runs.
 
 ```
-<hui-ui>{"root":"r","elements":{"r":{"type":"Card","props":{"title":"Réserver la chambre d’hôte","description":"Nuit du 12 novembre, chez Ilyass.","meta":"Estimation 96 €"},"children":["s","c","b"]},"s":{"type":"Stepper","props":{"label":"Personnes","min":1,"max":6,"value":{"$bindState":"/guests"}}},"c":{"type":"Choice","props":{"label":"Formule","options":[{"value":"nuit","label":"Nuit et petit-déjeuner"},{"value":"journee","label":"Journée seule"}],"value":{"$bindState":"/formule"}}},"b":{"type":"Button","props":{"label":"Demander la réservation","variant":"primary","action":{"name":"send","params":{"text":"Réserve pour {{/guests}} personnes, formule {{/formule}}"}}}}},"state":{"guests":2,"formule":"nuit"}}</hui-ui>
+<hui-ui>{"root":"r","elements":{"r":{"type":"Stack","props":{"direction":"column","gap":"md"},"children":["g","t"]},"g":{"type":"Grid","props":{"columns":2},"children":["m1","m2"]},"m1":{"type":"Metric","props":{"label":"Cost per run, Preto","value":"€0.42","delta":"−18% over 7 days","status":"ok"}},"m2":{"type":"Metric","props":{"label":"Median duration, Branco","value":"38 s","delta":"+6 s","status":"warn"}},"t":{"type":"Table","props":{"title":"Three routines, last run","columns":[{"key":"routine","label":"Routine"},{"key":"bot","label":"Bot"},{"key":"duration","label":"Duration","align":"end"},{"key":"cost","label":"Cost","align":"end"},{"key":"state","label":"State"}],"rows":[{"routine":"nightly-report","bot":"Branco","duration":"38 s","cost":"€0.41","state":"Failed"},{"routine":"inbox-triage","bot":"Dex","duration":"12 s","cost":"€0.08","state":"Passed"},{"routine":"price-watch","bot":"Preto","duration":"54 s","cost":"€0.42","state":"Slow"},{"routine":"backup-cache","bot":"Branco","duration":"67 s","cost":"€0.19","state":"Passed"},{"routine":"digest-slack","bot":"Preto","duration":"21 s","cost":"€0.12","state":"Passed"}]}}}}</hui-ui>
+```
+
+### Form: Stepper, Choice and send
+
+A counter, a choice, and a button that sends the interpolated state to the bot.
+
+```
+<hui-ui>{"root":"r","elements":{"r":{"type":"Card","props":{"title":"Book the guest room","description":"Night of 12 November, at Ilyass’s.","meta":"Estimate €96"},"children":["s","c","b"]},"s":{"type":"Stepper","props":{"label":"People","min":1,"max":6,"value":{"$bindState":"/guests"}}},"c":{"type":"Choice","props":{"label":"Plan","options":[{"value":"night","label":"Night and breakfast"},{"value":"day","label":"Day only"}],"value":{"$bindState":"/plan"}}},"b":{"type":"Button","props":{"label":"Request the booking","variant":"primary","action":{"name":"send","params":{"text":"Book for {{/guests}} people, {{/plan}} plan"}}}}},"state":{"guests":2,"plan":"night"}}</hui-ui>
 ```
 
 ## Catalogue
 
 FORMAT
-Tu réponds dans le fil d’une conversation de l’app desktop Hermes. Pour une réponse qui se lit mieux en interface, insère un bloc dans ton texte markdown :
-<hui-ui>{"root":"r","elements":{"r":{"type":"Card","props":{"title":"Réservation"},"children":["n","b"]},"n":{"type":"Stepper","props":{"label":"Personnes","min":1,"max":8,"value":{"$bindState":"/guests"}}},"b":{"type":"Button","props":{"label":"Réserver","variant":"primary","action":{"name":"send","params":{"text":"Réserve pour {{/guests}} personnes"}}}}},"state":{"guests":2}}</hui-ui>
+You are answering in a Hermes desktop app conversation. When the answer reads better as an interface, insert a block in your markdown:
+<hui-ui>{"root":"r","elements":{"r":{"type":"Card","props":{"title":"Booking"},"children":["n","b"]},"n":{"type":"Stepper","props":{"label":"People","min":1,"max":8,"value":{"$bindState":"/guests"}}},"b":{"type":"Button","props":{"label":"Book","variant":"primary","action":{"name":"send","params":{"text":"Book for {{/guests}} people"}}}}}},"state":{"guests":2}}</hui-ui>
 
-Un seul objet JSON valide, sur une ligne ou plusieurs, entre <hui-ui> et </hui-ui>. Pas de fence, pas de commentaire, pas de JSONL.
-- "root" : la clé de l’élément racine.
-- "elements" : clé courte → { "type", "props", "children"?, "visible"? }. "children" liste des clés, dans l’ordre d’affichage.
-- "state" : les valeurs de départ des composants interactifs. Un composant lié s’écrit { "$bindState": "/chemin" } et lit sa valeur dans le state.
-- "visible" : une condition, par exemple { "$state": "/tab", "eq": "prix" } — voir CONDITIONS.
+One valid JSON object, on one line or several, between <hui-ui> and </hui-ui>. No fence, no comment, no JSONL.
+- "root": the key of the root element.
+- "elements": short key → { "type", "props", "children"?, "visible"? }. "children" lists keys, in display order.
+- "state": the starting values of interactive components. A bound component is written { "$bindState": "/path" } and reads its value from the state.
+- "visible": a condition, for example { "$state": "/tab", "eq": "price" } — see CONDITIONS.
 
 CONDITIONS
-visible accepte { "$state": "/chemin", "eq": "valeur" }, { "neq": "valeur" }, { "gt": n }, { "gte": n }, { "lt": n }, { "lte": n }, { "$state": "/chemin" } (vrai si la valeur existe), un tableau (ET), ou { "$and": [...] } / { "$or": [...] }.
-Pour des onglets : un composant Tabs lié à "/tab", et un enfant par onglet avec "visible": { "$state": "/tab", "eq": "<id>" }.
+visible accepts { "$state": "/path", "eq": "value" }, { "neq": "value" }, { "gt": n }, { "gte": n }, { "lt": n }, { "lte": n }, { "$state": "/path" } (true when the value exists), an array (AND), or { "$and": [...] } / { "$or": [...] }.
+For tabs: a Tabs component bound to "/tab", and one child per tab with "visible": { "$state": "/tab", "eq": "<id>" }.
 
-VALEURS DÉRIVÉES
-Dans un texte ou un paramètre d’action, {{/chemin}} est remplacé par la valeur du state au moment du clic : "Réserve pour {{/guests}} personnes".
+DERIVED VALUES
+In a text or an action parameter, {{/path}} is replaced by the state value at click time: "Book for {{/guests}} people".
 
 COMPOSANTS
 ### Card
-Une carte : un titre, une phrase, son contenu, et ses boutons dans le pied. Le conteneur d’une réponse qui se lit comme un bloc.
+A card: a title, a sentence, its content, and its buttons in the footer. The container for an answer that reads as one block.
 props: { title: string, description?: string, meta?: string }
 slots: footer
 ### Stack
-Empile des éléments en ligne ou en colonne, avec un espacement court, moyen ou large.
+Stacks elements in a row or a column, with small, medium or large spacing.
 props: { direction: "row" | "column", gap?: "sm" | "md" | "lg" }
 ### Grid
-Place des éléments côte à côte sur 2, 3 ou 4 colonnes égales. Pour des chiffres ou des cartes courtes.
+Places elements side by side on 2, 3 or 4 equal columns. For numbers or short cards.
 props: { columns: 2 | 3 | 4 }
 ### Text
-Un paragraphe de markdown court : une ou deux phrases, avec du gras ou du code en ligne. Pas de titre, pas de liste.
+A short markdown paragraph: one or two sentences, with bold or inline code. No heading, no list.
 props: { text: string, tone?: "default" | "muted" }
 ### Metric
-Un chiffre qui compte : sa valeur en gros, ce qu’il mesure, son écart, et une note. Le statut colore seulement l’écart.
+A number that matters: its value large, what it measures, its delta, and a note. The status colours only the delta.
 props: { label: string, value: string, delta?: string, status?: "ok" | "warn" | "fail" | "neutral", hint?: string }
 ### KeyValue
-Une liste de paires libellé / valeur, alignées. Pour les caractéristiques d’une chose : modèle, date, coût, propriétaire.
+A list of aligned label / value pairs. For the facts about one thing: model, date, cost, owner.
 props: { items: Array<{ label: string, value: string }> }
 ### Table
-Un tableau : ses colonnes et ses lignes. À partir de quatre lignes de données comparables, jamais pour deux valeurs.
+A table: its columns and rows. From four rows of comparable data, never for two values.
 props: { columns: Array<{ key: string, label: string, align?: "start" | "end" }>, rows: Array<Record<string, string | number | boolean | unknown>>, title?: string }
 ### Chart
-Un graphique en barres, en courbe ou en aire : une clé pour l’axe des abscisses, une à quatre séries numériques, avec leurs libellés.
+A bar, line or area chart: one key for the x axis, one to four numeric series with their labels.
 props: { kind: "bar" | "line" | "area", data: Array<Record<string, string | number>>, xKey: string, series: Array<{ key: string, label: string, status?: "ok" | "warn" | "fail" }>, title?: string, height?: number }
 ### Checklist
-Un plan ou un suivi d’étapes, une ligne par étape avec son état : fait, en cours, en attente, en échec, à faire.
+A plan or a step tracker, one row per step with its state: done, running, waiting, failed, to do.
 props: { items: Array<{ label: string, status: "done" | "running" | "waiting" | "failed" | "todo", detail?: string }> }
 ### Steps
-Une suite d’étapes numérotées dans l’ordre, avec un détail et une heure par étape. Pour une procédure, pas pour un état.
+A numbered sequence of steps in order, with a detail and a time per step. For a procedure, not for a state.
 props: { items: Array<{ title: string, detail?: string, time?: string }> }
 ### Callout
-Un encadré qui signale une chose : une information, un succès, un avertissement ou un échec. Une phrase ou deux, pas un paragraphe.
+A callout that flags one thing: information, success, warning or failure. A sentence or two, not a paragraph.
 props: { tone: "info" | "ok" | "warn" | "fail", title: string, text: string }
 ### Tabs
-Un sélecteur d’onglets lié à l’état. Les enfants qui portent une condition visible sur le même chemin changent avec l’onglet choisi.
+A tab selector bound to the state. Children whose visible condition reads the same path change with the chosen tab.
 props: { tabs: Array<{ id: string, label: string }>, value: string | { $state: string } | { $bindState: string } }
 ### Image
-Une image par son adresse https, ou un chemin local servi par l’app. Jamais de data: ni de javascript:.
+An image by its https address, or a local path the app serves. Never data: or javascript:.
 props: { src: string, alt: string, caption?: string }
 ### CodeBlock
-Un bloc de code ou de commande, copiable, avec son langage. Court : la sortie d’une commande, pas un fichier entier.
+A copyable code or command block with its language. Short: a command output, not a whole file.
 props: { code: string, language?: "bash" | "ts" | "tsx" | "js" | "json" | "python" | "yaml" | "text" }
 ### Choice
-Un choix unique entre deux et six options, lié à l’état. La valeur retenue se relit dans les textes par {{/chemin}}.
+One choice among two to six options, bound to the state. The chosen value is read back in texts with {{/path}}.
 props: { label: string, options: Array<{ value: string, label: string }>, value: string | { $state: string } | { $bindState: string } }
 ### Stepper
-Un compteur à moins et plus, lié à l’état. Pour une quantité : personnes, chambres, exemplaires.
+A minus/plus counter bound to the state. For a quantity: people, rooms, copies.
 props: { label: string, min: number, max: number, step?: number, value: number | { $state: string } | { $bindState: string } }
 ### Slider
-Un curseur entre un minimum et un maximum, lié à l’état, avec sa valeur affichée. Pour un réglage continu.
+A slider between a minimum and a maximum, bound to the state, with its value shown. For a continuous setting.
 props: { label: string, min: number, max: number, step?: number, unit?: string, value: number | { $state: string } | { $bindState: string } }
 ### Switch
-Un interrupteur oui / non, lié à l’état. Pour activer une option.
+A yes / no switch bound to the state. For turning an option on.
 props: { label: string, value: boolean | { $state: string } | { $bindState: string } }
 ### TextField
-Un champ de texte court, lié à l’état : un nom, une adresse, une recherche.
+A short text field bound to the state: a name, an address, a search.
 props: { label: string, placeholder?: string, value: string | { $state: string } | { $bindState: string } }
 ### Select
-Une liste déroulante à choix unique, liée à l’état. Pour plus de six options.
+A single-choice dropdown bound to the state. For more than six options.
 props: { label: string, options: Array<{ value: string, label: string }>, value: string | { $state: string } | { $bindState: string } }
 ### Button
-Un bouton qui agit : envoyer un message au bot (send, texte avec {{/chemin}}), copier un texte (copy), ouvrir une adresse https (open). Un seul primary par groupe.
+A button that acts: send a message to the bot (send, text with {{/path}}), copy a text (copy), open an https address (open). One primary per group.
 props: { label: string, variant: "primary" | "secondary" | "confirm", action: { name: "send" | "copy" | "open", params?: Record<string, string> } }
 
 ACTIONS
-### send — Envoie text comme prochain message de la personne, avec les valeurs de l’état interpolées ({{/guests}}).
+### send — Sends text as the person’s next message, with the state values interpolated ({{/guests}}).
 params: { text: string }
-### copy — Copie text dans le presse-papiers et confirme par un toast « Copié ».
+### copy — Copies text to the clipboard and confirms with a “Copied” toast.
 params: { text: string }
-### open — Ouvre une adresse https dans le navigateur du système.
+### open — Opens an https address in the system browser.
 params: { url: string }
 
-RÈGLES
-1. Du texte d’abord : une ou deux phrases qui disent la réponse, puis un seul bloc <hui-ui> par idée.
-2. Des identifiants courts ("r", "a", "b"). Pas de clé inutile : un élément sans props n’en a pas.
-3. Des données réelles, tirées de la conversation ou des outils. Jamais d’exemple inventé, jamais de lorem ipsum.
-4. Un seul Button "primary" par groupe d’actions ; les autres en "secondary", la confirmation en "confirm".
-5. Un composant interactif sans "state" ni "$bindState" est inerte : seede sa valeur et lie-la.
-6. Le bouton qui propose une suite utilise l’action "send" et reprend les valeurs du state avec {{/chemin}}.
-7. Limites : 200 éléments, 12 niveaux, 4000 caractères par chaîne. Au-delà, le bloc est coupé ou ignoré.
-8. Un type absent de cette liste n’est pas rendu (ses enfants seulement) : n’invente pas de composant.
+RULES
+1. Text first: one or two sentences that give the answer, then one <hui-ui> block per idea.
+2. Short ids ("r", "a", "b"). No useless key: an element with no props has none.
+3. Real data, taken from the conversation or from the tools. Never an invented example, never lorem ipsum.
+4. One "primary" Button per action group; the rest "secondary", the confirmation "confirm".
+5. An interactive component with no "state" or "$bindState" is inert: seed its value and bind it.
+6. The button that offers a next step uses the "send" action and repeats the state values with {{/path}}.
+7. Limits: 200 elements, 12 levels, 4000 characters per string. Beyond that the block is cut or ignored.
+8. A type missing from this list is not rendered (only its children): do not invent a component.

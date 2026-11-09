@@ -439,7 +439,7 @@
   letter-spacing: var(--tracking-body);
   color: var(--text-2);
   /* The footer is one row: meta that runs out of room ends in an ellipsis, and the actions keep their size. */
-  :where(& > :not(button, [data-slot="button"])) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :where(& > :not(button, [data-hui-part="button"])) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
 /* field: the hairline pill around one line of text. Paper, a 1px --line-control edge, --radius-pill, 12px of inset.

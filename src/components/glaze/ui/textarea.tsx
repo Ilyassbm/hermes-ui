@@ -64,7 +64,7 @@ function Textarea({className, autoGrow = false, rows, minRows = rows ?? 3, maxRo
   const textarea = <InputPrimitive
     // The caller's props first, so the counter's describedby, the limit's invalid state and the sizing below stay.
     {...primitiveProps}
-    data-slot="textarea"
+    data-hui-part="textarea"
     data-control=""
     data-auto-grow={autoGrow || undefined}
     render={<textarea ref={setRef} rows={minRows}/>}
@@ -96,11 +96,11 @@ function Textarea({className, autoGrow = false, rows, minRows = rows ?? 3, maxRo
   />;
 
   if (limit === undefined) return textarea;
-  return <div data-slot="textarea-limit" className={cn('flex w-full min-w-0 flex-col gap-1', className)}>
+  return <div data-hui-part="textarea-limit" className={cn('flex w-full min-w-0 flex-col gap-1', className)}>
     {textarea}
     <p
       id={counterId}
-      data-slot="textarea-counter"
+      data-hui-part="textarea-counter"
       data-status={over ? 'fail' : undefined}
       className={cn('self-end type-caption text-text-2 data-[status=fail]:text-fail-text', !near && 'sr-only')}
     >

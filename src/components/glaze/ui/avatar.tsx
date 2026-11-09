@@ -79,7 +79,7 @@ function Avatar({className, size = 'default', type = 'person', name, src, decora
   const kind: AvatarType = type ?? 'person';
   const labelled = !!name && !decorative;
   return <AvatarContext.Provider value={{type: kind, size: px}}><AvatarPrimitive.Root
-    data-slot="avatar"
+    data-hui-part="avatar"
     data-size={px}
     data-type={kind}
     role={labelled ? 'img' : undefined}
@@ -97,7 +97,7 @@ function Avatar({className, size = 'default', type = 'person', name, src, decora
 
 function AvatarImage({className, ...props}: AvatarPrimitive.Image.Props) {
   return <AvatarPrimitive.Image
-    data-slot="avatar-image"
+    data-hui-part="avatar-image"
     decoding="async"
     draggable={false}
     className={mergeClass('aspect-square size-full rounded-[inherit] object-cover group-data-[type=source]/avatar:object-contain', className)}
@@ -108,7 +108,7 @@ function AvatarImage({className, ...props}: AvatarPrimitive.Image.Props) {
 /** Initials for a person; the bot glyph for an agent and the globe for a source when given no children. */
 function AvatarFallback({className, children, ...props}: AvatarPrimitive.Fallback.Props) {
   return <AvatarPrimitive.Fallback
-    data-slot="avatar-fallback"
+    data-hui-part="avatar-fallback"
     className={mergeClass([
       'flex size-full items-center justify-center overflow-hidden rounded-[inherit] bg-field pe-(--avatar-covered) type-label-sm leading-none text-text-1',
       'group-data-[type=agent]/avatar:text-text-2 group-data-[type=source]/avatar:text-text-2 group-data-[size=lg]/avatar:type-label',
@@ -150,7 +150,7 @@ function AvatarGroup({className, children, max = 4, label, size = 'default', ...
   const shown = items.length > max ? items.slice(0, Math.max(1, max - 1)) : items;
   const hidden = items.slice(shown.length);
   return <div
-    data-slot="avatar-group"
+    data-hui-part="avatar-group"
     data-size={size}
     role="list"
     aria-label={label}
@@ -171,7 +171,7 @@ function AvatarGroup({className, children, max = 4, label, size = 'default', ...
 function AvatarGroupCount({className, children, size = 'default', names = [], ...props}: React.ComponentProps<'div'> & {size?: AvatarSize; names?: string[]}) {
   const list = names.length ? names.join(', ') : undefined;
   const count = <div
-    data-slot="avatar-group-count"
+    data-hui-part="avatar-group-count"
     role="listitem"
     tabIndex={list ? 0 : undefined}
     className={cn(

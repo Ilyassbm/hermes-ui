@@ -85,14 +85,14 @@ function DropdownMenu({trigger = 'click', onOpenChange, onTargetChange, ...props
   };
   return <MenuContext.Provider value={state}>
     {trigger === 'contextmenu'
-      ? <ContextMenuPrimitive.Root data-slot="dropdown-menu" onOpenChange={change as ContextMenuPrimitive.Root.Props['onOpenChange']} {...(props as ContextMenuPrimitive.Root.Props)}/>
-      : <MenuPrimitive.Root data-slot="dropdown-menu" onOpenChange={change} {...props}/>}
+      ? <ContextMenuPrimitive.Root data-hui-part="dropdown-menu" onOpenChange={change as ContextMenuPrimitive.Root.Props['onOpenChange']} {...(props as ContextMenuPrimitive.Root.Props)}/>
+      : <MenuPrimitive.Root data-hui-part="dropdown-menu" onOpenChange={change} {...props}/>}
   </MenuContext.Provider>;
 }
 
 function DropdownMenuPortal(props: MenuPrimitive.Portal.Props) {
   const container = useGlazePortal();
-  return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" container={container} {...props}/>;
+  return <MenuPrimitive.Portal data-hui-part="dropdown-menu-portal" container={container} {...props}/>;
 }
 
 type DropdownMenuTriggerProps = MenuPrimitive.Trigger.Props & {
@@ -113,7 +113,7 @@ function DropdownMenuTrigger({selectable = false, className, ...props}: Dropdown
       'forced-colors:[&_[data-menu-target-open]]:outline-solid forced-colors:[&_[data-menu-target-open]]:outline-2 forced-colors:[&_[data-menu-target-open]]:-outline-offset-2',
     );
     return <ContextMenuPrimitive.Trigger
-      data-slot="dropdown-menu-trigger"
+      data-hui-part="dropdown-menu-trigger"
       data-menu-area=""
       data-selectable={selectable || undefined}
       onPointerDown={event => { if (event.pointerType !== 'mouse') pressed.current = rowOf(event.target, event.currentTarget); }}
@@ -135,7 +135,7 @@ function DropdownMenuTrigger({selectable = false, className, ...props}: Dropdown
       {...(props as ContextMenuPrimitive.Trigger.Props)}
     />;
   }
-  return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" className={className} {...props}/>;
+  return <MenuPrimitive.Trigger data-hui-part="dropdown-menu-trigger" className={className} {...props}/>;
 }
 
 type DropdownMenuContentProps = MenuPrimitive.Popup.Props & Pick<MenuPrimitive.Positioner.Props, 'align' | 'alignOffset' | 'side' | 'sideOffset' | 'collisionPadding' | 'collisionAvoidance' | 'anchor'> & {
@@ -147,7 +147,7 @@ function DropdownMenuContent({align, alignOffset, side, sideOffset, collisionPad
   const {mode} = React.useContext(MenuContext);
   // A click menu takes its name from its trigger; a context menu has no trigger button, so it needs
   // one. Pass the row's name ("Actions for run_8f2a"); "Actions" is the fallback.
-  const popup = <MenuPrimitive.Popup data-slot="dropdown-menu-content" data-size={size} aria-label={mode === 'contextmenu' ? 'Actions' : undefined} className={mergeClass(menuPopupClass, className)} {...props}/>;
+  const popup = <MenuPrimitive.Popup data-hui-part="dropdown-menu-content" data-size={size} aria-label={mode === 'contextmenu' ? 'Actions' : undefined} className={mergeClass(menuPopupClass, className)} {...props}/>;
   return <DropdownMenuPortal>
     {mode === 'contextmenu'
       ? <ContextMenuPrimitive.Positioner className="isolate z-(--z-overlay) outline-none" align={align ?? 'start'} alignOffset={alignOffset ?? 4} side={side ?? 'inline-end'} sideOffset={sideOffset ?? 0} collisionPadding={collisionPadding} collisionAvoidance={collisionAvoidance}>{popup}</ContextMenuPrimitive.Positioner>
@@ -156,18 +156,18 @@ function DropdownMenuContent({align, alignOffset, side, sideOffset, collisionPad
 }
 
 function DropdownMenuGroup(props: MenuPrimitive.Group.Props) {
-  return <MenuPrimitive.Group data-slot="dropdown-menu-group" {...props}/>;
+  return <MenuPrimitive.Group data-hui-part="dropdown-menu-group" {...props}/>;
 }
 
 function DropdownMenuLabel({className, inset, ...props}: MenuPrimitive.GroupLabel.Props & {inset?: boolean}) {
-  return <MenuPrimitive.GroupLabel data-slot="dropdown-menu-label" data-inset={inset || undefined} className={mergeClass(menuLabelClass, className)} {...props}/>;
+  return <MenuPrimitive.GroupLabel data-hui-part="dropdown-menu-label" data-inset={inset || undefined} className={mergeClass(menuLabelClass, className)} {...props}/>;
 }
 
 type ItemVariant = 'default' | 'destructive';
 
 function DropdownMenuItem({className, inset, variant = 'default', ...props}: MenuPrimitive.Item.Props & {inset?: boolean; variant?: ItemVariant}) {
   return <MenuPrimitive.Item
-    data-slot="dropdown-menu-item"
+    data-hui-part="dropdown-menu-item"
     data-inset={inset || undefined}
     data-variant={variant}
     data-status={variant === 'destructive' ? 'fail' : undefined}
@@ -179,7 +179,7 @@ function DropdownMenuItem({className, inset, variant = 'default', ...props}: Men
 /** An item that navigates: a real link, so open in a new tab and copy link work (trap/menu-navigation). */
 function DropdownMenuLinkItem({className, inset, ...props}: MenuPrimitive.LinkItem.Props & {inset?: boolean}) {
   return <MenuPrimitive.LinkItem
-    data-slot="dropdown-menu-link-item"
+    data-hui-part="dropdown-menu-link-item"
     data-inset={inset || undefined}
     className={mergeClass([menuItemClass, 'cursor-pointer'], className)}
     {...props}
@@ -187,12 +187,12 @@ function DropdownMenuLinkItem({className, inset, ...props}: MenuPrimitive.LinkIt
 }
 
 function DropdownMenuSub(props: MenuPrimitive.SubmenuRoot.Props) {
-  return <MenuPrimitive.SubmenuRoot data-slot="dropdown-menu-sub" {...props}/>;
+  return <MenuPrimitive.SubmenuRoot data-hui-part="dropdown-menu-sub" {...props}/>;
 }
 
 function DropdownMenuSubTrigger({className, inset, children, ...props}: MenuPrimitive.SubmenuTrigger.Props & {inset?: boolean}) {
   return <MenuPrimitive.SubmenuTrigger
-    data-slot="dropdown-menu-sub-trigger"
+    data-hui-part="dropdown-menu-sub-trigger"
     data-inset={inset || undefined}
     className={mergeClass([menuItemClass, 'data-popup-open:bg-hover forced-colors:data-popup-open:outline-solid forced-colors:data-popup-open:outline-1 forced-colors:data-popup-open:-outline-offset-1'], className)}
     {...props}
@@ -206,19 +206,19 @@ function DropdownMenuSubContent({align = 'start', alignOffset = -5, side = 'inli
   // A submenu always positions against its parent item, whichever way the root opened.
   return <DropdownMenuPortal>
     <MenuPrimitive.Positioner className="isolate z-(--z-overlay) outline-none" align={align} alignOffset={alignOffset} side={side} sideOffset={sideOffset} collisionPadding={collisionPadding} collisionAvoidance={collisionAvoidance}>
-      <MenuPrimitive.Popup data-slot="dropdown-menu-sub-content" data-size={size} className={mergeClass(menuPopupClass, className)} {...props}/>
+      <MenuPrimitive.Popup data-hui-part="dropdown-menu-sub-content" data-size={size} className={mergeClass(menuPopupClass, className)} {...props}/>
     </MenuPrimitive.Positioner>
   </DropdownMenuPortal>;
 }
 
 function DropdownMenuCheckboxItem({className, children, inset, ...props}: MenuPrimitive.CheckboxItem.Props & {inset?: boolean}) {
   return <MenuPrimitive.CheckboxItem
-    data-slot="dropdown-menu-checkbox-item"
+    data-hui-part="dropdown-menu-checkbox-item"
     data-inset={inset || undefined}
     className={mergeClass(menuCheckItemClass, className)}
     {...props}
   >
-    <span data-slot="dropdown-menu-checkbox-item-indicator" className="pointer-events-none absolute start-2 flex size-(--icon) items-center justify-center">
+    <span data-hui-part="dropdown-menu-checkbox-item-indicator" className="pointer-events-none absolute start-2 flex size-(--icon) items-center justify-center">
       <MenuPrimitive.CheckboxItemIndicator className="tick-draw flex [&_svg]:text-text-1"><Icon icon={Check}/></MenuPrimitive.CheckboxItemIndicator>
     </span>
     {children}
@@ -226,17 +226,17 @@ function DropdownMenuCheckboxItem({className, children, inset, ...props}: MenuPr
 }
 
 function DropdownMenuRadioGroup(props: MenuPrimitive.RadioGroup.Props) {
-  return <MenuPrimitive.RadioGroup data-slot="dropdown-menu-radio-group" {...props}/>;
+  return <MenuPrimitive.RadioGroup data-hui-part="dropdown-menu-radio-group" {...props}/>;
 }
 
 function DropdownMenuRadioItem({className, children, inset, ...props}: MenuPrimitive.RadioItem.Props & {inset?: boolean}) {
   return <MenuPrimitive.RadioItem
-    data-slot="dropdown-menu-radio-item"
+    data-hui-part="dropdown-menu-radio-item"
     data-inset={inset || undefined}
     className={mergeClass(menuCheckItemClass, className)}
     {...props}
   >
-    <span data-slot="dropdown-menu-radio-item-indicator" className="pointer-events-none absolute start-2 flex size-(--icon) items-center justify-center">
+    <span data-hui-part="dropdown-menu-radio-item-indicator" className="pointer-events-none absolute start-2 flex size-(--icon) items-center justify-center">
       {/* The chosen option takes the checkbox item's check: a menu marks a choice with a glyph, never a dot. */}
       <MenuPrimitive.RadioItemIndicator className="tick-draw flex [&_svg]:text-text-1"><Icon icon={Check}/></MenuPrimitive.RadioItemIndicator>
     </span>
@@ -245,13 +245,13 @@ function DropdownMenuRadioItem({className, children, inset, ...props}: MenuPrimi
 }
 
 function DropdownMenuSeparator({className, ...props}: MenuPrimitive.Separator.Props) {
-  return <MenuPrimitive.Separator data-slot="dropdown-menu-separator" className={mergeClass(menuSeparatorClass, className)} {...props}/>;
+  return <MenuPrimitive.Separator data-hui-part="dropdown-menu-separator" className={mergeClass(menuSeparatorClass, className)} {...props}/>;
 }
 
 /** The item's shortcut, one key cap per key, from keys or from a string child, at the row's inline end. */
 function DropdownMenuShortcut({className, keys, children, ...props}: React.ComponentProps<'kbd'> & {keys?: string[]}) {
   const caps = keys ?? (typeof children === 'string' ? [children] : null);
-  return <kbd data-slot="dropdown-menu-shortcut" className={cn(menuShortcutClass, className)} {...props}>
+  return <kbd data-hui-part="dropdown-menu-shortcut" className={cn(menuShortcutClass, className)} {...props}>
     {caps ? caps.map((key, i) => <Kbd key={i}>{key}</Kbd>) : children}
   </kbd>;
 }

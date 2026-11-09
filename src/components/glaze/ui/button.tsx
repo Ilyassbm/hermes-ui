@@ -72,7 +72,7 @@ type ButtonProps = ButtonPrimitive.Props & VariantProps<typeof buttonVariants> &
 
 /** The pending arc: a 3/4 ring turning once per --dur-spin, still under reduced motion. */
 function Arc() {
-  return <Icon icon={Pending} data-slot="button-arc" className="animate-spin motion-reduce:animate-none"/>;
+  return <Icon icon={Pending} data-hui-part="button-arc" className="animate-spin motion-reduce:animate-none"/>;
 }
 
 /** The text a screen reader would name the button by, roughly: text outside aria-hidden parts. */
@@ -115,18 +115,18 @@ function Button({className, variant, size, pending, pendingLabel, disabled, focu
   const mergedRef = useMemo(() => mergeRefs(ref as Ref<HTMLElement> | undefined, named), [ref, named]);
 
   // A text label never wraps; a label too long for its container ends in an ellipsis and stays the accessible name.
-  const label = typeof children === 'string' ? <span data-slot="button-text" className="min-w-0 truncate">{children}</span> : children;
+  const label = typeof children === 'string' ? <span data-hui-part="button-text" className="min-w-0 truncate">{children}</span> : children;
   const content = canPend
-    ? <span data-slot="button-stack" className="grid min-w-0 place-items-center [grid-template-areas:'stack']">
-        <span data-slot="button-idle" className={cn('inline-flex max-w-full min-w-0 items-center gap-1.5 [grid-area:stack]', pending && 'opacity-0')}>{label}</span>
-        <span data-slot="button-pending" aria-hidden className={cn('inline-flex max-w-full min-w-0 items-center gap-1.5 [grid-area:stack]', !pending && 'invisible')}>
+    ? <span data-hui-part="button-stack" className="grid min-w-0 place-items-center [grid-template-areas:'stack']">
+        <span data-hui-part="button-idle" className={cn('inline-flex max-w-full min-w-0 items-center gap-1.5 [grid-area:stack]', pending && 'opacity-0')}>{label}</span>
+        <span data-hui-part="button-pending" aria-hidden className={cn('inline-flex max-w-full min-w-0 items-center gap-1.5 [grid-area:stack]', !pending && 'invisible')}>
           <Arc/>{iconOnly ? null : typeof pendingLabel === 'string' ? <span className="min-w-0 truncate">{pendingLabel}</span> : pendingLabel ?? label}
         </span>
       </span>
     : label;
 
   return <ButtonPrimitive
-    data-slot="button"
+    data-hui-part="button"
     data-variant={v}
     data-size={s}
     ref={mergedRef}

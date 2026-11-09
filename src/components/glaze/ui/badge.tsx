@@ -52,7 +52,7 @@ function Badge({className, variant = 'neutral', size = 'default', count, max = 9
     defaultTagName: 'span',
     props: mergeProps<'span'>(
       {className: cn(badgeVariants({variant, size}), className), children: shown},
-      {'data-slot': 'badge', 'data-variant': variant, 'data-size': size, title: capped ? exact : undefined} as React.ComponentProps<'span'>,
+      {'data-hui-part': 'badge', 'data-variant': variant, 'data-size': size, title: capped ? exact : undefined} as React.ComponentProps<'span'>,
       props,
     ),
     render,

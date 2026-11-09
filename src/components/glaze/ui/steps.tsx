@@ -53,7 +53,7 @@ function Steps({value, onValueChange, orientation = 'horizontal', size = 'defaul
   const ctx = React.useMemo(() => ({value, onValueChange, orientation, size, linear}), [value, onValueChange, orientation, size, linear]);
   return <StepsContext.Provider value={ctx}>
     <ol
-      data-slot="steps"
+      data-hui-part="steps"
       data-orientation={orientation}
       data-size={size}
       className={cn('group/steps flex w-full min-w-0', orientation === 'horizontal' ? 'flex-row items-start' : 'flex-col', className)}
@@ -76,7 +76,7 @@ function Step({step, state: stateProp, disabled = false, className, ...props}: S
   const ctx = React.useMemo(() => ({step, state, disabled}), [step, state, disabled]);
   return <StepContext.Provider value={ctx}>
     <li
-      data-slot="step"
+      data-hui-part="step"
       data-state={state}
       aria-current={step === value ? 'step' : undefined}
       className={cn(
@@ -100,14 +100,14 @@ function StepTrigger({className, children, ...props}: React.ComponentProps<'butt
     orientation === 'horizontal' ? cn('flex-col items-start', size === 'sm' ? 'gap-1.5' : 'gap-2') : cn('items-start', size === 'sm' ? 'gap-2' : 'gap-3'),
     className,
   );
-  if (!onValueChange) return <div data-slot="step-trigger" className={base}>{children}</div>;
+  if (!onValueChange) return <div data-hui-part="step-trigger" className={base}>{children}</div>;
   const blocked = disabled || (linear && step > value);
   return <button
     type="button"
-    data-slot="step-trigger"
+    data-hui-part="step-trigger"
     disabled={blocked}
     onClick={() => onValueChange(step)}
-    className={cn(base, 'cursor-pointer rounded-tag decoration-line-strong underline-offset-4 enabled:hover:[&_[data-slot=step-title]]:underline disabled:cursor-not-allowed')}
+    className={cn(base, 'cursor-pointer rounded-tag decoration-line-strong underline-offset-4 enabled:hover:[&_[data-hui-part=step-title]]:underline disabled:cursor-not-allowed')}
     {...props}
   >{children}</button>;
 }
@@ -120,7 +120,7 @@ function StepIndicator({className, children, ...props}: React.ComponentProps<'sp
   const {size} = useSteps();
   const {step, state} = useStep();
   return <span
-    data-slot="step-indicator"
+    data-hui-part="step-indicator"
     data-state={state}
     className={cn(
       'grid shrink-0 place-items-center rounded-pill type-label-sm leading-none data transition-colors duration-(--dur-state) ease-out',
@@ -150,7 +150,7 @@ function StepIndicator({className, children, ...props}: React.ComponentProps<'sp
 /** Holds the label and the description beside or under the marker. */
 function StepText({className, ...props}: React.ComponentProps<'span'>) {
   return <span
-    data-slot="step-text"
+    data-hui-part="step-text"
     className={cn('flex min-w-0 flex-col gap-0.5 group-data-[orientation=vertical]/steps:group-data-[size=default]/steps:pt-px', className)}
     {...props}
   />;
@@ -166,7 +166,7 @@ function StepTitle({className, children, errorText = 'Failed', ...props}: StepTi
   const {size} = useSteps();
   const {state} = useStep();
   return <span
-    data-slot="step-title"
+    data-hui-part="step-title"
     className={cn(
       'inline-flex min-w-0 max-w-full items-baseline gap-1.5 text-text-1 group-data-[state=upcoming]/step:text-text-2',
       size === 'sm' ? 'type-label-sm' : 'type-label',
@@ -175,13 +175,13 @@ function StepTitle({className, children, errorText = 'Failed', ...props}: StepTi
     {...props}
   >
     <span className="truncate">{children}</span>
-    {state === 'error' && <span data-slot="step-error" className="shrink-0 text-fail-text">{errorText}</span>}
+    {state === 'error' && <span data-hui-part="step-error" className="shrink-0 text-fail-text">{errorText}</span>}
   </span>;
 }
 
 /** One line under the label, in text-2; it truncates rather than wraps. */
 function StepDescription({className, ...props}: React.ComponentProps<'span'>) {
-  return <span data-slot="step-description" className={cn('block max-w-(--measure-hint) truncate type-caption text-text-2', className)} {...props}/>;
+  return <span data-hui-part="step-description" className={cn('block max-w-(--measure-hint) truncate type-caption text-text-2', className)} {...props}/>;
 }
 
 /** The 2px track to the next step. It fills with the gradient once this step is done. The last step draws none. */
@@ -192,7 +192,7 @@ function StepSeparator({className, ...props}: React.ComponentProps<'span'>) {
   const horizontal = orientation === 'horizontal';
   return <span
     aria-hidden
-    data-slot="step-separator"
+    data-hui-part="step-separator"
     data-filled={filled ? '' : undefined}
     className={cn(
       'absolute block overflow-hidden rounded-pill bg-line group-last/step:hidden forced-colors:bg-[GrayText]',
@@ -206,7 +206,7 @@ function StepSeparator({className, ...props}: React.ComponentProps<'span'>) {
     {...props}
   >
     <span
-      data-slot="step-separator-fill"
+      data-hui-part="step-separator-fill"
       className={cn(
         'block size-full rounded-pill transition-transform duration-(--dur-overlay) ease-out motion-reduce:transition-none forced-colors:bg-[CanvasText]',
         horizontal ? 'glaze-sm glaze-sm-x origin-left rtl:origin-right' : 'glaze-sm origin-top',

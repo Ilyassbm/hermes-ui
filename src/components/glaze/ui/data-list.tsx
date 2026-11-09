@@ -28,9 +28,9 @@ type DataListProps = React.ComponentProps<'dl'> & VariantProps<typeof dataListVa
 };
 
 function DataList({className, variant = 'plain', orientation = 'horizontal', ...props}: DataListProps) {
-  return <div data-slot="data-list-frame" data-variant={variant} data-orientation={orientation} className={cn(dataListVariants({variant}), className)}>
+  return <div data-hui-part="data-list-frame" data-variant={variant} data-orientation={orientation} className={cn(dataListVariants({variant}), className)}>
     <dl
-      data-slot="data-list"
+      data-hui-part="data-list"
       className={cn('grid min-w-0 grid-cols-1', orientation === 'horizontal' && '@sm/data-list:grid-cols-[fit-content(var(--label-col))_minmax(0,1fr)] @sm/data-list:gap-x-4')}
       {...props}
     />
@@ -39,7 +39,7 @@ function DataList({className, variant = 'plain', orientation = 'horizontal', ...
 
 function DataListItem({className, ...props}: React.ComponentProps<'div'>) {
   return <div
-    data-slot="data-list-item"
+    data-hui-part="data-list-item"
     className={cn(
       'col-span-full flex min-h-(--row) min-w-0 flex-col justify-center gap-x-4 gap-y-0.5 py-2',
       'group-data-[orientation=horizontal]/data-list:@sm/data-list:grid group-data-[orientation=horizontal]/data-list:@sm/data-list:grid-cols-subgrid group-data-[orientation=horizontal]/data-list:@sm/data-list:items-baseline',
@@ -52,7 +52,7 @@ function DataListItem({className, ...props}: React.ComponentProps<'div'>) {
 
 /** The field's name, in text-2. */
 function DataListLabel({className, ...props}: React.ComponentProps<'dt'>) {
-  return <dt data-slot="data-list-label" className={cn('min-w-0 type-body-sm text-text-2 [overflow-wrap:anywhere]', className)} {...props}/>;
+  return <dt data-hui-part="data-list-label" className={cn('min-w-0 type-body-sm text-text-2 [overflow-wrap:anywhere]', className)} {...props}/>;
 }
 
 const isEmpty = (node: React.ReactNode) => node === null || node === undefined || node === false || (typeof node === 'string' && node.trim() === '');
@@ -66,7 +66,7 @@ type DataListValueProps = React.ComponentProps<'dd'> & {
 function DataListValue({className, mono = false, children, ...props}: DataListValueProps) {
   const empty = isEmpty(children);
   return <dd
-    data-slot="data-list-value"
+    data-hui-part="data-list-value"
     data-empty={empty || undefined}
     className={cn('flex min-w-0 flex-wrap items-center gap-2 text-text-1 data [overflow-wrap:anywhere]', mono && !empty ? 'type-code-sm' : 'type-label', className)}
     {...props}
@@ -75,7 +75,7 @@ function DataListValue({className, mono = false, children, ...props}: DataListVa
 
 /** What a field with no value says. DataListValue shows it by itself for an empty value. */
 function DataListEmpty({className, children = 'None', ...props}: React.ComponentProps<'span'>) {
-  return <span data-slot="data-list-empty" className={cn('type-body-sm text-text-2', className)} {...props}>{children}</span>;
+  return <span data-hui-part="data-list-empty" className={cn('type-body-sm text-text-2', className)} {...props}>{children}</span>;
 }
 
 export {DataList, DataListItem, DataListLabel, DataListValue, DataListEmpty, dataListVariants, type DataListProps, type DataListValueProps};

@@ -54,57 +54,57 @@ const NOW = Date.now()
 
 const MODELS = ['hermes-3-405b', 'deepseek-v4.1-flash', 'qwen3-coder-30b']
 
-const REASONING = `Je commence par les journaux de la routine, puis je compare les trois derniers passages.
-La coupure tombe toujours entre la 30e et la 31e seconde : c'est le délai par défaut du gateway, pas une panne du bot.
-Je vérifie ensuite le fichier de configuration avant de proposer une relance.`
+const REASONING = `I start with the routine's logs, then compare the last three runs.
+The cut always lands between second 30 and 31: that is the gateway's default timeout, not a bot failure.
+I then check the config file before offering a rerun.`
 
-const ANSWER = `## Pourquoi nightly-report échoue
+const ANSWER = `## Why nightly-report fails
 
-Trois nuits de suite, la routine s'arrête sur le même point : le gateway rend un \`504\` après 30 s, alors que la collecte des journaux en demande 40.
+Three nights in a row the routine stops at the same point: the gateway returns a \`504\` after 30 s, while collecting the logs takes 40.
 
-- **Branco** relance la routine à 02:14, sans changer le délai.
-- **Dex** a coupé la reprise automatique pour éviter la boucle.
-- **Preto** garde le dernier rapport complet du 5 novembre.
+- **Branco** reruns the routine at 02:14 without changing the timeout.
+- **Dex** turned the automatic retry off to avoid the loop.
+- **Preto** keeps the last complete report from 5 November.
 
-| Passage | Début | Durée | Résultat |
+| Run | Start | Duration | Result |
 | - | - | - | - |
-| run_8f2a | 02:10 | 38 s | échec |
-| run_7d1c | 02:10 | 41 s | échec |
-| run_6b03 | 02:09 | 39 s | échec |
+| run_8f2a | 02:10 | 38 s | failed |
+| run_7d1c | 02:10 | 41 s | failed |
+| run_6b03 | 02:09 | 39 s | failed |
 
-Le correctif tient en une ligne : passer \`--timeout\` à 60 s dans \`routines/nightly-report.toml\`.`
+The fix is one line: set \`--timeout\` to 60 s in \`routines/nightly-report.toml\`.`
 
 const COMMAND = `hermes routine run nightly-report --bot branco --timeout 60
-run_9a41 démarré · 3 étapes
-  lecture routines/nightly-report.toml  ok
-  collecte des journaux          40 s   ok
-  envoi du rapport vers #veille         ok
-terminé en 44 s`
+run_9a41 started · 3 steps
+  read routines/nightly-report.toml    ok
+  collect the logs          40 s      ok
+  send the report to #watch           ok
+done in 44 s`
 
 /** The turn's calls. Every one carries its `seq`: the reducer drops a late or duplicate event instead of replaying it. */
 const CALLS: ToolCallData[] = [
   {
     id: 'call_read', tool: 'read', status: 'completed', seq: 1,
     input: { filePath: 'routines/nightly-report/run.log' },
-    output: '02:10:31 gateway timeout after 30000ms\n02:10:32 retry 1/1 refusé (reprise automatique coupée)',
+    output: '02:10:31 gateway timeout after 30000ms\n02:10:32 retry 1/1 refused (automatic retry disabled)',
     startedAt: NOW - 13_800, endedAt: NOW - 13_100,
   },
   {
     id: 'call_shell', tool: 'shell', status: 'completed', seq: 2,
     input: { command: 'hermes routine logs nightly-report --bot branco --tail 40' },
-    output: '3 passages · 3 échecs · dernier 2026-11-08 02:10',
+    output: '3 runs · 3 failures · last 2026-11-08 02:10',
     startedAt: NOW - 13_000, endedAt: NOW - 12_200,
   },
   {
     id: 'call_search', tool: 'websearch', status: 'completed', seq: 3,
     input: { query: 'gateway 504 timeout routine hermes' },
-    output: 'Le délai par défaut du gateway est de 30 s ; il se règle par --timeout.',
+    output: 'The gateway default timeout is 30 s; set it with --timeout.',
     startedAt: NOW - 12_000, endedAt: NOW - 11_400,
   },
   {
     id: 'call_run', tool: 'shell', status: 'running', seq: 4,
     input: { command: 'hermes routine run nightly-report --bot branco --timeout 60' },
-    metadata: { output: 'collecte des journaux 32 s / 40 s' },
+    metadata: { output: 'collecting the logs 32 s / 40 s' },
     startedAt: NOW - 4_000,
   },
   {
@@ -112,32 +112,32 @@ const CALLS: ToolCallData[] = [
     input: { command: 'rm -rf cache/shared/2026-11-07' },
     permission: {
       patterns: ['rm -rf cache/shared/2026-11-07'],
-      message: 'Supprime les 214 Mo de journaux temporaires que les trois bots ont écrits hier.',
+      message: 'Deletes the 214 MB of temporary logs the three bots wrote yesterday.',
     },
   },
 ]
 
 const PLAN = [
-  { label: 'Lire les journaux des trois passages', detail: 'run.log', status: 'ok' as const },
-  { label: 'Relancer avec un délai de 60 s', detail: 'nightly-report', status: 'running' as const },
-  { label: 'Envoyer le rapport dans #veille', detail: 'slack', status: 'queued' as const },
+  { label: 'Read the logs of the three runs', detail: 'run.log', status: 'ok' as const },
+  { label: 'Rerun with a 60 s timeout', detail: 'nightly-report', status: 'running' as const },
+  { label: 'Send the report to #watch', detail: 'slack', status: 'queued' as const },
 ]
 
 const ROUTINES = [
   { nom: 'nightly-report', bot: 'Branco', duree: '38 s', statut: 'fail' as const },
   { nom: 'inbox-triage', bot: 'Dex', duree: '12 s', statut: 'ok' as const },
-  { nom: 'veille-prix', bot: 'Preto', duree: '54 s', statut: 'warn' as const },
+  { nom: 'price-watch', bot: 'Preto', duree: '54 s', statut: 'warn' as const },
   { nom: 'backup-cache', bot: 'Branco', duree: '67 s', statut: 'ok' as const },
 ]
 
 const WEEK = [
-  { jour: 'lun', reussies: 18, echouees: 1 },
-  { jour: 'mar', reussies: 21, echouees: 0 },
-  { jour: 'mer', reussies: 17, echouees: 2 },
-  { jour: 'jeu', reussies: 22, echouees: 1 },
-  { jour: 'ven', reussies: 20, echouees: 3 },
-  { jour: 'sam', reussies: 11, echouees: 1 },
-  { jour: 'dim', reussies: 9, echouees: 2 },
+  { jour: 'Mon', reussies: 18, echouees: 1 },
+  { jour: 'Tue', reussies: 21, echouees: 0 },
+  { jour: 'Wed', reussies: 17, echouees: 2 },
+  { jour: 'Thu', reussies: 22, echouees: 1 },
+  { jour: 'Fri', reussies: 20, echouees: 3 },
+  { jour: 'Sat', reussies: 11, echouees: 1 },
+  { jour: 'Sun', reussies: 9, echouees: 2 },
 ]
 
 // ---------- Intelligent UI ----------
@@ -151,9 +151,9 @@ const DEMO_TAGS: Record<string, TagRenderer> = {
 }
 
 const LEADS: Record<string, string> = {
-  plan: 'Trois étapes avant la relance, et la suite proposée en deux boutons.',
-  comparaison: 'Preto coûte moins cher, Branco tient la durée : les cinq derniers passages, côte à côte.',
-  formulaire: 'La réservation tient en un compteur, un choix et un bouton.'
+  plan: 'Three steps before the rerun, and the next step offered as two buttons.',
+  comparison: 'Preto costs less, Branco holds the duration: the last five runs, side by side.',
+  form: 'The booking fits in a counter, a choice and a button.'
 }
 
 /** One spec streamed a character at a time, 16 ms apart: the placeholder, then the card. */
@@ -176,7 +176,7 @@ function StreamedSpec({ text }: { text: string }) {
         {shown}
       </Response>
       <Button variant="secondary" size="sm" className="self-start" onClick={() => setRun(n => n + 1)}>
-        Rejouer le flux
+        Replay the stream
       </Button>
     </div>
   )
@@ -201,7 +201,7 @@ export function GlazeDemo() {
 
   const reply = (call: ToolCallData, answer: 'once' | 'reject') => {
     console.log(`[glaze-demo] tool ${call.id} → ${answer}`)
-    dispatch({ type: 'reply', seq: ++seq.current, id: call.id, reply: answer, feedback: answer === 'reject' ? 'Journaux à garder cette semaine.' : undefined })
+    dispatch({ type: 'reply', seq: ++seq.current, id: call.id, reply: answer, feedback: answer === 'reject' ? 'Keep this week\'s logs.' : undefined })
   }
 
   return (
@@ -210,29 +210,29 @@ export function GlazeDemo() {
         <header className="flex items-center gap-2 border-b border-line-faint px-4 py-2">
           <Avatar type="agent" size="sm" name="Dex"><AvatarFallback /></Avatar>
           <span className="type-label">Dex</span>
-          <Badge variant="outline" size="sm">démo Glaze</Badge>
+          <Badge variant="outline" size="sm">Glaze demo</Badge>
           <span className="type-caption text-text-3">/hui/glaze</span>
           <div className="ms-auto flex items-center gap-1">
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Relancer la routine" />}>
+                <TooltipTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Rerun the routine" />}>
                   <Icon icon={Retry} size={14} />
                 </TooltipTrigger>
-                <TooltipContent shortcut={['mod', 'shift', 'R']}>Relancer la routine</TooltipContent>
+                <TooltipContent shortcut={['mod', 'shift', 'R']}>Rerun the routine</TooltipContent>
               </Tooltip>
             </TooltipProvider>
             <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Actions de la routine" />}>
+              <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Routine actions" />}>
                 <Icon icon={More} size={14} />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" size="sm">
                 <DropdownMenuGroup>
-                  <DropdownMenuLabel>Routine nightly-report</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => console.log('[glaze-demo] ouvrir les journaux')}>Ouvrir les journaux</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => console.log('[glaze-demo] copier le lien du passage')}>Copier le lien du passage</DropdownMenuItem>
+                  <DropdownMenuLabel>nightly-report routine</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => console.log('[glaze-demo] open the logs')}>Open the logs</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => console.log('[glaze-demo] copy the run link')}>Copy the run link</DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive" onClick={() => console.log('[glaze-demo] désactiver la routine')}>Désactiver la routine</DropdownMenuItem>
+                <DropdownMenuItem variant="destructive" onClick={() => console.log('[glaze-demo] disable the routine')}>Disable the routine</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -245,7 +245,7 @@ export function GlazeDemo() {
                 <MessageHeader>Ilyass<MessageTime>21:12</MessageTime></MessageHeader>
                 <MessageBubble>
                   <MessageBubbleContent>
-                    Relance la routine nightly-report du bot Branco et dis-moi pourquoi elle a échoué trois nuits de suite.
+                    Rerun the nightly-report routine on the Branco bot and tell me why it failed three nights in a row.
                   </MessageBubbleContent>
                 </MessageBubble>
               </MessageContent>
@@ -253,24 +253,24 @@ export function GlazeDemo() {
 
             <AgentTurn name="Dex" state="done" time="21:14">
               <Reasoning streaming={false} duration={7}>{REASONING}</Reasoning>
-              <Activity label="Consultant les journaux" doneLabel="Journaux consultés" active status="ok" announce={false} />
+              <Activity label="Reading the logs" doneLabel="Logs read" active status="ok" announce={false} />
               <ToolCallList calls={state.calls} onReply={reply} />
               <Response>{ANSWER}</Response>
               <MessageFooter>
                 <MessageWorked>14 s</MessageWorked>
-                <CopyButton value={ANSWER} label="la réponse" size="icon-sm" />
+                <CopyButton value={ANSWER} label="the response" size="icon-sm" />
               </MessageFooter>
             </AgentTurn>
 
             <div className="flex flex-col gap-2">
               <div className="flex items-baseline gap-2">
-                <h2 className="type-heading-sm">Plan de l'agent</h2>
-                <span className="type-caption text-text-3">Ouvrir un appel : <Kbd keys="enter" /></span>
+                <h2 className="type-heading-sm">Agent plan</h2>
+                <span className="type-caption text-text-3">Open a call: <Kbd keys="enter" /></span>
               </div>
               <Card>
                 <CardHeader>
-                  <CardTitle>Réparer nightly-report</CardTitle>
-                  <CardDescription>Trois étapes, la relance est en cours sur le bot Branco.</CardDescription>
+                  <CardTitle>Fix nightly-report</CardTitle>
+                  <CardDescription>Three steps; the rerun is under way on the Branco bot.</CardDescription>
                 </CardHeader>
                 <CardContent flush>
                   {PLAN.map(row => (
@@ -282,27 +282,27 @@ export function GlazeDemo() {
                   ))}
                 </CardContent>
                 <CardFooter>
-                  <CardMeta>3 étapes · 44 s</CardMeta>
-                  <Button size="sm" variant="secondary" onClick={() => console.log('[glaze-demo] modifier le plan')}>Modifier</Button>
-                  <Button size="sm" variant="confirm" onClick={() => console.log('[glaze-demo] plan validé')}>Valider le plan</Button>
+                  <CardMeta>3 steps · 44 s</CardMeta>
+                  <Button size="sm" variant="secondary" onClick={() => console.log('[glaze-demo] edit the plan')}>Edit</Button>
+                  <Button size="sm" variant="confirm" onClick={() => console.log('[glaze-demo] plan approved')}>Approve the plan</Button>
                 </CardFooter>
               </Card>
             </div>
 
             <div className="flex flex-col gap-2">
-              <h2 className="type-heading-sm">La relance, en ligne de commande</h2>
+              <h2 className="type-heading-sm">The rerun, on the command line</h2>
               <CodeBlock variant="command" code={COMMAND} />
             </div>
 
             <div className="flex flex-col gap-2">
-              <h2 className="type-heading-sm">Routines des trois bots</h2>
-              <Table aria-label="Routines des trois bots, dernier passage">
+              <h2 className="type-heading-sm">The three bots' routines</h2>
+              <Table aria-label="The three bots' routines, last run">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Routine</TableHead>
                     <TableHead>Bot</TableHead>
-                    <TableHead numeric>Durée</TableHead>
-                    <TableHead>Résultat</TableHead>
+                    <TableHead numeric>Duration</TableHead>
+                    <TableHead>Result</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -319,23 +319,23 @@ export function GlazeDemo() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <h2 className="type-heading-sm">Passages par jour</h2>
+              <h2 className="type-heading-sm">Runs per day</h2>
               <Chart
                 type="bar"
-                label="Routines par jour, sept derniers jours"
+                label="Routines per day, last seven days"
                 data={WEEK}
                 xKey="jour"
                 unit="count"
                 stacked
                 height={170}
-                config={{ reussies: { label: 'Réussies' }, echouees: { label: 'Échouées', status: 'fail' } }}
+                config={{ reussies: { label: 'Passed' }, echouees: { label: 'Failed', status: 'fail' } }}
               />
             </div>
 
             <div className="flex flex-col gap-2">
               <h2 className="type-heading-sm">Intelligent UI</h2>
               <p className="type-caption text-text-3">
-                Le vrai chemin : un bloc <span className="mono">{'<hui-ui>'}</span> dans le markdown, le tag enregistré sur Response, le catalogue du skill, le sanitiser du fil.
+                The real path: a <span className="mono">{'<hui-ui>'}</span> block in the markdown, the tag registered on Response, the skill's catalogue, the thread's sanitiser.
               </p>
             </div>
 
@@ -346,7 +346,7 @@ export function GlazeDemo() {
             ))}
 
             <AgentTurn name="Dex" state="live" time="21:24">
-              <StreamedSpec text={`${LEADS.formulaire}\n\n<hui-ui>${EXAMPLES[2].json}</hui-ui>`} />
+              <StreamedSpec text={`${LEADS.form}\n\n<hui-ui>${EXAMPLES[2].json}</hui-ui>`} />
             </AgentTurn>
           </div>
         </div>
@@ -355,19 +355,19 @@ export function GlazeDemo() {
           <div className="mx-auto flex w-full max-w-measure flex-col gap-2">
             <PromptInput
               draftKey="hermes-ui-glaze-demo"
-              placeholder="Demander à Dex de relancer une routine"
+              placeholder="Ask Dex to rerun a routine"
               status="ready"
               generation="run_9a41"
-              onAttach={() => console.log('[glaze-demo] pièce jointe')}
+              onAttach={() => console.log('[glaze-demo] attachment')}
               attachments={[]}
               accept=".md,.txt,.json"
-              onSubmit={value => console.log('[glaze-demo] envoi', value.serialized)}
+              onSubmit={value => console.log('[glaze-demo] send', value.serialized)}
               tools={
                 <DropdownMenu>
                   <DropdownMenuTrigger render={<PromptInputModel model={model} />} />
                   <DropdownMenuContent align="start" side="top" size="sm">
                     <DropdownMenuGroup>
-                      <DropdownMenuLabel>Modèle</DropdownMenuLabel>
+                      <DropdownMenuLabel>Model</DropdownMenuLabel>
                       <DropdownMenuRadioGroup value={model} onValueChange={setModel}>
                         {MODELS.map(name => (
                           <DropdownMenuRadioItem key={name} value={name}>{name}</DropdownMenuRadioItem>
@@ -379,7 +379,7 @@ export function GlazeDemo() {
               }
             />
             <p className="type-caption text-text-3">
-              Entrée envoie · <Kbd keys="shift+enter" /> pour une nouvelle ligne
+              Enter sends · <Kbd keys="shift+enter" /> for a new line
             </p>
           </div>
         </footer>

@@ -92,12 +92,12 @@ function ChartFrame({title, description, actions, footer, height = 200, loading,
   const showTable = table && view === 'table' && state === 'ready';
   const card = frame === 'card';
 
-  const header = <header data-slot="chart-frame-header" className={cn('flex min-w-0 items-start justify-between gap-3', card ? 'p-3' : 'pb-3')}>
+  const header = <header data-hui-part="chart-frame-header" className={cn('flex min-w-0 items-start justify-between gap-3', card ? 'p-3' : 'pb-3')}>
     <div className="flex min-w-0 flex-col gap-0.5">
-      <h3 ref={titleRef} tabIndex={-1} data-slot="chart-frame-title" className="min-w-0 truncate type-label text-text-1 outline-none">{title}</h3>
-      {description && <p data-slot="chart-frame-description" className="type-body-sm text-text-2">{description}</p>}
+      <h3 ref={titleRef} tabIndex={-1} data-hui-part="chart-frame-title" className="min-w-0 truncate type-label text-text-1 outline-none">{title}</h3>
+      {description && <p data-hui-part="chart-frame-description" className="type-body-sm text-text-2">{description}</p>}
     </div>
-    {(actions || table || live) && <div data-slot="chart-frame-actions" className="-my-0.5 flex shrink-0 items-center gap-2">
+    {(actions || table || live) && <div data-hui-part="chart-frame-actions" className="-my-0.5 flex shrink-0 items-center gap-2">
       {live && <Status status="running" size="sm">Live</Status>}
       {actions}
       {table && <SegmentedControl size="sm" aria-label="View" value={view} onValueChange={next => setView(next as 'chart' | 'table')}>
@@ -107,10 +107,10 @@ function ChartFrame({title, description, actions, footer, height = 200, loading,
     </div>}
   </header>;
 
-  const body = <div data-slot="chart-frame-plot" className={cn('min-w-0', card && (showTable ? 'border-t border-line-faint' : 'px-3 pb-3'))}>
+  const body = <div data-hui-part="chart-frame-plot" className={cn('min-w-0', card && (showTable ? 'border-t border-line-faint' : 'px-3 pb-3'))}>
     {/* value-ok: the body holds the chart's height in px in every state, so nothing jumps; it can only live inline. */}
-    <div data-slot="chart-frame-body" className="relative min-w-0" style={showTable ? undefined : {height}}>
-      {state === 'loading' && <div data-slot="chart-frame-loading" data-shape={shape} className="flex h-full items-end gap-1">
+    <div data-hui-part="chart-frame-body" className="relative min-w-0" style={showTable ? undefined : {height}}>
+      {state === 'loading' && <div data-hui-part="chart-frame-loading" data-shape={shape} className="flex h-full items-end gap-1">
         <span className="sr-only">Loading {typeof title === 'string' ? title : 'chart'}</span>
         <Silhouette shape={shape}/>
       </div>}
@@ -128,10 +128,10 @@ function ChartFrame({title, description, actions, footer, height = 200, loading,
   </div>;
 
   // The footer keeps its room in every state, so the legend landing never moves what is below.
-  const foot = footer && !showTable ? <div data-slot="chart-frame-footer" aria-hidden={state !== 'ready' || undefined} inert={state !== 'ready' || undefined} className={cn(card ? 'shell-foot ps-0.5' : 'pt-2', state !== 'ready' && 'invisible')}>{footer}</div> : null;
+  const foot = footer && !showTable ? <div data-hui-part="chart-frame-footer" aria-hidden={state !== 'ready' || undefined} inert={state !== 'ready' || undefined} className={cn(card ? 'shell-foot ps-0.5' : 'pt-2', state !== 'ready' && 'invisible')}>{footer}</div> : null;
 
   return <section
-    data-slot="chart-frame"
+    data-hui-part="chart-frame"
     data-state={state}
     data-frame={frame}
     aria-busy={loading || undefined}
@@ -139,7 +139,7 @@ function ChartFrame({title, description, actions, footer, height = 200, loading,
     {...props}
   >
     {card
-      ? <div data-slot="chart-frame-panel" className="panel flex min-w-0 flex-col overflow-hidden forced-colors:border-[CanvasText]">{header}{body}</div>
+      ? <div data-hui-part="chart-frame-panel" className="panel flex min-w-0 flex-col overflow-hidden forced-colors:border-[CanvasText]">{header}{body}</div>
       : <>{header}{body}</>}
     {foot}
   </section>;
@@ -258,7 +258,7 @@ function Chart(props: ChartProps) {
     chart = <StatusBar data={data} label={label} unit={noun} range={range} onBucketClick={onBucketClick} size={size} className={frame === 'none' ? className : undefined}/>;
   }
   if (frame === 'none') {
-    if (loading) return <span data-slot="chart-frame-loading" data-shape={type} aria-busy className={cn('inline-flex', type === 'sparkline' ? 'h-(--control-sm) w-24' : 'h-(--control-sm) w-full', className)}><span className="sr-only">Loading {label}</span><Silhouette shape={type}/></span>;
+    if (loading) return <span data-hui-part="chart-frame-loading" data-shape={type} aria-busy className={cn('inline-flex', type === 'sparkline' ? 'h-(--control-sm) w-24' : 'h-(--control-sm) w-full', className)}><span className="sr-only">Loading {label}</span><Silhouette shape={type}/></span>;
     return chart;
   }
   return <ChartFrame title={title ?? label} description={description} actions={actions} height={bodyHeight} loading={loading} error={error} onRetry={onRetry} retrying={retrying} empty={emptyState} shape={type} frame={frame} live={live} data-chart-type={type} className={className}>{chart}</ChartFrame>;

@@ -9,6 +9,7 @@ import { host } from '@hermes/plugin-sdk'
 import { PromptInput, type Attachment, type CommandItem, type PromptInputHandle } from '@/components/glaze/ai/prompt-input'
 import { send, stop, store } from '@/lib/hermes'
 import { runCommand } from '../slash-run'
+import { UI } from '../strings'
 
 type Picked = { id: string; file: File; name: string; size: number }
 
@@ -81,8 +82,8 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
       <div className="mx-auto w-full max-w-measure">
         <PromptInput
           ref={input}
-          label={`Écrire à ${name}`}
-          placeholder={`Écris à ${name}…`}
+          label={UI.composer.label(name)}
+          placeholder={UI.composer.placeholder(name)}
           // One draft per thread: a draft written in one conversation is never carried into another.
           draftKey={`hermes-ui-${bot || 'default'}-${sid || 'new'}`}
           status={status}
@@ -97,45 +98,7 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
             ])
           }
           onRemoveAttachment={id => setFiles(fs => fs.filter(f => f.id !== id))}
-          labels={{
-            send: 'Envoyer',
-            stop: 'Arrêter',
-            stopping: 'Arrêt…',
-            sendAgain: 'Renvoyer',
-            attach: 'Joindre un fichier',
-            attachments: 'Pièces jointes',
-            drop: 'Déposer pour joindre',
-            uploading: percent => `Envoi ${percent} %`,
-            uploadFailed: 'Envoi impossible',
-            attached: 'Joint',
-            retryFile: fileName => `Réessayer ${fileName}`,
-            cancelUpload: fileName => `Annuler l’envoi de ${fileName}`,
-            removeFile: fileName => `Retirer ${fileName}`,
-            undo: 'Annuler',
-            cancel: 'Annuler',
-            removed: label => `${label} retiré`,
-            expanded: label => `${label} déplié`,
-            clickToExpand: 'Cliquer pour déplier',
-            textOnly: 'Ce champ prend du texte seulement',
-            acceptOnly: types => `Seuls les fichiers ${types} peuvent être joints ici`,
-            notAttached: (names, accept) => `Non joints : ${names.join(', ')}.${accept ? ` Formats acceptés : ${accept}` : ''}`,
-            tooLong: (characters, fit) => `Trop long à coller : ${characters.toLocaleString('fr-FR')} caractères, ${fit.toLocaleString('fr-FR')} tiennent. Joins-le comme fichier.`,
-            pasted: (lines, characters) => (lines > 1 ? `${lines} lignes collées` : `${characters.toLocaleString('fr-FR')} caractères collés`),
-            waiting: n => `En attente de ${n} envoi${n > 1 ? 's' : ''}`,
-            held: n => `En attente de ${n} envoi${n > 1 ? 's' : ''}. Part dès qu’ils sont finis`,
-            failed: names => `${names.join(', ')} : envoi impossible. Retire le fichier ou réessaie`,
-            waitingOnYou: n => `${n} appel${n > 1 ? 's' : ''} en attente de toi`,
-            review: 'Voir',
-            files: 'Fichiers et ressources',
-            commands: 'Commandes',
-            searchCommands: 'Chercher une commande',
-            noMatches: query => `Aucun résultat pour « ${query} »`,
-            results: n => `${n} résultat${n > 1 ? 's' : ''}`,
-            shell: 'commande shell',
-            shellPlaceholder: 'Lancer une commande shell',
-            shellStatus: 'Shell. Échap pour sortir',
-            off: 'La saisie est désactivée'
-          }}
+          labels={UI.composer.labels}
           onValueChange={value => {
             const text = String(value?.text || '')
             // Only a draft that starts with a slash asks the gateway what to offer.

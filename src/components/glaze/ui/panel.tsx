@@ -22,7 +22,7 @@ const panelVariants = cva('panel relative flex min-w-0 flex-col text-text-1 forc
 type PanelProps = React.ComponentProps<'div'> & VariantProps<typeof panelVariants>;
 
 function Panel({className, padding = 'default', ...props}: PanelProps) {
-  return <div data-slot="panel" data-padding={padding} className={cn(panelVariants({padding}), className)} {...props}/>;
+  return <div data-hui-part="panel" data-padding={padding} className={cn(panelVariants({padding}), className)} {...props}/>;
 }
 
 export {Panel, panelVariants, type PanelProps};

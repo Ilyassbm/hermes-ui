@@ -5,13 +5,13 @@
 //
 // So two static rules, parsed with the TypeScript AST (no regex over the source, no browser):
 //
-//   1. an element Base UI tracks — `data-slot="dialog-content"`, `data-slot="dialog-overlay"` or
-//      `data-slot="dialog-backdrop"` — must not carry `overlay-motion` (a transition on the tracked node parks it) and
+//   1. an element Base UI tracks — `data-hui-part="dialog-content"`, `data-hui-part="dialog-overlay"` or
+//      `data-hui-part="dialog-backdrop"` — must not carry `overlay-motion` (a transition on the tracked node parks it) and
 //      must end on `data-ending-style:duration-0`, so the unmount is synchronous whatever the entrance was doing.
 //      A class may come from a constant or a cva() array, so every identifier in the expression is expanded from the
 //      top-level `const` of the tree it is written in, four levels deep.
 //   2. `src/app/bot-picker.tsx` keeps the belt: a `setTimeout` (≤ 1 s) that looks for a leftover
-//      `[data-slot="dialog-content"]…[data-open]` once the picker is closed, and a `key` on its `<Dialog>` so the
+//      `[data-hui-part="dialog-content"]…[data-open]` once the picker is closed, and a `key` on its `<Dialog>` so the
 //      React remount is what removes the node.
 //
 //   node scripts/check-overlay-unmount.mjs            # src
@@ -130,7 +130,7 @@ export function checkTrackedSlots(file, consts) {
   const problems = []
   for (const opening of jsxOpenings(file.source)) {
     const attrs = attributesOf(opening)
-    const slot = literalOf(attrs.get('data-slot'))
+    const slot = literalOf(attrs.get('data-hui-part'))
     if (!slot || !TRACKED_SLOTS.has(slot)) continue
     const at = file.source.getLineAndCharacterOfPosition(opening.getStart(file.source))
     const where = { line: at.line + 1, column: at.character + 1 }
@@ -139,12 +139,12 @@ export function checkTrackedSlots(file, consts) {
     if (MOTION.test(text) && !INSTANT.test(text)) {
       problems.push({
         ...where,
-        message: `data-slot="${slot}" porte overlay-motion sans data-ending-style:duration-0 : Base UI démonte sur getAnimations(), une transition non démarrée ne se termine jamais et le nœud (avec son voile) reste sur l'app.`,
+        message: `data-hui-part="${slot}" porte overlay-motion sans data-ending-style:duration-0 : Base UI démonte sur getAnimations(), une transition non démarrée ne se termine jamais et le nœud (avec son voile) reste sur l'app.`,
       })
     } else if (!INSTANT.test(text)) {
       problems.push({
         ...where,
-        message: `data-slot="${slot}" n'a pas data-ending-style:duration-0 : le démontage doit être synchrone, il ne doit dépendre d'aucune transition.`,
+        message: `data-hui-part="${slot}" n'a pas data-ending-style:duration-0 : le démontage doit être synchrone, il ne doit dépendre d'aucune transition.`,
       })
     }
   }
@@ -162,8 +162,10 @@ function numberFrom(text, consts) {
 }
 
 /**
- * Rule 2: the picker keeps a timeout guard that looks for a leftover dialog once it is closed, and a `key` on the
- * <Dialog> — or on the element wrapping it, so a fragment key counts — so a forced remount is what clears the node.
+ * Rule 2: the picker keeps a timeout guard that reads its own content ref once the dialog is closed (a node still
+ * connected is the leftover), and a `key` on the <Dialog> — or on the element wrapping it, so a fragment key counts —
+ * so a forced remount is what clears the node. Lot 13: no `document.querySelector` with a `[data-…]` selector in that
+ * timer — the catalog refuses a plugin that reaches the app's markup.
  * @returns {{line: number, column: number, message: string}[]}
  */
 export function checkPickerGuard(file, consts) {
@@ -179,9 +181,10 @@ export function checkPickerGuard(file, consts) {
         if (
           delay !== null &&
           delay <= GUARD_MAX_MS &&
-          /querySelector|querySelectorAll/.test(body) &&
-          /data-slot="dialog-content"|\[data-slot=.dialog-content/.test(body) &&
-          /data-open/.test(body)
+          /\.current\b/.test(body) &&
+          /isConnected/.test(body) &&
+          !/querySelector|querySelectorAll/.test(body) &&
+          !/\[data-/.test(body)
         ) {
           guard = true
         }
@@ -205,14 +208,14 @@ export function checkPickerGuard(file, consts) {
     problems.push({
       line: 1,
       column: 1,
-      message: `pas de garde-fou : un setTimeout(≤ ${GUARD_MAX_MS} ms) doit vérifier qu'aucun [data-slot="dialog-content"][data-open] ni voile du picker ne reste dans le DOM après la fermeture, et le démonter.`,
+      message: `pas de garde-fou : un setTimeout(≤ ${GUARD_MAX_MS} ms) doit vérifier qu'aucun [data-hui-part="dialog-content"][data-open] ni voile du picker ne reste dans le DOM après la fermeture, et le démonter.`,
     })
   }
   if (!keyed) {
     problems.push({
       line: 1,
       column: 1,
-      message: 'le <Dialog> du picker n’a pas de `key` : un démontage forcé doit pouvoir passer par un remount React (clé incrémentée).',
+      message: 'the picker\'s <Dialog> has no `key`: a forced unmount must be able to go through a React remount (an incremented key).',
     })
   }
   return problems

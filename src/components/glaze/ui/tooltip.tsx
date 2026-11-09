@@ -20,7 +20,7 @@ import {isPart} from '@/lib/glaze/children';
 // once on keyboard focus; inside a TooltipProvider the next trigger in a toolbar opens at once.
 
 function TooltipProvider({delay = 500, closeDelay = 0, ...props}: TooltipPrimitive.Provider.Props) {
-  return <TooltipPrimitive.Provider data-slot="tooltip-provider" delay={delay} closeDelay={closeDelay} {...props}/>;
+  return <TooltipPrimitive.Provider data-hui-part="tooltip-provider" delay={delay} closeDelay={closeDelay} {...props}/>;
 }
 
 // The label, read from the TooltipContent child at render, so the trigger can be named on the server
@@ -33,7 +33,7 @@ function Tooltip({children, ...props}: TooltipPrimitive.Root.Props) {
     if (isPart(child, TooltipContent)) label = readLabel(child.props.children, false).text || null;
   });
   return <LabelContext.Provider value={label}>
-    <TooltipPrimitive.Root data-slot="tooltip" {...props}>{children}</TooltipPrimitive.Root>
+    <TooltipPrimitive.Root data-hui-part="tooltip" {...props}>{children}</TooltipPrimitive.Root>
   </LabelContext.Provider>;
 }
 
@@ -59,7 +59,7 @@ function TooltipTrigger({className, render, children, ...props}: TooltipPrimitiv
     || textOf(children as React.ReactNode) || textOf(el?.props.children as React.ReactNode);
   const naming = !named && label ? {'aria-label': label, 'data-tooltip-named': ''} : undefined;
   return <TooltipPrimitive.Trigger
-    data-slot="tooltip-trigger"
+    data-hui-part="tooltip-trigger"
     render={render}
     className={mergeClass(wrapperClass, className)}
     {...naming}
@@ -95,7 +95,7 @@ type TooltipContentProps = Omit<TooltipPrimitive.Popup.Props, 'children'> & Pick
 /** The inverse chip: ink with the inverse label, a tag corner, 24px tall, 4px of room before a shortcut. */
 const tooltipPopupClass = cn(
   'inline-flex min-h-6 w-fit max-w-(--tooltip-max) items-center gap-2 rounded-tag bg-ink px-2 py-1 type-label-sm text-text-inverse break-words',
-  'has-data-[slot=tooltip-shortcut]:pe-1',
+  'has-data-[hui-part=tooltip-shortcut]:pe-1',
   'forced-colors:outline-solid forced-colors:outline-1 forced-colors:outline-[CanvasText]',
 );
 
@@ -108,7 +108,7 @@ const tooltipMotionClass = 'overlay-motion data-instant:duration-0 data-instant:
  * instead. It is for specimens; a real tooltip is TooltipContent.
  */
 function TooltipChip({className, children, shortcut, ...props}: Omit<React.ComponentProps<'div'>, 'children'> & {children: string; shortcut?: string[]}) {
-  return <div data-slot="tooltip-content" role="presentation" className={cn(tooltipPopupClass, className)} {...props}>
+  return <div data-hui-part="tooltip-content" role="presentation" className={cn(tooltipPopupClass, className)} {...props}>
     <span className="min-w-0">{children}</span>
     {shortcut && <TooltipShortcut keys={shortcut}/>}
   </div>;
@@ -129,7 +129,7 @@ function TooltipContent({className, side = 'top', sideOffset = 6, align = 'cente
       className="isolate z-(--z-overlay)"
     >
       <TooltipPrimitive.Popup
-        data-slot="tooltip-content"
+        data-hui-part="tooltip-content"
         className={mergeClass([tooltipPopupClass, tooltipMotionClass], className)}
         {...props}
       >
@@ -142,7 +142,7 @@ function TooltipContent({className, side = 'top', sideOffset = 6, align = 'cente
 
 /** Keys in a tooltip, one cap per key: mono at 0.8 on a faint inverse wash, so they read as keys, not as the label. */
 function TooltipShortcut({keys, className, ...props}: React.ComponentProps<'kbd'> & {keys: string[]}) {
-  return <kbd data-slot="tooltip-shortcut" className={cn('inline-flex shrink-0 items-center gap-0.5', className)} {...props}>
+  return <kbd data-hui-part="tooltip-shortcut" className={cn('inline-flex shrink-0 items-center gap-0.5', className)} {...props}>
     {keys.map((key, i) => <kbd key={i} className="inline-flex h-4 min-w-4 items-center justify-center rounded-tag bg-text-inverse/15 px-1 type-code-xs text-text-inverse">{key}</kbd>)}
   </kbd>;
 }

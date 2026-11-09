@@ -12,6 +12,7 @@ import { toast } from '@/components/glaze/ui/toast'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/glaze/ui/tooltip'
 import { loadRoutines, store } from '@/lib/hermes'
 import { useStore } from '@/lib/store'
+import { UI } from './strings'
 
 /** The job's next run, in the rail's short form. Fields differ between gateway versions, so every spelling is tried. */
 function nextRun(job: any): string {
@@ -19,7 +20,7 @@ function nextRun(job: any): string {
   if (!raw) return ''
   const ms = typeof raw === 'number' ? (raw < 1e12 ? raw * 1000 : raw) : Date.parse(String(raw))
   if (!Number.isFinite(ms)) return ''
-  return new Date(ms).toLocaleString('fr-FR', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
+  return new Date(ms).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
 function routineName(job: any): string {
@@ -90,33 +91,33 @@ export function Aside({ ctx }: { ctx: any }) {
     try {
       await ctx?.os?.writeClipboard?.(path)
       setCopied(path)
-      toast('Chemin copié', { description: path })
+      toast(UI.aside.copiedTitle, { description: path })
     } catch {
-      toast.fail('Chemin illisible', { description: path })
+      toast.fail(UI.aside.unreadableTitle, { description: path })
     }
   }
 
   return (
-    <aside aria-label="Routines et fichiers" data-enter="aside" className="flex h-full min-h-0 min-w-0 flex-col gap-4 overflow-y-auto px-3 py-2">
+    <aside aria-label={UI.aside.label} data-enter="aside" className="flex h-full min-h-0 min-w-0 flex-col gap-4 overflow-y-auto px-3 py-2">
       <section className="flex flex-col gap-1">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="type-caption text-text-2">Routines</h2>
+          <h2 className="type-caption text-text-2">{UI.aside.routines}</h2>
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Créer une routine" onClick={() => open('nav.cron')} />}>
+              <TooltipTrigger render={<Button variant="ghost" size="icon-sm" aria-label={UI.aside.createRoutine} onClick={() => open('nav.cron')} />}>
                 <Icon icon={Add} size={12} />
               </TooltipTrigger>
-              <TooltipContent>Créer une routine</TooltipContent>
+              <TooltipContent>{UI.aside.createRoutine}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
         {routines.length ? (
-          <ItemGroup variant="plain" aria-label="Routines du bot">
+          <ItemGroup variant="plain" aria-label={UI.aside.routinesLabel}>
             {routines.slice(0, 12).map((job: any) => (
-              <AsideRow key={job.id || job.job_id || routineName(job)} label={`Ouvrir la routine ${routineName(job)}`} onClick={() => open('nav.cron')}>
+              <AsideRow key={job.id || job.job_id || routineName(job)} label={UI.aside.openRoutine(routineName(job))} onClick={() => open('nav.cron')}>
                 <ItemMedia>
                   <Status status={isActive(job) ? 'ok' : 'idle'} size="sm">
-                    {isActive(job) ? 'Active' : 'En pause'}
+                    {isActive(job) ? UI.aside.active : UI.aside.paused}
                   </Status>
                 </ItemMedia>
                 <ItemContent>
@@ -133,12 +134,12 @@ export function Aside({ ctx }: { ctx: any }) {
         ) : (
           <Empty variant="plain" size="sm">
             <EmptyHeader>
-              <EmptyTitle>Aucune routine</EmptyTitle>
-              <EmptyDescription>Ce bot n'a rien de planifié.</EmptyDescription>
+              <EmptyTitle>{UI.aside.noRoutine}</EmptyTitle>
+              <EmptyDescription>{UI.aside.noRoutineBody}</EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Button size="sm" variant="secondary" onClick={() => open('nav.cron')}>
-                Nouvelle routine
+                {UI.aside.newRoutine}
               </Button>
             </EmptyContent>
           </Empty>
@@ -146,14 +147,14 @@ export function Aside({ ctx }: { ctx: any }) {
       </section>
 
       <section className="flex flex-col gap-1">
-        <h2 className="type-caption text-text-2">Fichiers</h2>
+        <h2 className="type-caption text-text-2">{UI.aside.files}</h2>
         {files.length ? (
-          <ItemGroup variant="plain" aria-label="Fichiers de la conversation">
+          <ItemGroup variant="plain" aria-label={UI.aside.filesLabel}>
             {files.slice(0, 30).map((file: any) => {
               const parts = String(file.path || '').split('/')
               const name = parts.pop() || file.path
               return (
-                <AsideRow key={file.path} label={`Ouvrir ${file.path}`} onClick={() => void reveal(file.path)}>
+                <AsideRow key={file.path} label={UI.aside.openFile(file.path)} onClick={() => void reveal(file.path)}>
                   <ItemMedia variant="icon">
                     <Icon icon={Document} size={14} />
                   </ItemMedia>
@@ -168,11 +169,11 @@ export function Aside({ ctx }: { ctx: any }) {
             })}
           </ItemGroup>
         ) : (
-          <p className="px-1 py-2 type-caption text-text-3">Les fichiers créés ou modifiés dans cette conversation s'affichent ici.</p>
+          <p className="px-1 py-2 type-caption text-text-3">{UI.aside.noFiles}</p>
         )}
         {copied ? (
           <span role="status" className="px-1 type-caption text-text-3">
-            Chemin copié
+            {UI.aside.pathCopied}
           </span>
         ) : null}
       </section>

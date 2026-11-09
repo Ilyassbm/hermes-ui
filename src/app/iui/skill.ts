@@ -16,58 +16,58 @@ description: ${SKILL_DESCRIPTION}
 
 const BODY = `# Intelligent UI
 
-Le fil de l’app desktop Hermes sait dessiner une interface : cartes, chiffres, tableaux, graphiques, plans, formulaires, choix. Tu écris du texte, puis un bloc \`<hui-ui>\`, et le fil le rend avec les composants Glaze.
+The Hermes desktop thread can draw an interface: cards, numbers, tables, charts, plans, forms, choices. You write text, then a \`<hui-ui>\` block, and the thread renders it with the Glaze components.
 
-## Quand l’utiliser
+## When to use it
 
-- une comparaison : deux options, deux périodes, deux bots ;
-- des chiffres qui se lisent mieux alignés qu’en phrase : coûts, durées, taux ;
-- un plan d’action, ou le suivi de ses étapes ;
-- un choix à faire, ou un réglage avec des quantités ;
-- des données tabulaires de plus de quatre lignes ;
-- un tableau de bord : deux ou trois chiffres, un graphique, une liste.
+- a comparison: two options, two periods, two bots;
+- numbers that read better aligned than in a sentence: costs, durations, rates;
+- an action plan, or the tracking of its steps;
+- a choice to make, or a setting with quantities;
+- tabular data of more than four rows;
+- a dashboard: two or three numbers, a chart, a list.
 
-## Quand ne pas l’utiliser
+## When not to use it
 
-- une réponse courte : une phrase suffit, une carte l’alourdit ;
-- une conversation : une question, une relance, un remerciement ;
-- Telegram, Slack, Discord, l’e-mail, ou toute session dont la source n’est pas l’app desktop : le tag s’afficherait brut, avec son JSON. Dans le doute, écris du texte.
+- a short answer: one sentence is enough, a card only weighs it down;
+- a conversation: a question, a follow-up, a thank-you;
+- Telegram, Slack, Discord, email, or any session whose source is not the desktop app: the tag would print raw, with its JSON. When in doubt, write text.
 
-## Règles
+## Rules
 
-1. Du texte d’abord : une ou deux phrases qui donnent la réponse. L’interface la complète, elle ne la remplace pas.
-2. Un seul bloc \`<hui-ui>\` par idée. Deux idées, deux blocs, séparés par du texte.
-3. Un JSON compact et valide, sur une ligne ou plusieurs, jamais dans un fence.
-4. Des identifiants courts : \`"r"\`, \`"a"\`, \`"b"\`.
-5. Des données réelles, prises dans la conversation ou dans ce que les outils ont rendu. Rien d’inventé, aucun jeu d’exemple.
-6. Un bouton \`send\` pour proposer la suite, avec les valeurs du state interpolées : « Réserve pour {{/guests}} personnes ».
-7. Un seul bouton \`primary\` par groupe d’actions ; le reste en \`secondary\`.
-8. Si un composant manque, écris du texte : le catalogue est fermé, un type inconnu n’est pas rendu.
+1. Text first: one or two sentences that give the answer. The interface completes it, it does not replace it.
+2. One \`<hui-ui>\` block per idea. Two ideas, two blocks, separated by text.
+3. Compact, valid JSON, on one line or several, never inside a fence.
+4. Short ids: \`"r"\`, \`"a"\`, \`"b"\`.
+5. Real data, taken from the conversation or from what the tools returned. Nothing invented, no sample set.
+6. A \`send\` button to offer the next step, with the state values interpolated: "Book for {{/guests}} people".
+7. One \`primary\` button per action group; the rest \`secondary\`.
+8. If a component is missing, write text: the catalogue is closed and an unknown type is not rendered.
 
-## Exemples
+## Examples
 
-### Plan avec Checklist et boutons
+### Plan with a Checklist and buttons
 
-Une réponse à « pourquoi nightly-report échoue », et la suite proposée en deux boutons.
+An answer to "why does nightly-report fail", and the next step offered as two buttons.
 
 ${exampleBlock(EXAMPLES[0])}
 
-### Comparaison : Table et Metric
+### Comparison: Table and Metric
 
-Deux chiffres qui comptent, puis le tableau des cinq dernières lignes comparables.
+Two numbers that matter, then the table of the last five comparable runs.
 
 ${exampleBlock(EXAMPLES[1])}
 
-### Formulaire : Stepper, Choice et envoi
+### Form: Stepper, Choice and send
 
-Un compteur, un choix, et un bouton qui envoie le state interpolé au bot.
+A counter, a choice, and a button that sends the interpolated state to the bot.
 
 ${exampleBlock(EXAMPLES[2])}
 
 ## Catalogue
 `
 
-/** The whole SKILL.md: header, French body, examples, then the catalogue's generated prompt. */
+/** The whole SKILL.md: header, English body, examples, then the catalogue's generated prompt. */
 export function renderSkill(): string {
   return `${HEADER}\n\n${BODY}\n${catalog.prompt()}\n`
 }

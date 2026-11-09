@@ -109,7 +109,7 @@ export function toolEventStep(state: ToolAdapterState, ev: { type?: string; payl
       id,
       status: failed ? 'error' : 'completed',
       output,
-      ...(failed ? { error: output.slice(0, 400) || `L'outil ${tool} a échoué.` } : {})
+      ...(failed ? { error: output.slice(0, 400) || `The ${tool} tool failed.` } : {})
     })
     next = { ...next, calls: track(next.calls, id, tool, failed ? 'error' : 'completed') }
     return { state: next, actions }

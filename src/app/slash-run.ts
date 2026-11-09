@@ -8,12 +8,13 @@ import { host } from '@hermes/plugin-sdk'
 import { addNote, ensureSession, newConversation, send, stop, store } from '@/lib/hermes'
 import { classifyInput } from '@/lib/slash'
 import { focusEditor, insertInEditor } from './editor'
+import { UI } from './strings'
 import { openModelMenu } from './ui-state'
 
 /** A turn is running: a command would race it. */
-const BUSY = 'Arrête la réponse en cours avant de lancer une commande.'
+const BUSY = UI.slash.busy
 
-const reason = (e: any) => String(e?.message || e || 'commande indisponible')
+const reason = (e: any) => String(e?.message || e || UI.slash.unavailable)
 
 /**
  * Handles one composer value if it is a command.
@@ -52,7 +53,7 @@ async function execSlash(name: string, arg: string): Promise<void> {
   try {
     sid = await ensureSession()
   } catch (e) {
-    addNote(`/${name} : ${reason(e)}`)
+    addNote(`/${name}: ${reason(e)}`)
     return
   }
   try {
@@ -67,9 +68,9 @@ async function execSlash(name: string, arg: string): Promise<void> {
   }
   try {
     const res = await host.request('command.dispatch', { session_id: sid, name, arg: arg || '' })
-    if (!handleResult(res)) addNote(`/${name} : commande inconnue`)
+    if (!handleResult(res)) addNote(`/${name}: ${UI.slash.unknown}`)
   } catch (e) {
-    addNote(`/${name} : ${reason(e)}`)
+    addNote(`/${name}: ${reason(e)}`)
   }
 }
 

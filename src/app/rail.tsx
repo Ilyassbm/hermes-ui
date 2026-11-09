@@ -32,6 +32,7 @@ import { setReplaceNative } from './native-takeover'
 import { BotAvatar } from './bot-avatar'
 import { botIdentity, botRole, sinceLabel } from './format'
 import { capsOf } from './keys'
+import { UI } from './strings'
 import { openPicker } from './ui-state'
 import { usageCards, UsageCards } from './usage'
 import { useBots } from './use-bots'
@@ -81,7 +82,7 @@ export function Rail({ ctx }: { ctx: any }) {
         if (b.active === null) return -1
         return b.active - a.active
       }
-      return a.label.localeCompare(b.label, 'fr')
+      return a.label.localeCompare(b.label, 'en')
     })
 
   const pinnedRows = pinned.map(name => ordered.find(row => row.name === name)).filter((row): row is Row => Boolean(row))
@@ -129,11 +130,11 @@ export function Rail({ ctx }: { ctx: any }) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger
-                render={<div role="button" tabIndex={0} className="hui-icon-btn" aria-label="Nouvelle discussion avec un bot" onClick={() => openPicker('new')} onKeyDown={enter(() => openPicker('new'))} />}
+                render={<div role="button" tabIndex={0} className="hui-icon-btn" aria-label={UI.rail.newWithBot} onClick={() => openPicker('new')} onKeyDown={enter(() => openPicker('new'))} />}
               >
                 <Icon icon={Add} size={16} />
               </TooltipTrigger>
-              <TooltipContent shortcut={capsOf('hermes-ui.newChatWithBot')}>Nouvelle discussion avec un bot</TooltipContent>
+              <TooltipContent shortcut={capsOf('hermes-ui.newChatWithBot')}>{UI.rail.newWithBot}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
@@ -144,12 +145,12 @@ export function Rail({ ctx }: { ctx: any }) {
           role="button"
           tabIndex={0}
           className="hui-search"
-          aria-label="Rechercher un bot ou une conversation"
+          aria-label={UI.rail.searchLabel}
           onClick={() => openPicker('search')}
           onKeyDown={enter(() => openPicker('search'))}
         >
           <Icon icon={Search} size={14} />
-          <span>Rechercher</span>
+          <span>{UI.rail.search}</span>
           <Kbd keys="mod+alt+k" />
         </div>
       </div>
@@ -161,7 +162,7 @@ export function Rail({ ctx }: { ctx: any }) {
         data-shade-bottom={shade.bottom || undefined}
       >
         {pinnedRows.length ? (
-          <div className="hui-pinned" role="listbox" aria-label="Bots épinglés">
+          <div className="hui-pinned" role="listbox" aria-label={UI.rail.pinnedLabel}>
             {pinnedRows.map(row => (
               <BotContextMenu key={row.name} row={row} pinned onPin={() => pin(row.name, false)} ctx={ctx}>
                 <div
@@ -176,7 +177,7 @@ export function Rail({ ctx }: { ctx: any }) {
                   <span className="hui-avatar">
                     <BotAvatar size={56} colors={row.identity.colors} shape={row.identity.shape} label={row.label} />
                     {busy(row.name) ? (
-                      <span className="hui-work" role="img" aria-label="Travaille">
+                      <span className="hui-work" role="img" aria-label={UI.rail.working}>
                         <ActivityArc />
                       </span>
                     ) : null}
@@ -199,12 +200,12 @@ export function Rail({ ctx }: { ctx: any }) {
             onClick={fold}
             onKeyDown={enter(fold)}
           >
-            <span>Équipe</span>
+            <span>{UI.rail.team}</span>
             <Icon icon={ChevronRight} size={12} />
           </div>
           <div className="hui-team-body" id="hui-team-body">
             <div>
-              <div role="listbox" aria-label="Équipe">
+              <div role="listbox" aria-label={UI.rail.teamLabel}>
                 {team.map(row => (
                   <BotContextMenu
                     key={row.name}
@@ -225,7 +226,7 @@ export function Rail({ ctx }: { ctx: any }) {
                       <span className="hui-avatar">
                         <BotAvatar size={46} colors={row.identity.colors} shape={row.identity.shape} label={row.label} />
                         {busy(row.name) ? (
-                          <span className="hui-work" role="img" aria-label="Travaille">
+                          <span className="hui-work" role="img" aria-label={UI.rail.working}>
                             <ActivityArc />
                           </span>
                         ) : null}
@@ -237,7 +238,7 @@ export function Rail({ ctx }: { ctx: any }) {
                           {waiting(row.name) ? (
                             <Badge variant="warn" size="sm" className="ms-auto">
                               <Icon icon={Time} size={12} />
-                              Attend
+                              {UI.rail.waiting}
                             </Badge>
                           ) : sinceLabel(row.active) ? (
                             <span className="hui-row-time">{sinceLabel(row.active)}</span>
@@ -277,7 +278,7 @@ function AppMenu({ ctx }: { ctx: any }) {
           keypress and the mouseup that followed a mouse click closed it at once (lot 7). */}
       <DropdownMenuTrigger
         openOnHover={false}
-        render={<Button variant="ghost" size="sm" className="hui-rail-app" aria-label="Menu de l'application" />}
+        render={<Button variant="ghost" size="sm" className="hui-rail-app" aria-label={UI.rail.appMenu} />}
       >
         <span>Agentise</span>
         <Icon icon={ChevronDown} size={12} />
@@ -286,19 +287,19 @@ function AppMenu({ ctx }: { ctx: any }) {
         <DropdownMenuGroup>
           <DropdownMenuLabel>Hermes</DropdownMenuLabel>
           <DropdownMenuItem onClick={() => run('nav.settings')}>
-            Réglages
+            {UI.rail.settings}
             <DropdownMenuShortcut keys={['⌘', ',']} />
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => run('nav.capabilities')}>Capabilities</DropdownMenuItem>
           <DropdownMenuItem onClick={() => run('nav.messaging')}>Messaging</DropdownMenuItem>
           <DropdownMenuItem onClick={() => run('nav.artifacts')}>Artifacts</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => run('nav.cron')}>Tâches planifiées</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('nav.cron')}>{UI.rail.scheduled}</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => run('nav.agents')}>Agents et connexions</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('nav.agents')}>{UI.rail.agents}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => run('keybinds.openPanel')}>
-            Raccourcis
+            {UI.rail.shortcuts}
             <DropdownMenuShortcut keys={['⌘', '/']} />
           </DropdownMenuItem>
         </DropdownMenuGroup>
@@ -307,10 +308,10 @@ function AppMenu({ ctx }: { ctx: any }) {
           <DropdownMenuItem
             onClick={() => {
               setReplaceNative(ctx, false)
-              toast('Interface native', { description: 'Les nouveaux chats et les sessions ouvrent les pages du bureau.' })
+              toast(UI.rail.useNativeTitle, { description: UI.rail.useNativeBody })
             }}
           >
-            Utiliser l'interface native
+            {UI.rail.useNative}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
@@ -395,9 +396,9 @@ function BotContextMenu({
                 void selectBot(row.name).then(() => newConversation())
               }}
             >
-              Nouvelle discussion
+              {UI.rail.newConversation}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onPin}>{pinned ? 'Désépingler' : 'Épingler'}</DropdownMenuItem>
+            <DropdownMenuItem onClick={onPin}>{pinned ? UI.rail.unpin : UI.rail.pin}</DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 try {
@@ -407,7 +408,7 @@ function BotContextMenu({
                 }
               }}
             >
-              Paramètres du profil
+              {UI.rail.profileSettings}
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>

@@ -87,7 +87,7 @@ function Alert({className, status = 'neutral', icon = true, announce = true, dis
   return <AlertContext.Provider value={{status, dismiss, dismissible}}>
     <div
       ref={rootRefs}
-      data-slot="alert"
+      data-hui-part="alert"
       data-status={status}
       role={role ?? (announce ? (loud ? 'alert' : 'status') : undefined)}
       className={cn(alertVariants({status}), className)}
@@ -95,13 +95,13 @@ function Alert({className, status = 'neutral', icon = true, announce = true, dis
     >
       {/* Parts place themselves on named areas, so they work in any order. Under 24rem the action drops under the text. */}
       <div
-        data-slot="alert-grid"
+        data-hui-part="alert-grid"
         className={cn(
           'grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto_auto] items-start [grid-template-areas:"icon_title_action_close""icon_desc_action_close""icon_more_more_more"]',
         )}
       >
-        {glyph && <span data-slot="alert-icon" className={cn(
-          'me-2 flex h-lh items-center type-label [grid-area:icon] group-not-has-data-[slot=alert-title]/alert:type-body-sm',
+        {glyph && <span data-hui-part="alert-icon" className={cn(
+          'me-2 flex h-lh items-center type-label [grid-area:icon] group-not-has-data-[hui-part=alert-title]/alert:type-body-sm',
           status === 'neutral' ? 'text-text-2' : status === 'ok' ? 'text-ok-text' : status === 'warn' ? 'text-warn-text' : 'text-fail-text',
         )}>{glyph}</span>}
         {children}
@@ -118,13 +118,13 @@ function useAlert() {
 
 /** The headline: names the thing in words ("Key expires tomorrow"). */
 function AlertTitle({className, ...props}: React.ComponentProps<'p'>) {
-  return <p data-slot="alert-title" className={cn('min-w-0 type-label text-text-1 [overflow-wrap:anywhere] [grid-area:title]', className)} {...props}/>;
+  return <p data-hui-part="alert-title" className={cn('min-w-0 type-label text-text-1 [overflow-wrap:anywhere] [grid-area:title]', className)} {...props}/>;
 }
 
 /** What happened and what to do now. Links inside are ink and underlined. */
 function AlertDescription({className, ...props}: React.ComponentProps<'div'>) {
   return <div
-    data-slot="alert-description"
+    data-hui-part="alert-description"
     className={cn(
       'min-w-0 type-body-sm text-text-1 [overflow-wrap:anywhere] [grid-area:desc] group-data-[status=neutral]/alert:text-text-2',
       '[&_a]:text-text-1 [&_a]:underline [&_a]:decoration-1 [&_a]:underline-offset-2',
@@ -137,7 +137,7 @@ function AlertDescription({className, ...props}: React.ComponentProps<'div'>) {
 /** One or two size="sm" Buttons at the end of the row; under the message when the alert is under 24rem wide. */
 function AlertAction({className, ...props}: React.ComponentProps<'div'>) {
   return <div
-    data-slot="alert-action"
+    data-hui-part="alert-action"
     className={cn(
       'ms-3 -my-0.5 flex max-w-full min-w-0 flex-wrap items-center gap-2 self-center [grid-area:action]',
       '@max-sm/alert:ms-0 @max-sm/alert:mt-2 @max-sm/alert:my-0 @max-sm/alert:justify-self-start @max-sm/alert:[grid-area:more]',
@@ -157,7 +157,7 @@ function AlertClose({className, label = 'Dismiss', onClick, ...props}: Omit<Reac
   return <Button
     variant="ghost"
     size="icon-sm"
-    data-slot="alert-close"
+    data-hui-part="alert-close"
     aria-label={label}
     onClick={event => { onClick?.(event); if (!event.defaultPrevented) dismiss(); }}
     className={cn('ms-2 -me-1.5 -mt-1 self-start [grid-area:close]', className)}

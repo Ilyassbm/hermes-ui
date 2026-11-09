@@ -111,7 +111,7 @@ function QueueRow({item, index, count, editing, setEditing, onEdit, onSendNow, o
   const failed = status === 'failed';
 
   if (editing) {
-    return <li data-slot="prompt-queue-item" data-index={index} data-state="editing" className="flex min-h-(--row) min-w-0 flex-wrap items-center gap-1.5 py-1 ps-3 pe-1 rule-row">
+    return <li data-hui-part="prompt-queue-item" data-index={index} data-state="editing" className="flex min-h-(--row) min-w-0 flex-wrap items-center gap-1.5 py-1 ps-3 pe-1 rule-row">
       <Input
         ref={inputRef}
         size="sm"
@@ -133,7 +133,7 @@ function QueueRow({item, index, count, editing, setEditing, onEdit, onSendNow, o
   }
 
   return <li
-    data-slot="prompt-queue-item"
+    data-hui-part="prompt-queue-item"
     data-index={index}
     data-state={status}
     data-status={failed ? 'fail' : undefined}
@@ -150,7 +150,7 @@ function QueueRow({item, index, count, editing, setEditing, onEdit, onSendNow, o
       <Status status={failed ? 'fail' : sending ? 'running' : 'queued'} size="sm" className="shrink-0 @xs/queue-row:w-18"><span className="sr-only @xs/queue-row:not-sr-only">{failed ? words.failed : sending ? words.sending : words.queued}</span></Status>
       <span className="min-w-0 flex-1 truncate type-body-sm text-text-1" title={item.text}>{item.text}</span>
       <span className="flex shrink-0 items-center justify-end">
-        {(onRetry || onSendNow) && <span data-slot="prompt-queue-primary" className="flex w-22 shrink-0 justify-end">
+        {(onRetry || onSendNow) && <span data-hui-part="prompt-queue-primary" className="flex w-22 shrink-0 justify-end">
           {failed && onRetry
             ? <Button size="sm" variant="secondary" onClick={() => onRetry(item.id)} className="w-full">{words.retry}</Button>
             : onSendNow && !failed && <Button size="sm" variant="ghost" disabled={sending} pending={sending} pendingLabel={words.sending} onClick={() => onSendNow(item.id)} className="w-full">{words.sendNow}</Button>}
@@ -191,7 +191,7 @@ function PromptQueue({items, onEdit, onSendNow, onRemove, onRetry, onMove, editi
     const active = document.activeElement as HTMLElement | null;
     const lost = !active || active === document.body || !active.isConnected || (!!rootRef.current?.contains(active) && active.matches(':disabled'));
     if (!lost) return;
-    const rows = rootRef.current?.querySelectorAll<HTMLElement>('[data-slot="prompt-queue-item"]') ?? [];
+    const rows = rootRef.current?.querySelectorAll<HTMLElement>('[data-hui-part="prompt-queue-item"]') ?? [];
     const row = rows[Math.min(lastIndex.current, rows.length - 1)];
     const target = row?.querySelector<HTMLElement>('input, button:not(:disabled)');
     if (target) { target.focus(); return; }
@@ -202,7 +202,7 @@ function PromptQueue({items, onEdit, onSendNow, onRemove, onRetry, onMove, editi
   const halted = items[0]?.status === 'failed';
   return <div
     ref={rootRefs}
-    data-slot="prompt-queue"
+    data-hui-part="prompt-queue"
     data-state={halted ? 'halted' : 'waiting'}
     onFocus={event => { const row = (event.target as HTMLElement).closest<HTMLElement>('[data-index]'); if (row) lastIndex.current = Number(row.dataset.index); }}
     onBlur={event => { const next = event.relatedTarget as Node | null; if (next && !event.currentTarget.contains(next)) lastIndex.current = null; }}

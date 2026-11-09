@@ -63,7 +63,7 @@ function useThumb() {
     if (!el || !th) return;
     let first = true;
     const place = () => {
-      const on = el.querySelector<HTMLElement>(':scope > [data-slot=segmented-control-item][data-checked]');
+      const on = el.querySelector<HTMLElement>(':scope > [data-hui-part=segmented-control-item][data-checked]');
       th.hidden = !on;
       if (!on) return;
       // The first place is set with the move off, so the thumb starts under the chosen segment instead of gliding in.
@@ -79,7 +79,7 @@ function useThumb() {
     mo.observe(el, {subtree: true, attributes: true, attributeFilter: ['data-checked', 'data-disabled']});
     const ro = new ResizeObserver(place);
     ro.observe(el);
-    el.querySelectorAll(':scope > [data-slot=segmented-control-item]').forEach(item => ro.observe(item));
+    el.querySelectorAll(':scope > [data-hui-part=segmented-control-item]').forEach(item => ro.observe(item));
     return () => { mo.disconnect(); ro.disconnect(); };
   }, []);
   return {track, thumb, ready};
@@ -120,16 +120,16 @@ function SegmentedControl(props: SegmentedControlProps) {
   const ctx: Mode = {size: size ?? 'default', countMax: props.countMax, multiple: !!props.multiple, sliding: ready};
   if (props.multiple) {
     const {multiple: _m, onValueChange, size: _s, fill: _f, className: _c, children: _ch, countMax: _cm, ...rest} = props;
-    return <ToggleGroupPrimitive data-slot="segmented-control" data-size={size} data-multiple="" multiple onValueChange={value => onValueChange?.(value as string[])} className={classes} {...rest}>
+    return <ToggleGroupPrimitive data-hui-part="segmented-control" data-size={size} data-multiple="" multiple onValueChange={value => onValueChange?.(value as string[])} className={classes} {...rest}>
       <ModeContext.Provider value={ctx}>{children}</ModeContext.Provider>
     </ToggleGroupPrimitive>;
   }
   const {multiple: _m, onValueChange, size: _s, fill: _f, className: _c, children: _ch, countMax: _cm, ...rest} = props;
-  return <RadioGroupPrimitive ref={track} data-slot="segmented-control" data-size={size} onValueChange={value => onValueChange?.(value as string)} className={cn('relative', classes)} {...rest}>
+  return <RadioGroupPrimitive ref={track} data-hui-part="segmented-control" data-size={size} onValueChange={value => onValueChange?.(value as string)} className={cn('relative', classes)} {...rest}>
     <span
       ref={thumb}
       aria-hidden
-      data-slot="segmented-control-thumb"
+      data-hui-part="segmented-control-thumb"
       className={cn(
         'glaze-sm pointer-events-none absolute inset-y-0.5 left-0 w-(--seg-w) translate-x-(--seg-x) rounded-pill',
         'transition-[translate,width] duration-(--dur-slide) ease-out motion-reduce:transition-none',
@@ -179,13 +179,13 @@ function SegmentedControlItem({className, children, count, countMax: itemMax, ..
   const reserve = itemMax ?? groupMax ?? seen.current;
   const title = typeof children === 'string' ? children : undefined;
   const content = <>
-    <span data-slot="segmented-control-label" className="inline-flex min-w-0 items-center gap-1.5"><span className="min-w-0 truncate">{children}</span></span>
-    {count !== undefined && <span data-slot="segmented-control-count" aria-hidden className="grid shrink-0 justify-items-start tabular-nums opacity-70 [grid-template-areas:'c']">
+    <span data-hui-part="segmented-control-label" className="inline-flex min-w-0 items-center gap-1.5"><span className="min-w-0 truncate">{children}</span></span>
+    {count !== undefined && <span data-hui-part="segmented-control-count" aria-hidden className="grid shrink-0 justify-items-start tabular-nums opacity-70 [grid-template-areas:'c']">
       <span className="invisible [grid-area:c]">{fmt.format(Math.max(reserve, count))}</span>
       <span id={countId} className="[grid-area:c]">{fmt.format(count)}</span>
     </span>}
   </>;
-  const shared = {'data-slot': 'segmented-control-item', title, 'aria-describedby': count !== undefined ? countId : undefined};
+  const shared = {'data-hui-part': 'segmented-control-item', title, 'aria-describedby': count !== undefined ? countId : undefined};
   if (multiple) return <TogglePrimitive {...shared} {...props} className={state => cn(itemBase, itemSize[size], state.pressed ? on : off, className)}>{content}</TogglePrimitive>;
   return <RadioPrimitive.Root {...shared} {...props} className={state => cn(itemBase, itemSize[size], state.checked ? (sliding ? onThumb : on) : off, className)}>{content}</RadioPrimitive.Root>;
 }

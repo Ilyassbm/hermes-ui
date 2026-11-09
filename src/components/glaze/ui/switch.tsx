@@ -26,7 +26,7 @@ type SwitchProps = SwitchPrimitive.Root.Props & {
 function Switch({className, size = 'default', pending, readOnly, 'aria-invalid': invalid, ...props}: SwitchProps) {
   const isInvalid = invalid === true || invalid === 'true';
   return <SwitchPrimitive.Root
-    data-slot="switch"
+    data-hui-part="switch"
     data-size={size}
     data-pending={pending || undefined}
     aria-invalid={isInvalid || undefined}
@@ -48,7 +48,7 @@ function Switch({className, size = 'default', pending, readOnly, 'aria-invalid':
     {...props}
   >
     <SwitchPrimitive.Thumb
-      data-slot="switch-thumb"
+      data-hui-part="switch-thumb"
       className={cn(
         'pointer-events-none grid place-content-center rounded-pill border border-line-control bg-(--switch-knob) text-(--switch-mark)',
         'data-checked:border-transparent data-checked:bg-(--glaze-sm-text) data-checked:text-text-2',

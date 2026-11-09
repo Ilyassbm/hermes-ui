@@ -5,7 +5,7 @@
 // the first frame of the launch, not from the first visit to /hui.
 //
 // One toggle per installation (`ctx.storage.chromeSetupV2`), then never again: the user keeps the last word, and the
-// README says how to bring the bar back (⌘⇧S, or ⌘K → « Afficher la barre d'état »).
+// README says how to bring the bar back (⌘⇧S, or ⌘K → "Show status bar").
 import { host } from '@hermes/plugin-sdk'
 
 const FLAG = 'chromeSetupV2'

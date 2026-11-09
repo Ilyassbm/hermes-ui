@@ -1,4 +1,7 @@
 name: hermes-ui
-version: 0.1.0
-description: "Hermes UI — a custom chat page for Hermes Desktop and the Webapp (bots, conversations, live activity line, routines, files, subscription usage)."
-author: "Dex for Ilyass Bm"
+version: 0.2.0
+description: "A bespoke chat workspace for Hermes Desktop and the Webapp: bots rail, live activity, rich replies, slash commands and per-bot models."
+author: "Ilyass Bm"
+license: MIT
+homepage: https://github.com/Ilyassbm/hermes-ui
+requires_hermes: ">=0.23"

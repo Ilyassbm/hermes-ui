@@ -36,7 +36,7 @@ type ItemGroupProps = React.ComponentProps<'div'> & VariantProps<typeof itemGrou
 /** The list: a panel of rows, or plain inside a card's panel. role="list"; each Item inside is a listitem. */
 function ItemGroup({className, variant = 'panel', role = 'list', ...props}: ItemGroupProps) {
   return <ItemGroupContext.Provider value={true}>
-    <div data-slot="item-group" data-variant={variant} role={role} className={cn(itemGroupVariants({variant}), className)} {...props}/>
+    <div data-hui-part="item-group" data-variant={variant} role={role} className={cn(itemGroupVariants({variant}), className)} {...props}/>
   </ItemGroupContext.Provider>;
 }
 
@@ -44,17 +44,17 @@ const itemVariants = cva(
   [
     'group/item @container/item relative flex w-full min-w-0 items-center gap-3 px-3 text-start text-text-1',
     'transition-[background-color] duration-(--dur-state) ease-out',
-    'in-data-[slot=item-group]:rule-row',
+    'in-data-[hui-part=item-group]:rule-row',
     // A row with an ItemLink is one target: the wash under the pointer, the ring inside its edge on focus.
-    'has-[[data-slot=item-link]:hover]:not-data-selected:bg-hover-row has-[[data-slot=item-link]:active]:bg-pressed',
-    'has-[[data-slot=item-link]:focus-visible]:focus-ring-row',
+    'has-[[data-hui-part=item-link]:hover]:not-data-selected:bg-hover-row has-[[data-hui-part=item-link]:active]:bg-pressed',
+    'has-[[data-hui-part=item-link]:focus-visible]:focus-ring-row',
     'data-selected:bg-pressed forced-colors:data-selected:outline forced-colors:data-selected:outline-2 forced-colors:data-selected:-outline-offset-2',
     'data-disabled:text-text-disabled',
   ],
   {
     variants: {
       size: {
-        default: 'min-h-(--row) py-1.5 has-data-[slot=item-description]:py-2',
+        default: 'min-h-(--row) py-1.5 has-data-[hui-part=item-description]:py-2',
         sm: 'min-h-(--control) gap-2 py-1',
       },
     },
@@ -76,7 +76,7 @@ function Item({className, size = 'default', selected, disabled, render, ...props
     props: mergeProps<'div'>(
       {className: cn(itemVariants({size}), className)},
       {
-        'data-slot': 'item',
+        'data-hui-part': 'item',
         'data-size': size,
         'data-selected': selected ? '' : undefined,
         'data-disabled': disabled ? '' : undefined,
@@ -89,7 +89,7 @@ function Item({className, size = 'default', selected, disabled, render, ...props
   });
 }
 
-const itemMediaVariants = cva('flex shrink-0 items-center justify-center group-has-data-[slot=item-description]/item:self-start group-has-data-[slot=item-description]/item:mt-0.5 [&_svg]:pointer-events-none', {
+const itemMediaVariants = cva('flex shrink-0 items-center justify-center group-has-data-[hui-part=item-description]/item:self-start group-has-data-[hui-part=item-description]/item:mt-0.5 [&_svg]:pointer-events-none', {
   variants: {
     variant: {
       default: '',
@@ -102,27 +102,27 @@ const itemMediaVariants = cva('flex shrink-0 items-center justify-center group-h
 
 /** The lead: an Avatar, an icon or a thumbnail. */
 function ItemMedia({className, variant = 'default', ...props}: React.ComponentProps<'div'> & VariantProps<typeof itemMediaVariants>) {
-  return <div data-slot="item-media" data-variant={variant} className={cn(itemMediaVariants({variant}), className)} {...props}/>;
+  return <div data-hui-part="item-media" data-variant={variant} className={cn(itemMediaVariants({variant}), className)} {...props}/>;
 }
 
 /** The title and description, taking the room left. */
 function ItemContent({className, ...props}: React.ComponentProps<'div'>) {
-  return <div data-slot="item-content" className={cn('flex min-w-0 flex-1 flex-col gap-0.5', className)} {...props}/>;
+  return <div data-hui-part="item-content" className={cn('flex min-w-0 flex-1 flex-col gap-0.5', className)} {...props}/>;
 }
 
 /** The name, one line, truncated last. Add an ID after it in mono. */
 function ItemTitle({className, ...props}: React.ComponentProps<'div'>) {
-  return <div data-slot="item-title" className={cn('flex min-w-0 items-baseline gap-2 type-label [&>*:first-child]:min-w-0 [&>*:first-child]:truncate', className)} {...props}/>;
+  return <div data-hui-part="item-title" className={cn('flex min-w-0 items-baseline gap-2 type-label [&>*:first-child]:min-w-0 [&>*:first-child]:truncate', className)} {...props}/>;
 }
 
 /** Up to two lines under the title, in text-2. */
 function ItemDescription({className, ...props}: React.ComponentProps<'p'>) {
-  return <p data-slot="item-description" className={cn('line-clamp-2 type-body-sm text-text-2 group-data-disabled/item:text-text-disabled', className)} {...props}/>;
+  return <p data-hui-part="item-description" className={cn('line-clamp-2 type-body-sm text-text-2 group-data-disabled/item:text-text-disabled', className)} {...props}/>;
 }
 
 /** A time, an owner, a count. The first part the row drops: hidden when the row is under 28rem wide. */
 function ItemMeta({className, ...props}: React.ComponentProps<'div'>) {
-  return <div data-slot="item-meta" className={cn('shrink-0 type-caption text-text-2 @max-md/item:hidden', className)} {...props}/>;
+  return <div data-hui-part="item-meta" className={cn('shrink-0 type-caption text-text-2 @max-md/item:hidden', className)} {...props}/>;
 }
 
 /**
@@ -130,12 +130,12 @@ function ItemMeta({className, ...props}: React.ComponentProps<'div'>) {
  * and the row takes one tab stop with its ring inside the row's edge.
  */
 function ItemLink({className, ...props}: React.ComponentProps<'a'>) {
-  return <a data-slot="item-link" data-control="" className={cn('min-w-0 truncate after:absolute after:inset-0 after:content-[""]', className)} {...props}/>;
+  return <a data-hui-part="item-link" data-control="" className={cn('min-w-0 truncate after:absolute after:inset-0 after:content-[""]', className)} {...props}/>;
 }
 
 /** Buttons at the end of the row: size="icon-sm" ghost, or one size="sm" secondary Button. They never drop. */
 function ItemActions({className, ...props}: React.ComponentProps<'div'>) {
-  return <div data-slot="item-actions" className={cn('relative z-(--z-raised) -me-2 flex shrink-0 items-center gap-1', className)} {...props}/>;
+  return <div data-hui-part="item-actions" className={cn('relative z-(--z-raised) -me-2 flex shrink-0 items-center gap-1', className)} {...props}/>;
 }
 
 export {Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemMeta, ItemLink, ItemActions, itemVariants, itemGroupVariants, type ItemProps, type ItemGroupProps};

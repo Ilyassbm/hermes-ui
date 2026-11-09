@@ -3,15 +3,16 @@
 // that Base UI then closed (lot 8).
 //
 // The rule the picker keeps: the first level shows at most MODEL_MENU_TOP models per provider, taken from `topModels`
-// (which slices with that constant); the whole catalogue lives in the "Tous les modèles {Fournisseur}…" submenu, whose
-// list is mounted with the submenu and opens on a filter field.
+// (which slices with that constant); the whole catalogue lives in the `UI.header.allModels(provider.name)` submenu
+// ("All … models…"), whose list is mounted with the submenu and opens on a filter field.
 //
 // Checked statically, with the TypeScript AST (no browser, no gateway):
 //   1. MODEL_MENU_TOP is a number, and at most 8;
 //   2. every `.slice(...)` in topModels is capped by MODEL_MENU_TOP (or a literal ≤ 8), so the constant is the real cap;
 //   3. in the model menu's first level, every DropdownMenuRadioItem is fed by `topModels(...)` — not by
 //      `provider.models` directly, and not by a numeric slice above 8;
-//   4. the level has a "Tous les modèles…" submenu, and `AllModels` renders a filter field before the full list.
+//   4. the level has an all-models submenu (`UI.header.allModels(…)`), and `AllModels` renders a filter field before
+//      the full list.
 //
 //   node scripts/check-model-menu.mjs
 //
@@ -151,8 +152,8 @@ if (!menu) {
   }
 
   // The rest of the catalogue, behind the submenu, with its filter.
-  const subTrigger = elements(menu, 'DropdownMenuSubTrigger').find(el => el.getText().includes('Tous les modèles'))
-  if (!subTrigger) fail(header, menu, 'no "Tous les modèles {Fournisseur}…" submenu row: the catalogue would be unreachable')
+  const subTrigger = elements(menu, 'DropdownMenuSubTrigger').find(el => el.getText().includes('allModels('))
+  if (!subTrigger) fail(header, menu, 'no all-models submenu row (UI.header.allModels(provider.name)): the catalogue would be unreachable')
   if (!subs.length) fail(header, menu, 'no DropdownMenuSubContent under the model menu: the submenu list has nowhere to open')
 }
 
@@ -174,7 +175,7 @@ if (!all) {
 
 if (problems.length) {
   for (const problem of problems) console.error(problem)
-  console.error(`\ncheck-model-menu: ${problems.length} problème(s) — le premier niveau du sélecteur doit rester à ${MAX_TOP} modèles par fournisseur.`)
+  console.error(`\ncheck-model-menu: ${problems.length} problem(s) — the picker's first level must stay at ${MAX_TOP} models per provider.`)
   process.exit(1)
 }
-console.log(`check-model-menu: OK — MODEL_MENU_TOP = ${top?.initializer?.getText() ?? '?'}, premier niveau plafonné par topModels, sous-menu « Tous les modèles » avec filtre.`)
+console.log(`check-model-menu: OK — MODEL_MENU_TOP = ${top?.initializer?.getText() ?? '?'}, first level capped by topModels, all-models submenu with a filter.`)

@@ -75,7 +75,7 @@ function TriggerMenu({id, menu, title, empty, options, active, onHover, onPick, 
   if (container === null) return null;
   return createPortal(<div
     ref={listRef}
-    data-slot="prompt-input-menu"
+    data-hui-part="prompt-input-menu"
     data-menu={menu.kind}
     onMouseDown={event => { if (!(event.target as HTMLElement).closest('input')) event.preventDefault(); }}
     // The position is measured from the caret each frame it moves, so it is set inline; it is not a style choice.
@@ -85,7 +85,7 @@ function TriggerMenu({id, menu, title, empty, options, active, onHover, onPick, 
     {search}
     <div id={id} role="listbox" aria-label={title} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1">
       <p className={menuLabelClass} aria-hidden>{title}</p>
-      {options.length === 0 && <p data-slot="prompt-input-menu-empty" role="presentation" className="flex min-h-(--menu-row) items-center px-2 type-body-sm text-text-2">{empty}</p>}
+      {options.length === 0 && <p data-hui-part="prompt-input-menu-empty" role="presentation" className="flex min-h-(--menu-row) items-center px-2 type-body-sm text-text-2">{empty}</p>}
       {options.map((option, i) => <div
         key={option.key}
         id={`${id}-${i}`}

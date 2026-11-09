@@ -1,28 +1,32 @@
-// French copy for the live activity line, bot identity helpers, time formats.
+// English copy for the live activity line, bot identity helpers, time formats.
+//
+// Lot 13: every word here lives in UI.activity / UI.time (src/app/strings.ts); this module only maps a tool name to
+// the sentence its row prints.
+import { UI } from '../app/strings'
 
 const TOOL_VERBS = [
-  [/^read_file$/, 'lit un fichier'],
-  [/^(write_file|create_file)$/, 'écrit un fichier'],
-  [/^(patch|edit_file|apply_patch)$/, 'modifie un fichier'],
-  [/^search_files$/, 'cherche dans les fichiers'],
-  [/^(terminal|shell|bash|process)/, 'lance une commande'],
-  [/^web_search$/, 'cherche sur le web'],
-  [/^web_extract$/, 'lit une page web'],
-  [/^(browser|browser_exec|drive_preview)/, 'navigue sur le web'],
-  [/^execute_code$/, 'exécute du code'],
-  [/^vision_analyze$/, 'regarde une image'],
-  [/^image_generate$/, 'génère une image'],
-  [/^text_to_speech$/, 'prépare un audio'],
-  [/^skill_(view|manage)$|^skills_list$/, 'consulte ses skills'],
-  [/^memory$/, 'met à jour sa mémoire'],
-  [/^session_search$/, 'fouille ses conversations'],
-  [/^(todo|todo_list)$/, 'organise ses tâches'],
-  [/^clarify$/, 'te pose une question'],
-  [/^(cronjob|cronjob_manage)$/, 'planifie une tâche'],
-  [/^send_message$/, 'envoie un message'],
-  [/^tool_(search|describe|call)$/, 'utilise un outil'],
-  [/^connectors__([a-z0-9-]+)__/, m => `utilise ${cap(m[1])}`],
-  [/^mcp__([a-z0-9-]+)__/, m => `utilise ${cap(m[1])}`]
+  [/^read_file$/, UI.activity.read],
+  [/^(write_file|create_file)$/, UI.activity.write],
+  [/^(patch|edit_file|apply_patch)$/, UI.activity.edit],
+  [/^search_files$/, UI.activity.searchFiles],
+  [/^(terminal|shell|bash|process)/, UI.activity.shell],
+  [/^web_search$/, UI.activity.webSearch],
+  [/^web_extract$/, UI.activity.webRead],
+  [/^(browser|browser_exec|drive_preview)/, UI.activity.browse],
+  [/^execute_code$/, UI.activity.code],
+  [/^vision_analyze$/, UI.activity.vision],
+  [/^image_generate$/, UI.activity.image],
+  [/^text_to_speech$/, UI.activity.speech],
+  [/^skill_(view|manage)$|^skills_list$/, UI.activity.skill],
+  [/^memory$/, UI.activity.memory],
+  [/^session_search$/, UI.activity.session],
+  [/^(todo|todo_list)$/, UI.activity.todo],
+  [/^clarify$/, UI.activity.clarify],
+  [/^(cronjob|cronjob_manage)$/, UI.activity.cron],
+  [/^send_message$/, UI.activity.message],
+  [/^tool_(search|describe|call)$/, UI.activity.tool],
+  [/^connectors__([a-z0-9-]+)__/, m => UI.activity.uses(cap(m[1]))],
+  [/^mcp__([a-z0-9-]+)__/, m => UI.activity.uses(cap(m[1]))]
 ]
 
 function cap(s) {
@@ -35,7 +39,7 @@ export function toolVerb(name) {
     const m = re.exec(n)
     if (m) return typeof verb === 'function' ? verb(m) : verb
   }
-  return n ? `utilise ${n.replace(/_/g, ' ')}` : 'travaille'
+  return n ? UI.activity.fallback(n) : UI.activity.works
 }
 
 // The default profile is Branco (Chief of Staff) in Ilyass's setup, as in the OS chat mode.
@@ -126,39 +130,39 @@ export function modelLabel(model) {
   return id.split(/[-_]+/).filter(Boolean).map(w => (/^v\d/i.test(w) ? w : titled(w))).join(' ')
 }
 
-// Glaze formats a duration for an English reader ("14.4s", "1m 05s"). French writes the unit apart, keeps a
-// non-breaking space before it, and rounds to the second under a minute: "14 s", "1 min 05 s", "1 h 04 min".
+// Glaze writes a duration as the English reader expects it — "14.4s", "1m 05s", "1h 04m" — and this keeps that shape,
+// rounding to the second under a minute.
 const NBSP = '\u00a0'
 
-export function frDuration(value) {
+export function humanDuration(value) {
   const text = String(value ?? '').trim()
   const ms = /^([\d.]+)ms$/.exec(text)
-  if (ms) return `${Math.round(Number(ms[1]))}${NBSP}ms`
+  if (ms) return `${Math.round(Number(ms[1]))}ms`
   const sec = /^([\d.]+)s$/.exec(text)
   if (sec) {
     const s = Math.round(Number(sec[1]))
-    if (s < 60) return `${s}${NBSP}s`
-    return `${Math.floor(s / 60)}${NBSP}min ${String(s % 60).padStart(2, '0')}${NBSP}s`
+    if (s < 60) return `${s}s`
+    return `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`
   }
   const min = /^(\d+)m (\d+)s$/.exec(text)
-  if (min) return `${min[1]}${NBSP}min ${min[2]}${NBSP}s`
+  if (min) return `${min[1]}m ${min[2]}s`
   const hour = /^(\d+)h (\d+)m$/.exec(text)
-  if (hour) return `${hour[1]}${NBSP}h ${hour[2]}${NBSP}min`
+  if (hour) return `${hour[1]}h ${hour[2]}m`
   const day = /^(\d+)d (\d+)h$/.exec(text)
-  if (day) return `${day[1]}${NBSP}j ${day[2]}${NBSP}h`
+  if (day) return `${day[1]}d ${day[2]}h`
   return text
 }
 
 export function hourOf(ts) {
   if (!ts) return ''
   const d = new Date(ts)
-  return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 }
 
-export const CONV_GROUPS = ["Aujourd'hui", 'Hier', '7 derniers jours', 'Plus ancien']
+export const CONV_GROUPS = UI.time.conversations
 
 export function convGroup(ts) {
-  if (!ts) return 'Plus ancien'
+  if (!ts) return CONV_GROUPS[3]
   const d = new Date(ts)
   const now = new Date()
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
@@ -174,9 +178,9 @@ export function resetIn(iso) {
   if (!Number.isFinite(ms) || ms <= 0) return ''
   const h = Math.floor(ms / 3600000)
   const m = Math.round((ms % 3600000) / 60000)
-  if (h >= 24) return `dans ${Math.round(h / 24)} j`
-  if (h > 0) return `dans ${h} h ${String(m).padStart(2, '0')}`
-  return `dans ${m} min`
+  if (h >= 24) return UI.time.resetInDays(Math.round(h / 24))
+  if (h > 0) return UI.time.resetInHours(h, String(m).padStart(2, '0'))
+  return UI.time.resetInMinutes(m)
 }
 
 export function plural(n, one, many) {

@@ -20,7 +20,7 @@ const isObject = (value: unknown): value is Record<string, unknown> => typeof va
 function clip<T>(value: T, issues: IuiIssue[], at: string): T {
   if (typeof value === 'string') {
     if (value.length <= LIMITS.string) return value
-    issues.push({ at, reason: `chaîne coupée à ${LIMITS.string} caractères` })
+    issues.push({ at, reason: `string cut to ${LIMITS.string} characters` })
     return value.slice(0, LIMITS.string) as T
   }
   if (Array.isArray(value)) return value.map((item, i) => clip(item, issues, `${at}/${i}`)) as T
@@ -55,17 +55,17 @@ export function sanitizeSpec(raw: unknown): IuiResult {
     if (seen.has(key)) continue
     seen.add(key)
     if (depth > LIMITS.depth) {
-      issues.push({ at: `/${key}`, reason: `au-delà de ${LIMITS.depth} niveaux` })
+      issues.push({ at: `/${key}`, reason: `deeper than ${LIMITS.depth} levels` })
       continue
     }
     if (Object.keys(elements).length >= LIMITS.elements) {
-      issues.push({ at: `/${key}`, reason: `au-delà de ${LIMITS.elements} éléments` })
+      issues.push({ at: `/${key}`, reason: `more than ${LIMITS.elements} elements` })
       continue
     }
 
     const node = source[key]
     if (!isObject(node) || typeof node.type !== 'string') {
-      issues.push({ at: `/${key}`, reason: 'élément sans type' })
+      issues.push({ at: `/${key}`, reason: 'element with no type' })
       continue
     }
 
@@ -82,7 +82,7 @@ export function sanitizeSpec(raw: unknown): IuiResult {
 
     // An image with a source the app will not load takes its element with it; the spec around it still draws.
     if (node.type === 'Image' && !IMAGE_OK.test(String((props as Record<string, unknown>).src ?? ''))) {
-      issues.push({ at: `/${key}`, reason: 'source d’image refusée' })
+      issues.push({ at: `/${key}`, reason: 'image source refused' })
       continue
     }
 

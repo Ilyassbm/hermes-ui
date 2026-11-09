@@ -63,7 +63,7 @@ function PromptInputMic({state = 'idle', level = 0, onListeningChange, size = 's
   const clamped = Math.min(1, Math.max(0, Number.isFinite(level) ? level : 0));
   const glyph = size === 'lg' ? 16 : size === 'sm' ? 12 : 14;
   const button = <Button
-    data-slot="prompt-input-mic"
+    data-hui-part="prompt-input-mic"
     data-state={state}
     variant="ghost"
     size={size === 'sm' ? 'icon-sm' : size === 'lg' ? 'icon-lg' : 'icon'}
@@ -77,7 +77,7 @@ function PromptInputMic({state = 'idle', level = 0, onListeningChange, size = 's
     {...props}
   >
     {listening
-      ? <span aria-hidden data-slot="prompt-input-mic-level" className={cn('flex items-center justify-center gap-0.5', size === 'sm' ? 'size-3' : 'size-4')}>
+      ? <span aria-hidden data-hui-part="prompt-input-mic-level" className={cn('flex items-center justify-center gap-0.5', size === 'sm' ? 'size-3' : 'size-4')}>
           {micBars.map((peak, i) => <span
             key={i}
             // The bar's height follows the live input level, a value only known at run time.

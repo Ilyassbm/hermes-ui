@@ -82,14 +82,14 @@ type StatusProps = Omit<React.ComponentProps<'span'>, 'children'> & Omit<Variant
 function Status({status = 'idle', size = 'default', live, className, children, ...props}: StatusProps) {
   const word = children ?? statusLabels[status];
   return <span
-    data-slot="status"
+    data-hui-part="status"
     data-status={status}
     data-size={size}
     className={cn(statusVariants({size, status}), className)}
     {...props}
   >
     <StatusMark status={status}/>
-    <span data-slot="status-word" aria-hidden={live && settled(status) ? true : undefined} className="min-w-0 [overflow-wrap:anywhere]">{word}</span>
+    <span data-hui-part="status-word" aria-hidden={live && settled(status) ? true : undefined} className="min-w-0 [overflow-wrap:anywhere]">{word}</span>
     {/* The region is always in the DOM, so a change from empty to the word is what gets announced. */}
     {live && <span role="status" className="sr-only">{settled(status) ? (typeof word === 'string' ? word : statusLabels[status]) : ''}</span>}
   </span>;
@@ -102,9 +102,9 @@ function Status({status = 'idle', size = 'default', live, className, children, .
  */
 function StatusMark({status = 'idle', label, className, ...props}: Omit<React.ComponentProps<'span'>, 'children'> & {status?: StatusValue; label?: string}) {
   const glyph = statusGlyph[status];
-  if (!glyph) return label ? <span data-slot="status-mark" data-status={status} className="sr-only">{label}</span> : null;
+  if (!glyph) return label ? <span data-hui-part="status-mark" data-status={status} className="sr-only">{label}</span> : null;
   return <span
-    data-slot="status-mark"
+    data-hui-part="status-mark"
     data-status={status}
     role={label ? 'img' : undefined}
     aria-label={label}

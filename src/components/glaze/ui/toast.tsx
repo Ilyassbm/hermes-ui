@@ -144,7 +144,7 @@ function Toaster({inline, limit = 3, manager = toastManager, className}: Toaster
     return () => { window.removeEventListener('blur', sync); window.removeEventListener('focus', sync); };
   }, []);
   const viewport = <ToastPrimitive.Viewport
-    data-slot="toast-viewport"
+    data-hui-part="toast-viewport"
     data-away={away || undefined}
     {...(inline ? {role: 'group', 'aria-live': 'off' as const, 'aria-label': 'Example toasts'} : {})}
     className={cn(
@@ -228,7 +228,7 @@ function ToastTimer({ms}: {ms: number}) {
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const el = ref.current;
-    const stack = el?.closest<HTMLElement>('[data-slot=toast-viewport]');
+    const stack = el?.closest<HTMLElement>('[data-hui-part=toast-viewport]');
     if (!el || !ms || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const drain = el.animate([{scale: '1 1'}, {scale: '0 1'}], {duration: ms, easing: 'linear', fill: 'forwards'});
     const sync = () => {
@@ -244,7 +244,7 @@ function ToastTimer({ms}: {ms: number}) {
   return <span
     ref={ref}
     aria-hidden
-    data-slot="toast-timer"
+    data-hui-part="toast-timer"
     className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 origin-left bg-line-control motion-reduce:hidden rtl:origin-right"
   />;
 }
@@ -266,7 +266,7 @@ function ToastItem({toast: t, waiting, nodeRef}: {toast: ToastObject; waiting: b
   return <ToastPrimitive.Root
     ref={nodeRef}
     toast={t}
-    data-slot="toast"
+    data-hui-part="toast"
     data-kind-of-toast={kind}
     data-timeout={ms || undefined}
     data-waiting={waiting || undefined}
@@ -284,16 +284,16 @@ function ToastItem({toast: t, waiting, nodeRef}: {toast: ToastObject; waiting: b
       'data-ending-style:hidden data-waiting:hidden',
     )}
   >
-    <ToastPrimitive.Content data-slot="toast-content" className="flex min-w-0 flex-1 items-start gap-2 py-1 [grid-area:content]">
+    <ToastPrimitive.Content data-hui-part="toast-content" className="flex min-w-0 flex-1 items-start gap-2 py-1 [grid-area:content]">
       {kind !== 'default' && <span aria-hidden className="flex h-lh shrink-0 items-center type-label"><Icon icon={kindIcon[kind].icon} className={kindIcon[kind].className}/></span>}
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <ToastPrimitive.Title data-slot="toast-title" className="type-label break-words text-text-1"/>
-        <ToastPrimitive.Description data-slot="toast-description" className="type-body-sm break-words text-text-2 empty:hidden"/>
+        <ToastPrimitive.Title data-hui-part="toast-title" className="type-label break-words text-text-1"/>
+        <ToastPrimitive.Description data-hui-part="toast-description" className="type-body-sm break-words text-text-2 empty:hidden"/>
       </div>
     </ToastPrimitive.Content>
     {/* The action and the X are 26px; the text sits 4px down, so its first line centres on them. */}
-    {t.actionProps && <ToastPrimitive.Action data-slot="toast-action" className={buttonVariants({variant: 'secondary', size: 'sm', className: 'self-start [grid-area:action] @max-[20rem]/toast:ms-6 @max-[20rem]/toast:justify-self-start'})}/>}
-    <ToastPrimitive.Close data-slot="toast-close" aria-label="Dismiss" className={buttonVariants({variant: 'ghost', size: 'icon-sm', className: 'self-start text-text-2 [grid-area:close] hover:text-text-1'})}>
+    {t.actionProps && <ToastPrimitive.Action data-hui-part="toast-action" className={buttonVariants({variant: 'secondary', size: 'sm', className: 'self-start [grid-area:action] @max-[20rem]/toast:ms-6 @max-[20rem]/toast:justify-self-start'})}/>}
+    <ToastPrimitive.Close data-hui-part="toast-close" aria-label="Dismiss" className={buttonVariants({variant: 'ghost', size: 'icon-sm', className: 'self-start text-text-2 [grid-area:close] hover:text-text-1'})}>
       <Icon icon={CloseIcon} size={12}/>
     </ToastPrimitive.Close>
     {!waiting && <ToastTimer key={`${t.id}-${ms}-${String(t.title)}`} ms={ms}/>}

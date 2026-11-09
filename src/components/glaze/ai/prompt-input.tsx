@@ -304,7 +304,7 @@ function PromptInput({
     chip.dataset.mentionLabel = mention.label;
     chip.setAttribute('aria-label', `${wordsRef.current.types[mention.type]} ${mention.label}`);
     if (mention.type === 'paste') chip.title = `${(pastes.current.get(mention.id) ?? '').slice(0, 280)}\n\n${wordsRef.current.clickToExpand}`;
-    const text = chip.querySelector('[data-slot="mention-label"]') ?? chip;
+    const text = chip.querySelector('[data-hui-part="mention-label"]') ?? chip;
     text.textContent = `${mention.type === 'command' ? '/' : ''}${mention.label}`;
     return chip;
   }, []);
@@ -813,7 +813,7 @@ function PromptInput({
       event.target.value = '';
     }}/>
   </>;
-  const statusEl = <p id={statusId} role="status" data-slot="prompt-input-status" className={cn(
+  const statusEl = <p id={statusId} role="status" data-hui-part="prompt-input-status" className={cn(
     'flex min-w-0 items-center gap-1.5 type-caption text-text-2 empty:hidden',
     !inline && 'order-last basis-full px-2 @sm/prompt-toolbar:order-none @sm/prompt-toolbar:basis-auto @sm/prompt-toolbar:shrink',
     inline && 'flex-1',
@@ -821,9 +821,9 @@ function PromptInput({
   )}>
     {shellMode && !notice && <Icon icon={Terminal} size={12} className="shrink-0"/>}
     {statusLine && <span className="min-w-0 truncate" title={statusLine}>{statusLine}</span>}
-    {showsWaiting && onReviewWaiting && <Button variant="ghost" size="sm" data-slot="prompt-input-review" onClick={onReviewWaiting}>{words.review}</Button>}
+    {showsWaiting && onReviewWaiting && <Button variant="ghost" size="sm" data-hui-part="prompt-input-review" onClick={onReviewWaiting}>{words.review}</Button>}
     {notice?.undo && <Button variant="ghost" size="sm" onClick={notice.undo}>{words.undo}</Button>}
-    {!notice && held && uploadReason && <Button variant="ghost" size="sm" data-slot="prompt-input-cancel-held" onClick={() => { setHeld(false); editorRef.current?.focus(); }}>{words.cancel}</Button>}
+    {!notice && held && uploadReason && <Button variant="ghost" size="sm" data-hui-part="prompt-input-cancel-held" onClick={() => { setHeld(false); editorRef.current?.focus(); }}>{words.cancel}</Button>}
   </p>;
   const sendEl = <SendButton
     status={sendStatus}
@@ -836,10 +836,10 @@ function PromptInput({
     type="button"
     labels={words}
   />;
-  const toolsEl = (className: string) => <div inert={shellMode} data-slot="prompt-input-tools" className={cn('flex min-w-0 items-center gap-1 empty:hidden', shellMode && 'opacity-40', className)}>{tools}</div>;
+  const toolsEl = (className: string) => <div inert={shellMode} data-hui-part="prompt-input-tools" className={cn('flex min-w-0 items-center gap-1 empty:hidden', shellMode && 'opacity-40', className)}>{tools}</div>;
   const editorEl =
     <div className="relative min-w-0 flex-1">
-      {empty && <span aria-hidden data-slot="prompt-input-placeholder" className={cn('pointer-events-none absolute inset-x-0 top-0 truncate text-text-3 select-none', shellMode ? 'type-code' : 'type-body')}>
+      {empty && <span aria-hidden data-hui-part="prompt-input-placeholder" className={cn('pointer-events-none absolute inset-x-0 top-0 truncate text-text-3 select-none', shellMode ? 'type-code' : 'type-body')}>
         {disabled ? words.off : shellMode ? words.shellPlaceholder : placeholder}
       </span>}
       <div
@@ -863,7 +863,7 @@ function PromptInput({
         spellCheck={!shellMode}
         autoCapitalize={shellMode ? 'off' : undefined}
         autoCorrect={shellMode ? 'off' : undefined}
-        data-slot="prompt-input-editor"
+        data-hui-part="prompt-input-editor"
         // The panel's edge darkens on focus (data-focused); base.css leaves a [data-control] unringed.
         data-control=""
         onInput={() => { changed(); detectTrigger(); }}
@@ -875,7 +875,7 @@ function PromptInput({
         onFocus={() => setFocused(true)}
         onBlur={event => {
           setFocused(false);
-          if (menu?.kind !== 'commands' && !(event.relatedTarget as HTMLElement | null)?.closest('[data-slot="prompt-input-menu"]')) setMenu(null);
+          if (menu?.kind !== 'commands' && !(event.relatedTarget as HTMLElement | null)?.closest('[data-hui-part="prompt-input-menu"]')) setMenu(null);
         }}
         onCopy={event => onCopy(event)}
         onCut={event => onCopy(event, true)}
@@ -884,15 +884,15 @@ function PromptInput({
           inline ? 'max-h-40' : 'max-h-60 min-h-11',
           'overflow-y-auto overscroll-contain break-words whitespace-pre-wrap text-text-1 outline-none',
           shellMode ? 'type-code' : 'type-body',
-          '[&_[data-slot=mention]]:mx-px [&_[data-mention-type=paste]]:cursor-pointer',
+          '[&_[data-hui-part=mention]]:mx-px [&_[data-mention-type=paste]]:cursor-pointer',
           disabled && 'cursor-not-allowed text-text-disabled',
         )}
       />
     </div>;
-  const shellPrompt = shellMode && <span aria-hidden data-slot="prompt-input-shell" className="type-code text-text-3 select-none">$</span>;
+  const shellPrompt = shellMode && <span aria-hidden data-hui-part="prompt-input-shell" className="type-code text-text-3 select-none">$</span>;
 
   return <div
-    data-slot="prompt-input"
+    data-hui-part="prompt-input"
     data-state={state}
     data-mode={mode}
     data-layout={layout}
@@ -908,21 +908,21 @@ function PromptInput({
       {(Object.keys(mentionTypeLabels) as MentionType[]).map(type => <Mention key={type} type={type} data-template={type} className="mx-px">x</Mention>)}
     </div>
 
-    {queue && <div data-slot="prompt-input-queue" className="mb-(--shell-inset) min-w-0 empty:hidden">{queue}</div>}
+    {queue && <div data-hui-part="prompt-input-queue" className="mb-(--shell-inset) min-w-0 empty:hidden">{queue}</div>}
 
     {/* The panel: the white surface the text sits on. Its edge darkens to the focus line while the cursor is in it; in
         shell mode it turns to the grey field, the one place in the composer where a person types code. */}
-    <div data-slot="prompt-input-panel" className={cn(
+    <div data-hui-part="prompt-input-panel" className={cn(
       'panel relative flex min-w-0 flex-col transition-[border-color,background-color] duration-(--dur-state) ease-out',
       'group-data-focused/prompt:border-line-focus group-data-force-focus/prompt:border-line-focus group-data-[mode=shell]/prompt:bg-field group-data-[state=disabled]/prompt:bg-field',
       'forced-colors:border-[CanvasText]',
     )}>
-      {disabled && disabledReason && <div id={reasonId} data-slot="prompt-input-reason" className="flex min-h-(--row) flex-wrap items-center gap-x-3 gap-y-1 py-1 ps-3 pe-1 rule-row">
+      {disabled && disabledReason && <div id={reasonId} data-hui-part="prompt-input-reason" className="flex min-h-(--row) flex-wrap items-center gap-x-3 gap-y-1 py-1 ps-3 pe-1 rule-row">
         <span className="min-w-0 flex-1 type-body-sm break-words text-text-1">{disabledReason}</span>
         <span className="ms-auto empty:hidden">{disabledAction}</span>
       </div>}
 
-      {attachments.length > 0 && <div ref={attachRef} data-slot="prompt-input-attachments" role="list" aria-label={words.attachments} className="flex flex-wrap gap-1.5 p-1.5 rule-row">
+      {attachments.length > 0 && <div ref={attachRef} data-hui-part="prompt-input-attachments" role="list" aria-label={words.attachments} className="flex flex-wrap gap-1.5 p-1.5 rule-row">
         {attachments.map((attachment, index) => <div role="listitem" key={attachment.id} className="max-w-full min-w-0">
           <PromptAttachment
             attachment={attachment}
@@ -938,18 +938,18 @@ function PromptInput({
       {inline
         // One row: attach, the text, the tools, send, all 26px and 4px from the panel's edge. When the text wraps the
         // editor grows while the buttons stay on the bottom line.
-        ? <div data-slot="prompt-input-body" className="@container/prompt-toolbar flex min-w-0 items-end gap-1 p-1">
+        ? <div data-hui-part="prompt-input-body" className="@container/prompt-toolbar flex min-w-0 items-end gap-1 p-1">
             {attachEl}
             <div className="flex min-h-(--control-sm) min-w-0 flex-1 items-center gap-1.5 px-1.5">{shellPrompt}{editorEl}</div>
             {toolsEl('h-(--control-sm) shrink-0')}
-            {meta && <div data-slot="prompt-input-meta" className="flex h-(--control-sm) shrink-0 items-center">{meta}</div>}
+            {meta && <div data-hui-part="prompt-input-meta" className="flex h-(--control-sm) shrink-0 items-center">{meta}</div>}
             {voice && <PromptInputMic size="sm" {...voice} disabled={disabled || voice.disabled}/>}
             {sendEl}
           </div>
-        : <div data-slot="prompt-input-body" className="flex min-w-0 gap-1.5 px-3 pt-2.5 pb-2">{shellPrompt}{editorEl}</div>}
+        : <div data-hui-part="prompt-input-body" className="flex min-w-0 gap-1.5 px-3 pt-2.5 pb-2">{shellPrompt}{editorEl}</div>}
     </div>
 
-    {!inline && <div data-slot="prompt-input-toolbar" className="@container/prompt-toolbar flex min-h-(--control-sm) min-w-0 flex-wrap items-center gap-1 pt-(--shell-inset)">
+    {!inline && <div data-hui-part="prompt-input-toolbar" className="@container/prompt-toolbar flex min-h-(--control-sm) min-w-0 flex-wrap items-center gap-1 pt-(--shell-inset)">
       {attachEl}
       {/* The tools sit between attach and send and take the free space, scrolling sideways when they run out of it. */}
       {toolsEl('flex-1 basis-0 overflow-x-auto [scrollbar-width:none]')}
@@ -957,7 +957,7 @@ function PromptInput({
       {statusEl}
       {/* Meta, the mic and Send stay together at the end of the row. */}
       <div className="ms-auto flex shrink-0 items-center gap-1">
-        {meta && <div data-slot="prompt-input-meta" className="shrink-0">{meta}</div>}
+        {meta && <div data-hui-part="prompt-input-meta" className="shrink-0">{meta}</div>}
         {voice && <PromptInputMic size="sm" {...voice} disabled={disabled || voice.disabled}/>}
         {sendEl}
       </div>
@@ -966,7 +966,7 @@ function PromptInput({
     {/* The drop overlay over the whole composer: paper with the focus line and its words at the start. A refused type
         takes the failure tint and the coral line, and says why. */}
     {dragging && <div
-      data-slot="prompt-input-drop"
+      data-hui-part="prompt-input-drop"
       data-status={dragging === 'reject' ? 'fail' : undefined}
       aria-hidden
       className="pointer-events-none absolute inset-0 z-(--z-raised) flex flex-col items-start gap-1 rounded-shell border border-line-focus bg-paper px-4 py-3 data-[status=fail]:border-fail data-[status=fail]:bg-fail-tint"
@@ -999,7 +999,7 @@ function PromptInput({
           data-control=""
           value={menu.query}
           onChange={event => { setActive(0); setMenu(m => (m ? {...m, query: event.target.value} : m)); }}
-          onBlur={event => { if (!(event.relatedTarget as HTMLElement | null)?.closest('[data-slot="prompt-input-menu"]')) setMenu(null); }}
+          onBlur={event => { if (!(event.relatedTarget as HTMLElement | null)?.closest('[data-hui-part="prompt-input-menu"]')) setMenu(null); }}
           onKeyDown={event => {
             if (isComposing(event)) return;
             const count = options.length;
@@ -1020,7 +1020,7 @@ function PromptInput({
  * a DropdownMenuTrigger's render element to open a menu of your models.
  */
 function PromptInputModel({model, children, className, ...props}: Omit<ButtonProps, 'variant' | 'size'> & {model: string}) {
-  return <Button data-slot="prompt-input-model" variant="ghost" size="sm" aria-label={`Model, ${model}`} className={cn('gap-1 text-text-2', className)} {...props}>
+  return <Button data-hui-part="prompt-input-model" variant="ghost" size="sm" aria-label={`Model, ${model}`} className={cn('gap-1 text-text-2', className)} {...props}>
     {children ?? model}<Icon icon={ChevronDown} size={12}/>
   </Button>;
 }

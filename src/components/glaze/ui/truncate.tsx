@@ -69,7 +69,7 @@ function TextHint({content, children, disabled, side = 'top'}: TextHintProps) {
     />
     <Tooltip.Portal container={container}>
       <Tooltip.Positioner side={side} sideOffset={6} collisionPadding={8} className="isolate z-(--z-overlay)">
-        <Tooltip.Popup data-slot="text-hint" className={cn(textHintClass, tooltipMotionClass)}><span className="min-w-0">{content}</span></Tooltip.Popup>
+        <Tooltip.Popup data-hui-part="text-hint" className={cn(textHintClass, tooltipMotionClass)}><span className="min-w-0">{content}</span></Tooltip.Popup>
       </Tooltip.Positioner>
     </Tooltip.Portal>
   </Tooltip.Root>;
@@ -196,7 +196,7 @@ function MiddleTruncate({children, tail, hint, focusable, className, ...props}: 
   const tab = clipped && hint && focusable ? 0 : undefined;
   const text = <span ref={outer} className="block max-w-full min-w-0">
     <span
-      data-slot="truncate"
+      data-hui-part="truncate"
       data-position="middle"
       data-clipped={clipped || undefined}
       dir="auto"
@@ -205,9 +205,9 @@ function MiddleTruncate({children, tail, hint, focusable, className, ...props}: 
       className={cn('inline-flex max-w-full whitespace-nowrap focus-visible:rounded-tag', className)}
       {...props}
     >
-      <span ref={head} data-slot="truncate-head" className="overflow-hidden">{headText}</span>
-      <span ref={dots} data-slot="truncate-ellipsis" aria-hidden="true" className="hidden shrink-0 select-none">…</span>
-      <span ref={tailEl} data-slot="truncate-tail" className="shrink-0">{tailText}</span>
+      <span ref={head} data-hui-part="truncate-head" className="overflow-hidden">{headText}</span>
+      <span ref={dots} data-hui-part="truncate-ellipsis" aria-hidden="true" className="hidden shrink-0 select-none">…</span>
+      <span ref={tailEl} data-hui-part="truncate-tail" className="shrink-0">{tailText}</span>
     </span>
   </span>;
   if (!hint) return text;
@@ -222,7 +222,7 @@ function Truncate({children, position = 'end', tail = 'auto', hint = true, focus
   const tab = clipped && hint && focusable ? 0 : undefined;
   const text = <span
     ref={cutRefs}
-    data-slot="truncate"
+    data-hui-part="truncate"
     data-position="end"
     data-clipped={clipped || undefined}
     tabIndex={tab}

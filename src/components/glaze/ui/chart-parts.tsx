@@ -78,7 +78,7 @@ function ChartContainer({config, xKey, defaultHidden, className, children, ...pr
   }), []);
   const value = useMemo(() => ({config, keys: Object.keys(config).filter(k => k !== xKey), hidden, toggle, highlight, setHighlight}), [config, xKey, hidden, toggle, highlight]);
   return <ChartContext.Provider value={value}>
-    <div data-slot="chart" className={cn('flex w-full min-w-0 flex-col', className)} {...props}>{children}</div>
+    <div data-hui-part="chart" className={cn('flex w-full min-w-0 flex-col', className)} {...props}>{children}</div>
   </ChartContext.Provider>;
 }
 
@@ -122,7 +122,7 @@ function ChartSwatch({config, series, onInk, off, className}: {config: ChartConf
   const keys = useOptionalChart()?.keys;
   const {dashed} = seriesTone(config, series, keys);
   return <svg
-    data-slot="chart-swatch"
+    data-hui-part="chart-swatch"
     aria-hidden
     focusable="false"
     width={8}
@@ -219,7 +219,7 @@ function ChartTooltip({anchor, children, className}: ChartTooltipProps) {
   if (!anchor || container === null) return null;
   const tooltip = <div
     ref={ref}
-    data-slot="chart-tooltip"
+    data-hui-part="chart-tooltip"
     aria-hidden
     className={cn(tooltipPopupClass, 'pointer-events-none fixed z-(--z-overlay) min-w-32 flex-col items-stretch gap-1 py-1.5', !place && 'invisible', className)}
     // value-ok: the chip follows the pointer, so its place is measured each time and can only live inline.
@@ -230,15 +230,15 @@ function ChartTooltip({anchor, children, className}: ChartTooltipProps) {
 
 /** A title (the x value) over the rows. */
 function ChartTooltipContent({title, children, className}: {title?: ReactNode; children?: ReactNode; className?: string}) {
-  return <div data-slot="chart-tooltip-content" className={cn('flex flex-col gap-1', className)}>
-    {title && <div data-slot="chart-tooltip-title" className="type-label-sm text-text-inverse/70">{title}</div>}
+  return <div data-hui-part="chart-tooltip-content" className={cn('flex flex-col gap-1', className)}>
+    {title && <div data-hui-part="chart-tooltip-title" className="type-label-sm text-text-inverse/70">{title}</div>}
     {children}
   </div>;
 }
 
 /** One series on the chip: its swatch, its name and its value, the value at the end in tabular figures. */
 function ChartTooltipRow({indicator, label, value, className}: {indicator?: ReactNode; label: ReactNode; value: ReactNode; className?: string}) {
-  return <div data-slot="chart-tooltip-row" className={cn('flex items-center gap-2 type-label-sm', className)}>
+  return <div data-hui-part="chart-tooltip-row" className={cn('flex items-center gap-2 type-label-sm', className)}>
     {indicator}
     <span className="min-w-0 flex-1 truncate text-text-inverse/70">{label}</span>
     <span className="data text-text-inverse">{value}</span>
@@ -275,7 +275,7 @@ const ChartDataTable = memo(function ChartDataTable({caption, rowHeader = 'Date'
   const named = tab === 0 ? (typeof caption === 'string' ? {'aria-label': caption} : {'aria-labelledby': captionId}) : {};
   return <div
     ref={box}
-    data-slot="chart-data-table"
+    data-hui-part="chart-data-table"
     data-visible={visible || undefined}
     tabIndex={tab}
     role={tab === 0 ? 'region' : undefined}
@@ -291,7 +291,7 @@ const ChartDataTable = memo(function ChartDataTable({caption, rowHeader = 'Date'
         </tr>
       </thead>
       <tbody className="[&>tr:not(:last-child)>*]:border-b [&>tr:not(:last-child)>*]:border-line-faint">
-        {rows.length === 0 && <tr data-slot="chart-data-table-empty">
+        {rows.length === 0 && <tr data-hui-part="chart-data-table-empty">
           <td colSpan={columns.length + 1} className={cn(tdClass, 'text-start text-text-2')}>{empty}</td>
         </tr>}
         {rows.map(row => <tr key={row.key}>
@@ -328,7 +328,7 @@ type ChartLegendProps = Omit<React.ComponentProps<'ul'>, 'children'> & VariantPr
 function ChartLegend({series, values, toggle = true, layout = 'row', className, ...props}: ChartLegendProps) {
   const {config, keys, hidden, toggle: flip, highlight, setHighlight} = useChart();
   const list = series ?? keys;
-  return <ul data-slot="chart-legend" data-layout={layout} className={cn(chartLegendVariants({layout}), className)} {...props}>
+  return <ul data-hui-part="chart-legend" data-layout={layout} className={cn(chartLegendVariants({layout}), className)} {...props}>
     {list.map(key => {
       const off = hidden.has(key);
       const dim = highlight !== null && highlight !== key;
@@ -342,7 +342,7 @@ function ChartLegend({series, values, toggle = true, layout = 'row', className, 
         {toggle
           ? <button
               type="button"
-              data-slot="chart-legend-item"
+              data-hui-part="chart-legend-item"
               aria-pressed={!off}
               onClick={() => flip(key)}
               onPointerEnter={() => !off && setHighlight(key)}
@@ -352,7 +352,7 @@ function ChartLegend({series, values, toggle = true, layout = 'row', className, 
               onKeyDown={event => { if (event.key === 'Escape') setHighlight(null); }}
               className={cn(item, 'transition-colors duration-(--dur-state) ease-out hover:bg-hover')}
             >{body}</button>
-          : <span data-slot="chart-legend-item" className={item}>{body}</span>}
+          : <span data-hui-part="chart-legend-item" className={item}>{body}</span>}
       </li>;
     })}
   </ul>;

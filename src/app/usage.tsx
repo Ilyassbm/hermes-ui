@@ -5,22 +5,23 @@
 // `resetsAt`: under a day away it is just the hour, further out it is the short weekday and the hour, and with no date
 // at all the row keeps only the percentage.
 import type { CSSProperties } from 'react'
+import { UI } from './strings'
 
 export type UsageWindow = { id?: string; used?: number | string; resetsAt?: string }
 export type UsageProvider = { id?: string; label?: string; plan?: string; tier?: string; windows?: UsageWindow[] }
 
 type Card = {
   id: string
-  /** "Limites d'utilisation du forfait · Claude · Pro" */
+  /** "Usage limits · Claude · Pro" */
   title: string
   rows: { key: string; label: string; used: number; reset: string }[]
 }
 
 /** The three windows the rail draws, in the order a person reads them, with the label the amendment pins. */
 const WINDOWS: { key: string; ids: string[]; label: string }[] = [
-  { key: 'session', ids: ['session', 'five_hour', 'rolling'], label: 'Limite de 5 heures' },
-  { key: 'week', ids: ['week', 'weekly'], label: 'Hebdomadaire · tous les modèles' },
-  { key: 'month', ids: ['month', 'monthly'], label: 'Mensuel' }
+  { key: 'session', ids: ['session', 'five_hour', 'rolling'], label: UI.usage.fiveHour },
+  { key: 'week', ids: ['week', 'weekly'], label: UI.usage.weekly },
+  { key: 'month', ids: ['month', 'monthly'], label: UI.usage.monthly }
 ]
 
 /** The providers with a card, in the rail's order. */
@@ -32,18 +33,18 @@ const pct = (value: unknown): number => {
   return Math.max(0, Math.min(100, Math.round(n)))
 }
 
-const hourMinute = (date: Date) => date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+const hourMinute = (date: Date) => date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 
-/** "Réinitialisation le lun. 03:20", "Réinitialisation à 03:20" under a day, "" without a date. */
+/** "Resets Mon 03:20", "Resets at 03:20" under a day, "" without a date. */
 export function resetLabel(iso?: string, now = Date.now()): string {
   if (!iso) return ''
   const date = new Date(iso)
   const at = date.getTime()
   if (!Number.isFinite(at)) return ''
   const left = at - now
-  if (left > 0 && left < 86_400_000) return `Réinitialisation à ${hourMinute(date)}`
-  const day = date.toLocaleDateString('fr-FR', { weekday: 'short' })
-  return `Réinitialisation le ${day} ${hourMinute(date)}`
+  if (left > 0 && left < 86_400_000) return UI.usage.resetsAt(hourMinute(date))
+  const day = date.toLocaleDateString('en-GB', { weekday: 'short' })
+  return UI.usage.resetsOn(day, hourMinute(date))
 }
 
 /** One card per provider the rail shows, with its windows. */
@@ -56,7 +57,7 @@ export function usageCards(usage: unknown, now = Date.now()): Card[] {
       const plan = (p.plan || p.tier || '').trim()
       return {
         id: String(p.id),
-        title: `Limites d'utilisation du forfait · ${p.label || p.id}${plan ? ` · ${plan}` : ''}`,
+        title: UI.usage.title(p.label || p.id, plan),
         rows: WINDOWS.flatMap(w => {
           const window = windows.find(candidate => candidate && w.ids.includes(String(candidate.id)))
           if (!window) return []

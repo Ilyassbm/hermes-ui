@@ -27,6 +27,7 @@ import { useStore } from '@/lib/store'
 import { BotAvatar } from './bot-avatar'
 import { focusEditor } from './editor'
 import { botIdentity, botRole, sinceLabel } from './format'
+import { UI } from './strings'
 import { openPicker, view } from './ui-state'
 
 type BotChoice = {
@@ -66,6 +67,13 @@ export function BotPicker({ ctx }: { ctx: any }) {
   const [query, setQuery] = useState('')
   const [index, setIndex] = useState(0)
   const listRef = useRef<HTMLDivElement | null>(null)
+  /**
+   * The dialog's own node. Lot 13: the guard reads this ref instead of querying the document for a `[data-…]`
+   * selector — the catalog lint refuses a plugin that reaches the app's markup, and a ref cannot reach anything the
+   * picker did not render. React clears it when the popup unmounts, so a non-null, connected node after a close is
+   * exactly the stuck node the guard is looking for.
+   */
+  const panelRef = useRef<HTMLDivElement | null>(null)
   /** One pick per open: the dialog's listener and a stray second key must not both act. */
   const busy = useRef(false)
   /** The unmount guard's key: bumping it remounts the <Dialog> shut, which is how a stuck node is removed. */
@@ -100,20 +108,12 @@ export function BotPicker({ ctx }: { ctx: any }) {
   const needle = query.trim().toLowerCase()
 
   /**
-   * Marks the scrim this dialog brought, so the guard below can tell it from another overlay's: Base UI renders the
-   * backdrop as the popup's sibling, inside the same portal.
-   */
-  useEffect(() => {
-    if (!open) return
-    const popup = document.querySelector('.hui-picker')
-    popup?.parentElement?.querySelector('[data-slot="dialog-overlay"]')?.setAttribute('data-picker-scrim', '')
-  }, [open, mountKey])
-
-  /**
    * The guard itself, armed by the picker being closed whatever closed it — Escape, a digit, a row, a click on the
    * backdrop (which reaches us as `onOpenChange(false)`, so `open` going false is the one signal every way out
-   * shares). 400 ms later, a picker dialog, an open dialog, or the scrim it came with is still in the DOM: nothing
-   * legitimate is mounted then, so the <Dialog> is remounted shut and React removes the node.
+   * shares). 400 ms later, the picker's own popup node still in hand and still connected means Base UI failed to
+   * unmount it (and its scrim, which covers the app): nothing legitimate is mounted then, so the <Dialog> is
+   * remounted shut and React removes the node. No document query: the ref only ever points at what this component
+   * rendered.
    */
   useEffect(() => {
     if (open) {
@@ -122,11 +122,8 @@ export function BotPicker({ ctx }: { ctx: any }) {
     }
     const timer = window.setTimeout(() => {
       if (guardRan.current) return
-      const stuck =
-        document.querySelector('[data-slot="dialog-content"][data-open]') ||
-        document.querySelector('[data-slot="dialog-content"].hui-picker') ||
-        document.querySelector('[data-picker-scrim]')
-      if (!stuck) return
+      const panel = panelRef.current
+      if (!panel || !panel.isConnected) return
       guardRan.current = true
       setMountKey(key => key + 1)
     }, UNMOUNT_GUARD_MS)
@@ -283,12 +280,12 @@ export function BotPicker({ ctx }: { ctx: any }) {
     // whole tree (dialog, portal, scrim) before mounting it shut again.
     <Fragment key={mountKey}>
       <Dialog open={open} onOpenChange={next => { if (!next) openPicker(null) }}>
-        <DialogContent className="hui-picker" showCloseButton={false}>
+        <DialogContent ref={panelRef} className="hui-picker" showCloseButton={false}>
           <DialogTitle className="hui-sr">
-            {mode === 'search' ? 'Rechercher un bot ou une conversation' : 'Nouvelle discussion avec un bot'}
+            {mode === 'search' ? UI.picker.searchTitle : UI.picker.newTitle}
           </DialogTitle>
           <DialogDescription className="hui-sr">
-            Choisis un bot pour commencer une discussion, ou une conversation pour l’ouvrir.
+            {UI.picker.description}
           </DialogDescription>
 
           <div className="hui-picker-form">
@@ -296,8 +293,8 @@ export function BotPicker({ ctx }: { ctx: any }) {
               mode="search"
               autoFocus
               value={query}
-              placeholder={mode === 'search' ? 'Rechercher un bot ou une conversation' : 'Nouvelle discussion avec…'}
-              aria-label={mode === 'search' ? 'Rechercher un bot ou une conversation' : 'Nouvelle discussion avec…'}
+              placeholder={mode === 'search' ? UI.picker.searchTitle : UI.picker.newPlaceholder}
+              aria-label={mode === 'search' ? UI.picker.searchTitle : UI.picker.newPlaceholder}
               onChange={e => {
                 setQuery(e.target.value)
                 setIndex(0)
@@ -305,13 +302,13 @@ export function BotPicker({ ctx }: { ctx: any }) {
             />
           </div>
 
-          <div ref={listRef} className="hui-picker-list" role="listbox" aria-label="Bots et conversations">
-            {pinnedRows.length ? <p className="hui-picker-section">{needle ? 'Bots' : 'Épinglés'}</p> : null}
+          <div ref={listRef} className="hui-picker-list" role="listbox" aria-label={UI.picker.listLabel}>
+            {pinnedRows.length ? <p className="hui-picker-section">{needle ? UI.picker.bots : UI.picker.pinned}</p> : null}
             {pinnedRows.map(botRow)}
-            {teamRows.length ? <p className="hui-picker-section">Équipe</p> : null}
+            {teamRows.length ? <p className="hui-picker-section">{UI.picker.team}</p> : null}
             {teamRows.map(botRow)}
 
-            {convRows.length ? <p className="hui-picker-section">Conversations</p> : null}
+            {convRows.length ? <p className="hui-picker-section">{UI.picker.conversations}</p> : null}
             {convRows.map(row => {
               const at = choices.findIndex(candidate => candidate.key === row.key)
               return (
@@ -335,7 +332,7 @@ export function BotPicker({ ctx }: { ctx: any }) {
               )
             })}
 
-            {!choices.length ? <p className="hui-picker-empty">Aucun résultat</p> : null}
+            {!choices.length ? <p className="hui-picker-empty">{UI.picker.empty}</p> : null}
           </div>
         </DialogContent>
       </Dialog>

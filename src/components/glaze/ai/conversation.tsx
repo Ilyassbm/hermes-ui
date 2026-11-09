@@ -254,7 +254,7 @@ type ConversationProps = React.ComponentProps<'div'> & {
 function Conversation({className, status = 'idle', ...props}: ConversationProps) {
   const outer = useContext(Ctx);
   const root = <div
-    data-slot="conversation"
+    data-hui-part="conversation"
     data-status={outer ? outer.status : status}
     className={cn('group/conversation relative flex size-full min-h-0 flex-col overflow-hidden', className)}
     {...props}
@@ -289,7 +289,7 @@ function ConversationViewport({className, 'aria-label': ariaLabel = 'Conversatio
   return <>
     <div
       ref={viewportRefs}
-      data-slot="conversation-viewport"
+      data-hui-part="conversation-viewport"
       data-attached={attached}
       role="log"
       aria-live="off"
@@ -342,7 +342,7 @@ function ConversationContent({className, style, children, ref, ...props}: React.
 
   return <div
     ref={contentRefs}
-    data-slot="conversation-content"
+    data-hui-part="conversation-content"
     className={cn('flex h-max min-h-full flex-col justify-end gap-4', className)}
     style={{...style, ...(floor ? {minHeight: floor} : null)}}
     {...props}
@@ -358,7 +358,7 @@ type ItemProps = React.ComponentProps<'div'> & {
 
 function ConversationItem({className, rowKey, pinned, ...props}: ItemProps) {
   return <div
-    data-slot="conversation-item"
+    data-hui-part="conversation-item"
     data-row-key={rowKey}
     data-pinned={pinned || undefined}
     className={cn('min-w-0 shrink-0', !pinned && '[contain-intrinsic-size:auto_160px] [content-visibility:auto]' /* value-ok: a height the browser assumes for an off-screen message until it lays one out, never drawn */, className)}
@@ -368,7 +368,7 @@ function ConversationItem({className, rowKey, pinned, ...props}: ItemProps) {
 
 /** The reserved box at the end of the thread: the loader, then the turn's actions, in one height. */
 function ConversationTail({className, ...props}: React.ComponentProps<'div'>) {
-  return <div data-slot="conversation-tail" className={cn('flex min-h-(--control) min-w-0 shrink-0 items-center', className)} {...props}/>;
+  return <div data-hui-part="conversation-tail" className={cn('flex min-h-(--control) min-w-0 shrink-0 items-center', className)} {...props}/>;
 }
 
 /** Scrolls the thread so `el` sits a quarter of the way down the viewport, after letting go of the end. */
@@ -438,13 +438,13 @@ function ConversationJump({className, children, onClick, waiting: watchWaiting =
     if (toWaiting && viewport && first) {
       scrollToItem(viewport, first, detach);
       // Its first action (Deny, the safe one), else the row itself.
-      (first.querySelector<HTMLElement>('[data-slot=tool-call-actions] button') ?? first.querySelector<HTMLElement>('button'))?.focus({preventScroll: true});
+      (first.querySelector<HTMLElement>('[data-hui-part=tool-call-actions] button') ?? first.querySelector<HTMLElement>('button'))?.focus({preventScroll: true});
     } else scrollToEnd();
     onClick?.();
   };
   return <Button
     ref={buttonRefs}
-    data-slot="conversation-jump"
+    data-hui-part="conversation-jump"
     data-active={active}
     data-waiting={toWaiting || undefined}
     variant="secondary"
@@ -546,7 +546,7 @@ function ConversationRetry({attempt, next, message, onRetry, labels, className, 
   const words = conversationWords(labels);
   const left = useCountdown(next);
   const short = message && message.length > 80 ? `${message.slice(0, 79)}…` : message;
-  return <div data-slot="conversation-retry" className={cn('flex min-h-(--control) min-w-0 flex-wrap items-center gap-x-3 ps-4 pe-2', className)} {...props}>
+  return <div data-hui-part="conversation-retry" className={cn('flex min-h-(--control) min-w-0 flex-wrap items-center gap-x-3 ps-4 pe-2', className)} {...props}>
     <Status status="running" size="sm">{left ? words.retryingIn(left) : words.retryingNow}</Status>
     <span className="type-caption text-text-2 data">{words.attempt(attempt)}</span>
     {short && <span title={message} className="min-w-0 grow basis-48 truncate [contain:inline-size] type-body-sm text-text-2">{short}</span>}
@@ -557,7 +557,7 @@ function ConversationRetry({attempt, next, message, onRetry, labels, className, 
 /** A typed error at the end of the turn, as a row on the failure tint with its word. The partial answer above it stays. */
 function ConversationError({kind, message, onRetry, labels, className, ...props}: Omit<React.ComponentProps<'div'>, 'children'> & {kind: ErrorKind; message?: string; onRetry?: () => void; labels?: ConversationLabels}) {
   const words = conversationWords(labels);
-  return <div data-slot="conversation-error" data-status="fail" data-error={kind} className={cn('relative mx-4 flex min-h-(--row) min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-overlay bg-fail-tint py-1 ps-3 pe-1', className)} {...props}>
+  return <div data-hui-part="conversation-error" data-status="fail" data-error={kind} className={cn('relative mx-4 flex min-h-(--row) min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-overlay bg-fail-tint py-1 ps-3 pe-1', className)} {...props}>
     <Status status="fail" size="sm">{words.errors[kind]}</Status>
     {message && <span className="min-w-0 grow basis-48 type-body-sm text-text-2 [overflow-wrap:anywhere] [contain:inline-size]">{message}</span>}
     {onRetry && kind !== 'gone' && <Button variant="secondary" size="sm" onClick={onRetry} className="ms-auto">{words.retry}</Button>}
@@ -604,7 +604,7 @@ const Row = memo(function Row({row, onRetry, labels}: {row: ConversationRow; onR
       <Status status="running" size="sm" className="min-h-(--control) items-center text-text-2">{row.label ?? words.thinking}</Status>
     </AgentTurn>;
     case 'retry': return <ConversationRetry attempt={row.attempt} next={row.next} message={row.message} labels={labels}/>;
-    case 'diff': return <p data-slot="conversation-diff" className="relative flex min-h-(--control) items-center gap-2 px-4 type-body-sm text-text-2 data">
+    case 'diff': return <p data-hui-part="conversation-diff" className="relative flex min-h-(--control) items-center gap-2 px-4 type-body-sm text-text-2 data">
       <span className="text-text-1">{words.filesChanged(row.files)}</span>
       <DiffCount added={row.additions} removed={row.deletions} addedLabel={words.added} removedLabel={words.removed}/>
     </p>;

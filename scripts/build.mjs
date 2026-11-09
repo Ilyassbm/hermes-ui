@@ -6,7 +6,7 @@
 // Glaze surface and injected in a <style id="hermes-ui-glaze"> on mount, so nothing lands in the page head.
 //
 // --install HERMES_ROOT=<root> : also copies it as a standalone desktop plugin (dev only).
-import { build } from 'esbuild'
+import { build, transform } from 'esbuild'
 import { spawnSync } from 'node:child_process'
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
@@ -16,6 +16,7 @@ import postcss from 'postcss'
 import tailwind from '@tailwindcss/postcss'
 import { checkNativeSkin, findGlobalSelectors, NATIVE_SKIN_FILE, scopeGlobalSelectors } from './check-css.mjs'
 import { checkBundle } from './check-bundle.mjs'
+import { checkSurface } from './check-surface.mjs'
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
 const from = resolve(root, 'src/styles/app.css')
@@ -143,6 +144,33 @@ if (violations.length) {
   process.exit(1)
 }
 console.log(`bundle: ${(bundle.length / 1024 / 1024).toFixed(2)} MB, ${lines} lines, ${imports} import statement(s), modules: ${modules.join(', ') || 'none'}`)
+
+// 4a. Invisible characters, in the file as written. esbuild's printer emits a `\u200c` escape as the raw character
+//     again under `charset: 'utf8'`, so a node module's own zero-width joiners (zod's Persian and Kannada messages)
+//     reach `desktop/plugin.js` raw and the catalog's security scan reports `invisible_unicode` on the bundle. They
+//     only ever sit inside a string, template or regex literal, where the escape is the same value at run time and a
+//     visible one in a diff; the file is parsed again right after, so a bad rewrite cannot ship.
+// The exact set the security scan refuses (/opt/hermes/tools/threat_patterns.py::INVISIBLE_CHARS, read 2026-11-09):
+// zero-width space/non-joiner/joiner, word joiner, invisible times/separator/plus, BOM, the bidi embeddings and
+// isolates with their pops and overrides.
+const INVISIBLE = /[\u200B-\u200D\u2060\u2062-\u2064\uFEFF\u202A-\u202E\u2066-\u2069]/g
+const escaped = bundle.replace(INVISIBLE, ch => `\\u${ch.charCodeAt(0).toString(16).padStart(4, '0')}`)
+if (escaped !== bundle) {
+  await transform(escaped, { loader: 'js', format: 'esm' })
+  writeFileSync('desktop/plugin.js', escaped)
+  console.log(`invisible: ${(bundle.match(INVISIBLE) ?? []).length} character(s) escaped as \\uXXXX in desktop/plugin.js`)
+}
+
+// 4b. The catalog's Desktop-surface gate, on the bundle just written: the same rules `hermes plugins validate .`
+//     applies (scripts/check-surface.mjs transcribes plugin_validate_desktop.py). A refused construct here would ship
+//     to the renderer, so the build stops before the file is copied anywhere.
+const surface = checkSurface('desktop/plugin.js')
+if (surface.findings.length) {
+  console.error(`build: desktop surface refused — ${surface.findings.length} construct(s) in desktop/plugin.js`)
+  for (const finding of surface.findings.slice(0, 20)) console.error(`  ${finding.rule} (desktop/plugin.js:${finding.line})`)
+  process.exit(1)
+}
+console.log(`surface: desktop/plugin.js — no refused construct, ${surface.cues.length} review cue(s)`)
 
 if (install) {
   const hermesRoot = process.env.HERMES_ROOT || join(homedir(), '.hermes')

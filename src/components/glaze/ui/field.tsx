@@ -44,7 +44,7 @@ const labelClasses = [
 
 /** The quiet word after a label: Optional, Required, a unit or a limit. */
 function LabelHint({className, ...props}: ComponentProps<'span'>) {
-  return <span data-slot="label-hint" className={cn('type-body-sm whitespace-nowrap text-text-2 group-data-disabled/field:text-text-disabled', className)} {...props}/>;
+  return <span data-hui-part="label-hint" className={cn('type-body-sm whitespace-nowrap text-text-2 group-data-disabled/field:text-text-disabled', className)} {...props}/>;
 }
 
 type Mark = {
@@ -67,7 +67,7 @@ type LabelProps = ComponentProps<'label'> & Mark;
  * use FieldLabel, which Base UI binds for you.
  */
 function Label({className, optional, required, children, ...props}: LabelProps) {
-  return <label data-slot="label" className={cn(labelClasses, 'peer-disabled:text-text-disabled', className)} {...props}>
+  return <label data-hui-part="label" className={cn(labelClasses, 'peer-disabled:text-text-disabled', className)} {...props}>
     {children}
     {marks({optional, required})}
   </label>;
@@ -76,8 +76,8 @@ function Label({className, optional, required, children, ...props}: LabelProps) 
 /** Fieldsets and fields, 16px apart in a group and 24px between groups. The container a responsive field queries. */
 function FieldGroup({className, ...props}: ComponentProps<'div'>) {
   return <div
-    data-slot="field-group"
-    className={cn('group/field-group @container/field-group flex w-full min-w-0 flex-col gap-4 has-[>[data-slot=field-set]]:gap-6', className)}
+    data-hui-part="field-group"
+    className={cn('group/field-group @container/field-group flex w-full min-w-0 flex-col gap-4 has-[>[data-hui-part=field-set]]:gap-6', className)}
     {...props}
   />;
 }
@@ -86,9 +86,9 @@ function FieldGroup({className, ...props}: ComponentProps<'div'>) {
 function FieldSet({className, disabled, children, ...props}: FieldsetPrimitive.Root.Props) {
   return <FieldDisabled.Provider value={!!disabled}>
     <FieldsetPrimitive.Root
-      data-slot="field-set"
+      data-hui-part="field-set"
       disabled={disabled}
-      className={mergeClass('flex min-w-0 flex-col gap-4 has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3', className)}
+      className={mergeClass('flex min-w-0 flex-col gap-4 has-[>[data-hui-part=checkbox-group]]:gap-3 has-[>[data-hui-part=radio-group]]:gap-3', className)}
       {...props}
     >{children}</FieldsetPrimitive.Root>
   </FieldDisabled.Provider>;
@@ -97,7 +97,7 @@ function FieldSet({className, disabled, children, ...props}: FieldsetPrimitive.R
 /** The fieldset's title: a section heading by default, or a label-sized one for a short set inside a form. */
 function FieldLegend({className, variant = 'legend', ...props}: FieldsetPrimitive.Legend.Props & {variant?: 'legend' | 'label'}) {
   return <FieldsetPrimitive.Legend
-    data-slot="field-legend"
+    data-hui-part="field-legend"
     data-variant={variant}
     className={mergeClass('text-text-1 data-[variant=label]:type-label data-[variant=legend]:type-heading-sm data-disabled:text-text-disabled', className)}
     {...props}
@@ -112,15 +112,15 @@ const fieldVariants = cva('group/field flex w-full min-w-0', {
       // The control beside its label. A checkbox, a radio or a switch sits at the end with the label filling the row; a
       // text control takes the rest of the row after a --label-col label column, so stacked fields line up.
       horizontal: [
-        'flex-row items-center gap-3 has-[>[data-slot=field-content]]:items-start *:data-[slot=field-label]:flex-auto *:data-[slot=field-label]:shrink-0',
-        'has-[>[data-slot=input]]:gap-4 has-[>[data-slot=input]]:*:data-[slot=field-label]:w-(--label-col) has-[>[data-slot=input]]:*:data-[slot=field-label]:flex-none has-[>[data-slot=input]]:*:data-[slot=input]:flex-1',
-        'has-[>[data-slot=textarea]]:items-start has-[>[data-slot=textarea]]:gap-4 has-[>[data-slot=textarea]]:*:data-[slot=field-label]:w-(--label-col) has-[>[data-slot=textarea]]:*:data-[slot=field-label]:flex-none has-[>[data-slot=textarea]]:*:data-[slot=field-label]:pt-1.5',
+        'flex-row items-center gap-3 has-[>[data-hui-part=field-content]]:items-start *:data-[hui-part=field-label]:flex-auto *:data-[hui-part=field-label]:shrink-0',
+        'has-[>[data-hui-part=input]]:gap-4 has-[>[data-hui-part=input]]:*:data-[hui-part=field-label]:w-(--label-col) has-[>[data-hui-part=input]]:*:data-[hui-part=field-label]:flex-none has-[>[data-hui-part=input]]:*:data-[hui-part=input]:flex-1',
+        'has-[>[data-hui-part=textarea]]:items-start has-[>[data-hui-part=textarea]]:gap-4 has-[>[data-hui-part=textarea]]:*:data-[hui-part=field-label]:w-(--label-col) has-[>[data-hui-part=textarea]]:*:data-[hui-part=field-label]:flex-none has-[>[data-hui-part=textarea]]:*:data-[hui-part=field-label]:pt-1.5',
       ].join(' '),
       // Vertical in a narrow container, the label beside the control once the field group is 448px wide.
       responsive: [
         'flex-col gap-1.5',
         '@md/field-group:flex-row @md/field-group:items-center @md/field-group:gap-6',
-        '@md/field-group:*:data-[slot=field-label]:w-40 @md/field-group:*:data-[slot=field-label]:shrink-0 @md/field-group:*:data-[slot=field-content]:flex-auto',
+        '@md/field-group:*:data-[hui-part=field-label]:w-40 @md/field-group:*:data-[hui-part=field-label]:shrink-0 @md/field-group:*:data-[hui-part=field-content]:flex-auto',
       ].join(' '),
     },
   },
@@ -149,7 +149,7 @@ function Field({className, orientation = 'vertical', validationMode, ...props}: 
   }, [nested]);
   return <InField.Provider value>
     <FieldPrimitive.Root
-      data-slot="field"
+      data-hui-part="field"
       data-orientation={orientation}
       validationMode={validationMode ?? (invalid ? 'onChange' : 'onBlur')}
       className={mergeClass(fieldVariants({orientation}), className)}
@@ -161,14 +161,14 @@ function Field({className, orientation = 'vertical', validationMode, ...props}: 
 
 /** Stacks a label and its description beside the control in a horizontal field. */
 function FieldContent({className, ...props}: ComponentProps<'div'>) {
-  return <div data-slot="field-content" className={cn('flex min-w-0 flex-1 flex-col gap-0.5', className)} {...props}/>;
+  return <div data-hui-part="field-content" className={cn('flex min-w-0 flex-1 flex-col gap-0.5', className)} {...props}/>;
 }
 
 type FieldLabelProps = FieldPrimitive.Label.Props & Mark;
 
 /** The field's label, bound to its control by Base UI. */
 function FieldLabel({className, optional, required, children, ...props}: FieldLabelProps) {
-  return <FieldPrimitive.Label data-slot="field-label" className={mergeClass([labelClasses, 'data-disabled:text-text-disabled'], className)} {...props}>
+  return <FieldPrimitive.Label data-hui-part="field-label" className={mergeClass([labelClasses, 'data-disabled:text-text-disabled'], className)} {...props}>
     {children}
     {marks({optional, required})}
   </FieldPrimitive.Label>;
@@ -176,7 +176,7 @@ function FieldLabel({className, optional, required, children, ...props}: FieldLa
 
 /** A label-styled title that is not a <label>, for a field whose control names itself (a radio group, a slider). */
 function FieldTitle({className, optional, required, children, ...props}: ComponentProps<'div'> & Mark) {
-  return <div data-slot="field-title" className={cn(labelClasses, className)} {...props}>
+  return <div data-hui-part="field-title" className={cn(labelClasses, className)} {...props}>
     {children}
     {marks({optional, required})}
   </div>;
@@ -190,14 +190,14 @@ function FieldDescription({className, ...props}: FieldPrimitive.Description.Prop
   if (!inField) {
     const {render: _render, ...rest} = props;
     // Outside a Field there is no Base UI state to hand a className function, so only a string applies.
-    return <p data-slot="field-description" className={cn(descriptionClasses, typeof className === 'string' && className)} {...(rest as ComponentProps<'p'>)}/>;
+    return <p data-hui-part="field-description" className={cn(descriptionClasses, typeof className === 'string' && className)} {...(rest as ComponentProps<'p'>)}/>;
   }
-  return <FieldPrimitive.Description data-slot="field-description" className={mergeClass(descriptionClasses, className)} {...props}/>;
+  return <FieldPrimitive.Description data-hui-part="field-description" className={mergeClass(descriptionClasses, className)} {...props}/>;
 }
 
 /** A hairline between groups of fields, with optional words in the middle ("or"). */
 function FieldSeparator({children, className, ...props}: ComponentProps<'div'> & {children?: ReactNode}) {
-  return <div data-slot="field-separator" role="separator" className={cn('flex items-center gap-3 type-caption text-text-2', className)} {...props}>
+  return <div data-hui-part="field-separator" role="separator" className={cn('flex items-center gap-3 type-caption text-text-2', className)} {...props}>
     <span aria-hidden className="h-px flex-1 bg-line"/>
     {children && <><span>{children}</span><span aria-hidden className="h-px flex-1 bg-line"/></>}
   </div>;
@@ -225,10 +225,10 @@ function FieldError({className, children, errors, match, ...props}: FieldErrorPr
   if (!inField) {
     if (!always) return null;
     const {render: _render, ...rest} = props;
-    return <div data-slot="field-error" data-status="fail" role="alert" className={cn(errorClasses, typeof className === 'string' && className)} {...(rest as ComponentProps<'div'>)}>{content}</div>;
+    return <div data-hui-part="field-error" data-status="fail" role="alert" className={cn(errorClasses, typeof className === 'string' && className)} {...(rest as ComponentProps<'div'>)}>{content}</div>;
   }
   return <FieldPrimitive.Error
-    data-slot="field-error"
+    data-hui-part="field-error"
     data-status="fail"
     match={match ?? (always ? true : undefined)}
     className={mergeClass(errorClasses, className)}
@@ -248,7 +248,7 @@ type FormProps = FormPrimitive.Props & {
 /** A form that collects Field values, validates them on submit, focuses the first invalid field and routes server errors back to fields by name through errors. */
 function Form({className, pending, onSubmit, onFormSubmit, ...props}: FormProps) {
   return <FormPrimitive
-    data-slot="form"
+    data-hui-part="form"
     aria-busy={pending || undefined}
     onSubmit={e => {
       if (pending) { e.preventDefault(); return; }
@@ -262,13 +262,13 @@ function Form({className, pending, onSubmit, onFormSubmit, ...props}: FormProps)
 
 /** The row of buttons at the end of a form: paper first, the one ink action last, under the reading hand. */
 function FormActions({className, ...props}: ComponentProps<'div'>) {
-  return <div data-slot="form-actions" className={cn('flex flex-wrap items-center gap-2', className)} {...props}/>;
+  return <div data-hui-part="form-actions" className={cn('flex flex-wrap items-center gap-2', className)} {...props}/>;
 }
 
 /** Where a submit's result is announced. Render it from the start, empty, so a screen reader hears it change. */
 function FormStatus({className, status, ...props}: ComponentProps<'p'> & {status?: 'ok' | 'fail'}) {
   return <p
-    data-slot="form-status"
+    data-hui-part="form-status"
     role="status"
     data-status={status}
     className={cn('min-h-lh type-body-sm text-text-1 data-[status=fail]:text-fail-text data-[status=ok]:text-ok-text', className)}

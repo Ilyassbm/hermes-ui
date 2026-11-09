@@ -1,7 +1,7 @@
-/* Glaze Noir — the skin for the native pages that stay native (Réglages, Capabilities, Messaging…).
+/* Glaze Noir — the skin for the native pages that stay native (Settings, Capabilities, Messaging…).
    Injected by the app as the theme's `customCSS`, so it is global CSS by construction. Every rule is therefore gated
    on `:where(:not(.glaze *))`: the native app gets Glaze's geometry, and Hermes UI's own page (.glaze) is never
-   touched, not even by specificity. Only `data-slot` attributes and the scrollbar/selection pseudo-elements are
+   touched, not even by specificity. Only `data-hui-part` attributes and the scrollbar/selection pseudo-elements are
    targeted — never the app's generated Tailwind classes, which change between builds.
 
    Geometry only: 8px on controls, 12px on cards, 10px on overlays. No shadow anywhere, hairlines from the theme's
@@ -10,45 +10,45 @@
    Budget: scripts/check-css.mjs fails the build above 8 kB, and fails any selector that mentions .glaze. */
 
 /* Cards: 12px, flat, the theme's hairline. */
-:where(:not(.glaze *)) [data-slot='card'],
-:where(:not(.glaze *)) [data-slot='card-stack-surface'],
-:where(:not(.glaze *)) [data-slot='tool-approval-card'],
-:where(:not(.glaze *)) [data-slot='connector-card'] {
+:where(:not(.glaze *)) [data-hui-part='card'],
+:where(:not(.glaze *)) [data-hui-part='card-stack-surface'],
+:where(:not(.glaze *)) [data-hui-part='tool-approval-card'],
+:where(:not(.glaze *)) [data-hui-part='connector-card'] {
   border-radius: 12px;
   border-color: var(--dt-border, rgba(244, 244, 243, 0.1));
   box-shadow: none;
 }
 
 /* Overlays (menus, popovers, dialogs, sheets, selects, tooltips): 10px, a 1px hairline instead of a shadow. */
-:where(:not(.glaze *)) [data-slot='popover-content'],
-:where(:not(.glaze *)) [data-slot='dropdown-menu-content'],
-:where(:not(.glaze *)) [data-slot='context-menu-content'],
-:where(:not(.glaze *)) [data-slot='select-content'],
-:where(:not(.glaze *)) [data-slot='dialog-content'],
-:where(:not(.glaze *)) [data-slot='sheet-content'],
-:where(:not(.glaze *)) [data-slot='tooltip-content'],
-:where(:not(.glaze *)) [data-slot='command'] {
+:where(:not(.glaze *)) [data-hui-part='popover-content'],
+:where(:not(.glaze *)) [data-hui-part='dropdown-menu-content'],
+:where(:not(.glaze *)) [data-hui-part='context-menu-content'],
+:where(:not(.glaze *)) [data-hui-part='select-content'],
+:where(:not(.glaze *)) [data-hui-part='dialog-content'],
+:where(:not(.glaze *)) [data-hui-part='sheet-content'],
+:where(:not(.glaze *)) [data-hui-part='tooltip-content'],
+:where(:not(.glaze *)) [data-hui-part='command'] {
   border-radius: 10px;
   border-color: var(--dt-border, rgba(244, 244, 243, 0.1));
   box-shadow: none;
 }
 
 /* One-line controls: 8px, flat. */
-:where(:not(.glaze *)) [data-slot='button'],
-:where(:not(.glaze *)) [data-slot='input'],
-:where(:not(.glaze *)) [data-slot='textarea'],
-:where(:not(.glaze *)) [data-slot='select-trigger'],
-:where(:not(.glaze *)) [data-slot='kbd'],
-:where(:not(.glaze *)) [data-slot='badge'] {
+:where(:not(.glaze *)) [data-hui-part='button'],
+:where(:not(.glaze *)) [data-hui-part='input'],
+:where(:not(.glaze *)) [data-hui-part='textarea'],
+:where(:not(.glaze *)) [data-hui-part='select-trigger'],
+:where(:not(.glaze *)) [data-hui-part='kbd'],
+:where(:not(.glaze *)) [data-hui-part='badge'] {
   border-radius: 8px;
   box-shadow: none;
 }
 
 /* The chrome's edges: one hairline, no rule of its own. */
-:where(:not(.glaze *)) [data-slot='sidebar'],
-:where(:not(.glaze *)) [data-slot='sidebar-footer'],
-:where(:not(.glaze *)) [data-slot='statusbar'],
-:where(:not(.glaze *)) [data-slot='separator'] {
+:where(:not(.glaze *)) [data-hui-part='sidebar'],
+:where(:not(.glaze *)) [data-hui-part='sidebar-footer'],
+:where(:not(.glaze *)) [data-hui-part='statusbar'],
+:where(:not(.glaze *)) [data-hui-part='separator'] {
   border-color: var(--dt-border, rgba(244, 244, 243, 0.1));
   box-shadow: none;
 }

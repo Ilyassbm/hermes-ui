@@ -33,27 +33,27 @@ type TableFrame = 'card' | 'none';
 
 /** The head row inside the panel: title, count, then actions at the end, over a hairline. Shared with DataGrid. */
 function TableTitle({title, count, actions, id, className}: {title: React.ReactNode; count?: React.ReactNode; actions?: React.ReactNode; id?: string; className?: string}) {
-  return <div data-slot="table-title" className={cn('flex min-h-(--row) min-w-0 shrink-0 items-center gap-2 border-b border-line-faint ps-3 pe-1.5', className)}>
+  return <div data-hui-part="table-title" className={cn('flex min-h-(--row) min-w-0 shrink-0 items-center gap-2 border-b border-line-faint ps-3 pe-1.5', className)}>
     <span id={id} className="min-w-0 truncate type-label text-text-1">{title}</span>
-    {count != null && <span data-slot="table-count" className="shrink-0 type-label text-text-2 data">{count}</span>}
-    {actions != null && <div data-slot="table-actions" className="ms-auto flex shrink-0 items-center gap-1">{actions}</div>}
+    {count != null && <span data-hui-part="table-count" className="shrink-0 type-label text-text-2 data">{count}</span>}
+    {actions != null && <div data-hui-part="table-actions" className="ms-auto flex shrink-0 items-center gap-1">{actions}</div>}
   </div>;
 }
 
 /** A strip under the head row for filters and the columns menu, over a hairline. Shared with DataGrid. */
 function TableToolbar({className, ...props}: React.ComponentProps<'div'>) {
-  return <div data-slot="table-toolbar" className={cn('flex min-h-(--row) min-w-0 shrink-0 flex-wrap items-center gap-2 border-b border-line-faint px-1.5 py-1', className)} {...props}/>;
+  return <div data-hui-part="table-toolbar" className={cn('flex min-h-(--row) min-w-0 shrink-0 flex-wrap items-center gap-2 border-b border-line-faint px-1.5 py-1', className)} {...props}/>;
 }
 
 /** The card around a table: the shell, the panel holding the rows, and the footer row on the shell. Shared with DataGrid. */
 function TableFrameBox({frame = 'card', footer, className, children, ...props}: React.ComponentProps<'div'> & {frame?: TableFrame; footer?: React.ReactNode}) {
-  if (frame === 'none') return <div data-slot="table-frame" data-frame="none" className={cn('flex min-w-0 flex-col', className)} {...props}>
+  if (frame === 'none') return <div data-hui-part="table-frame" data-frame="none" className={cn('flex min-w-0 flex-col', className)} {...props}>
     {children}
-    {footer != null && <div data-slot="table-footer-row" className="flex min-h-(--row) min-w-0 items-center gap-2 border-t border-line-faint px-3 type-caption text-text-2">{footer}</div>}
+    {footer != null && <div data-hui-part="table-footer-row" className="flex min-h-(--row) min-w-0 items-center gap-2 border-t border-line-faint px-3 type-caption text-text-2">{footer}</div>}
   </div>;
-  return <div data-slot="table-frame" data-frame="card" className={cn('shell text-text-1 forced-colors:border-[CanvasText]', className)} {...props}>
-    <div data-slot="table-panel" className="panel flex min-w-0 flex-col overflow-hidden forced-colors:border-[CanvasText]">{children}</div>
-    {footer != null && <div data-slot="table-footer-row" className="shell-foot [&>:first-child]:me-auto">{footer}</div>}
+  return <div data-hui-part="table-frame" data-frame="card" className={cn('shell text-text-1 forced-colors:border-[CanvasText]', className)} {...props}>
+    <div data-hui-part="table-panel" className="panel flex min-w-0 flex-col overflow-hidden forced-colors:border-[CanvasText]">{children}</div>
+    {footer != null && <div data-hui-part="table-footer-row" className="shell-foot [&>:first-child]:me-auto">{footer}</div>}
   </div>;
 }
 
@@ -93,7 +93,7 @@ function Table({className, frame = 'card', title, count, actions, toolbar, foote
     {toolbar != null && <TableToolbar>{toolbar}</TableToolbar>}
     <div
       ref={box}
-      data-slot="table-container"
+      data-hui-part="table-container"
       data-sticky-header={stickyHeader || undefined}
       tabIndex={tab}
       role={tab === 0 && (name || labelledBy) ? 'region' : undefined}
@@ -103,7 +103,7 @@ function Table({className, frame = 'card', title, count, actions, toolbar, foote
       // value-ok: the scroll box's height is the caller's, a number of px or any length, so it can only live inline.
       style={maxHeight !== undefined ? {maxHeight} : undefined}
     >
-      <table data-slot="table" aria-labelledby={labelledBy} className={cn(tableClassName, className)} {...props}/>
+      <table data-hui-part="table" aria-labelledby={labelledBy} className={cn(tableClassName, className)} {...props}/>
     </div>
   </TableFrameBox>;
 }
@@ -112,18 +112,18 @@ function Table({className, frame = 'card', title, count, actions, toolbar, foote
 const tableClassName = 'w-full caption-bottom border-separate border-spacing-0 text-start type-body-sm text-text-1';
 
 function TableHeader({className, ...props}: React.ComponentProps<'thead'>) {
-  return <thead data-slot="table-header" className={className} {...props}/>;
+  return <thead data-hui-part="table-header" className={className} {...props}/>;
 }
 
 /** The body: every row but the last carries the row rule on its cells. */
 function TableBody({className, ...props}: React.ComponentProps<'tbody'>) {
-  return <tbody data-slot="table-body" className={cn(bodyClassName, className)} {...props}/>;
+  return <tbody data-hui-part="table-body" className={cn(bodyClassName, className)} {...props}/>;
 }
 
 const bodyClassName = '[&>tr:not(:last-child)>td]:border-b [&>tr:not(:last-child)>td]:border-line-faint [&>tr:not(:last-child)>th]:border-b [&>tr:not(:last-child)>th]:border-line-faint';
 
 function TableFooter({className, ...props}: React.ComponentProps<'tfoot'>) {
-  return <tfoot data-slot="table-footer" className={cn('type-label text-text-1 [&>tr>td]:border-t [&>tr>td]:border-line-faint', className)} {...props}/>;
+  return <tfoot data-hui-part="table-footer" className={cn('type-label text-text-1 [&>tr>td]:border-t [&>tr>td]:border-line-faint', className)} {...props}/>;
 }
 
 /**
@@ -146,7 +146,7 @@ type TableRowProps = React.ComponentProps<'tr'> & {
 
 function TableRow({className, selected, open, ...props}: TableRowProps) {
   return <tr
-    data-slot="table-row"
+    data-hui-part="table-row"
     data-selected={selected || undefined}
     data-open={open || undefined}
     aria-selected={selected === undefined ? undefined : selected}
@@ -179,7 +179,7 @@ function TableHead({className, numeric, sort, onSort, children, ...props}: Table
   // A head with a sort, or a handler, is a sort button; a server page can show one by passing sort alone.
   const sortable = !!onSort || sort !== undefined;
   return <th
-    data-slot="table-head"
+    data-hui-part="table-head"
     scope="col"
     aria-sort={sortable ? (sort === 'asc' ? 'ascending' : sort === 'desc' ? 'descending' : 'none') : undefined}
     className={cn(headClassName, numeric && 'text-end', className)}
@@ -197,7 +197,7 @@ function TableSortButton({sort, numeric, className, children, ...props}: React.C
   const icon = sort === 'asc' ? ArrowUp : sort === 'desc' ? ArrowDown : ChevronSort;
   return <button
     type="button"
-    data-slot="table-sort"
+    data-hui-part="table-sort"
     data-sorted={sort || undefined}
     className={cn(
       'group/sort -mx-1.5 inline-flex h-(--control-sm) items-center gap-1 rounded-pill px-1.5 type-label-sm text-text-2',
@@ -220,11 +220,11 @@ type TableCellProps = React.ComponentProps<'td'> & {
 };
 
 function TableCell({className, numeric, mono, ...props}: TableCellProps) {
-  return <td data-slot="table-cell" className={cn(cellClassName, numeric && 'text-end data', mono && 'type-code-sm', className)} {...props}/>;
+  return <td data-hui-part="table-cell" className={cn(cellClassName, numeric && 'text-end data', mono && 'type-code-sm', className)} {...props}/>;
 }
 
 function TableCaption({className, ...props}: React.ComponentProps<'caption'>) {
-  return <caption data-slot="table-caption" className={cn('border-t border-line-faint px-3 py-2 text-start type-caption text-text-2', className)} {...props}/>;
+  return <caption data-hui-part="table-caption" className={cn('border-t border-line-faint px-3 py-2 text-start type-caption text-text-2', className)} {...props}/>;
 }
 
 type TableEmptyProps = Omit<React.ComponentProps<'td'>, 'title'> & {
@@ -242,7 +242,7 @@ type TableEmptyProps = Omit<React.ComponentProps<'td'>, 'title'> & {
 
 /** The body's one row when it has no records: a plain, small Empty centred across the columns. */
 function TableEmpty({colSpan, reason = 'empty', title, description, action, className, ...props}: TableEmptyProps) {
-  return <tr data-slot="table-empty">
+  return <tr data-hui-part="table-empty">
     <td colSpan={colSpan} className={cn('p-0 whitespace-normal', className)} {...props}>
       <Empty variant="plain" size="sm" reason={reason}>
         <EmptyHeader>
@@ -268,7 +268,7 @@ type TableLoadingProps = {
 function TableLoading({rows = 5, columns, hidden}: TableLoadingProps) {
   const cols = typeof columns === 'number' ? Array.from({length: columns}, () => ({})) as {numeric?: boolean; checkbox?: boolean}[] : columns;
   const widths = ['w-3/4', 'w-1/2', 'w-2/3'];
-  return <>{Array.from({length: rows}, (_, r) => <tr key={r} aria-hidden data-slot="table-loading-row" className={cn(hidden && 'invisible')}>
+  return <>{Array.from({length: rows}, (_, r) => <tr key={r} aria-hidden data-hui-part="table-loading-row" className={cn(hidden && 'invisible')}>
     {cols.map((col, c) => <td key={c} className={cn(cellClassName, col.checkbox && 'w-10 pe-0')}>
       <Skeleton className={cn('h-2 rounded-pill', col.checkbox ? 'size-4 rounded-tag' : col.numeric ? 'ms-auto w-1/3' : widths[(r + c) % 3])}/>
     </td>)}
@@ -294,7 +294,7 @@ function TableRowActions({indicator, revealOnHover = true, className, children, 
   const [menuOpen, setMenuOpen] = React.useState(false);
   const shown = menuOpen || !revealOnHover;
   return <RowActionsContext.Provider value={setMenuOpen}>
-    <div data-slot="table-row-actions" data-open={shown || undefined} className={cn("group/actions grid shrink-0 items-center justify-items-end [grid-template-areas:'stack']", className)} {...props}>
+    <div data-hui-part="table-row-actions" data-open={shown || undefined} className={cn("group/actions grid shrink-0 items-center justify-items-end [grid-template-areas:'stack']", className)} {...props}>
       {indicator != null && <span className="[grid-area:stack] type-caption whitespace-nowrap text-text-2 transition-opacity duration-(--dur-state) group-hover/row:opacity-0 group-focus-within/row:opacity-0 group-data-open/actions:opacity-0 pointer-coarse:opacity-0">{indicator}</span>}
       <div role="group" aria-label={ariaLabel} className={cn('flex items-center gap-0.5 [grid-area:stack] transition-opacity duration-(--dur-state)', revealOnHover && 'opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 group-data-open/actions:opacity-100 pointer-coarse:opacity-100')}>{children}</div>
     </div>
@@ -303,14 +303,14 @@ function TableRowActions({indicator, revealOnHover = true, className, children, 
 
 /** One icon action in a row: a 26px ghost icon button. Name it with the row: "Retry run_8f2a". */
 function TableRowAction({size = 'icon-sm', variant = 'ghost', ...props}: ButtonProps) {
-  return <Button data-slot="table-row-action" variant={variant} size={size} {...props}/>;
+  return <Button data-hui-part="table-row-action" variant={variant} size={size} {...props}/>;
 }
 
 /** The overflow menu at the end of a row. Keeps the actions shown while it is open. */
 function TableRowActionsMenu({label, children, align = 'end'}: {label: string; children: React.ReactNode; align?: 'start' | 'end'}) {
   const setOpen = React.useContext(RowActionsContext);
   return <DropdownMenu onOpenChange={open => setOpen?.(open)}>
-    <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm"/>} aria-label={label} data-slot="table-row-actions-trigger" className="data-popup-open:bg-pressed">
+    <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm"/>} aria-label={label} data-hui-part="table-row-actions-trigger" className="data-popup-open:bg-pressed">
       <Icon icon={More} size={12}/>
     </DropdownMenuTrigger>
     <DropdownMenuContent size="sm" align={align}>{children}</DropdownMenuContent>

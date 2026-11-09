@@ -390,7 +390,7 @@ function renderBlocks(blocks: Block[], ctx: {tail: boolean; tags: InlineTag[]; s
       }
       case 'hr': return <hr key={i} className="h-px border-0 bg-line-faint"/>;
       // A table on paper: a header row and row rules, no container fill.
-      case 'table': return <div key={i} data-slot="response-table" className="min-w-0 overflow-x-auto">
+      case 'table': return <div key={i} data-hui-part="response-table" className="min-w-0 overflow-x-auto">
         <table className="w-full text-start type-body-sm">
           <thead><tr className="border-b border-line-faint">{block.head.map((h, j) => <th key={j} scope="col" className="h-(--menu-row) px-3 text-start type-label-sm text-text-2 first:ps-0">{text(h, false)}</th>)}</tr></thead>
           <tbody>{block.rows.map((row, r) => <tr key={r} className="rule-row">{row.map((c, j) => <td key={j} className="h-(--menu-row) px-3 py-1.5 align-top first:ps-0">{text(c, false)}</td>)}</tr>)}</tbody>
@@ -418,12 +418,12 @@ function CodeChunk({text, open, maxLines}: {text: string; open: boolean; maxLine
   const lines = text.split('\n');
   const lang = lines[0].replace(/^\s*(`{3,}|~{3,})\s*/, '').trim().toLowerCase();
   const body = lines.slice(1, open ? undefined : -1);
-  return <CodeBlock data-slot="response-code" data-open={open || undefined} code={body.join('\n')} language={fenceLanguages[lang] ?? 'text'} maxLines={maxLines}/>;
+  return <CodeBlock data-hui-part="response-code" data-open={open || undefined} code={body.join('\n')} language={fenceLanguages[lang] ?? 'text'} maxLines={maxLines}/>;
 }
 
 function Pending({label}: {label: string}) {
   // A placeholder for a card, so it takes a card's footprint: a 36px row on paper with the faint edge.
-  return <div data-slot="response-pending" className="flex h-(--row) items-center gap-2 rounded-overlay border border-line-faint bg-paper px-3">
+  return <div data-hui-part="response-pending" className="flex h-(--row) items-center gap-2 rounded-overlay border border-line-faint bg-paper px-3">
     <Status status="running">{label}</Status>
   </div>;
 }
@@ -524,7 +524,7 @@ function Response({children, streaming = false, pace = true, tags, inlineTags = 
         if (live && (r.outcome === 'pending' || expiredAt === start)) tailKey = `${start}:${chunk.text.length}`;
         const rest = r.rest?.trim() && depth < 8 ? r.rest : '';
         return <Fragment key={start}>
-          <div data-slot="response-tag" data-outcome={r.outcome} className="min-w-0">{r.node}</div>
+          <div data-hui-part="response-tag" data-outcome={r.outcome} className="min-w-0">{r.node}</div>
           {rest && render(rest, start + chunk.text.length - rest.length, depth + 1)}
         </Fragment>;
       }
@@ -543,7 +543,7 @@ function Response({children, streaming = false, pace = true, tags, inlineTags = 
   }, [tailKey, streaming, tagTimeout]);
 
   return <div
-    data-slot="response"
+    data-hui-part="response"
     data-streaming={streaming || undefined}
     data-streamed={streamed.current || undefined}
     aria-busy={streaming || undefined}

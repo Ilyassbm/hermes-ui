@@ -73,7 +73,7 @@ function InputRoot({size = 'default', disabled, readOnly, className, onPointerDo
   };
   return <SizeContext.Provider value={size}>
     <div
-      data-slot="input"
+      data-hui-part="input"
       data-size={size}
       data-disabled={disabled || undefined}
       data-readonly={readOnly || undefined}
@@ -97,8 +97,8 @@ const slotClass = 'flex shrink-0 items-center gap-1 text-text-2 select-none [&_s
 function InputLeading({className, ...props}: ComponentProps<'span'>) {
   const size = useContext(SizeContext);
   return <span
-    data-slot="input-leading"
-    className={cn(slotClass, slotSize[size], 'has-[>[data-slot=input-action]:first-child]:-ms-[calc(var(--space-3)-var(--shell-inset))]', className)}
+    data-hui-part="input-leading"
+    className={cn(slotClass, slotSize[size], 'has-[>[data-hui-part=input-action]:first-child]:-ms-[calc(var(--space-3)-var(--shell-inset))]', className)}
     {...props}
   />;
 }
@@ -107,8 +107,8 @@ function InputLeading({className, ...props}: ComponentProps<'span'>) {
 function InputTrailing({className, ...props}: ComponentProps<'span'>) {
   const size = useContext(SizeContext);
   return <span
-    data-slot="input-trailing"
-    className={cn(slotClass, slotSize[size], 'has-[>[data-slot=input-action]:last-child]:-me-[calc(var(--space-3)-var(--shell-inset))]', className)}
+    data-hui-part="input-trailing"
+    className={cn(slotClass, slotSize[size], 'has-[>[data-hui-part=input-action]:last-child]:-me-[calc(var(--space-3)-var(--shell-inset))]', className)}
     {...props}
   />;
 }
@@ -120,7 +120,7 @@ function InputControl({className, mono, ...props}: InputPrimitive.Props & {
 }) {
   const size = useContext(SizeContext);
   return <InputPrimitive
-    data-slot="input-control"
+    data-hui-part="input-control"
     data-control=""
     className={mergeClass([
       'h-full w-full min-w-0 flex-1 truncate bg-transparent text-inherit',
@@ -145,7 +145,7 @@ type InputActionProps = Omit<ButtonProps, 'size'> & {
 function InputAction({className, size = 'icon', variant = 'ghost', ...props}: InputActionProps) {
   const box = useContext(SizeContext);
   return <Button
-    data-slot="input-action"
+    data-hui-part="input-action"
     variant={variant}
     size={size === 'icon' ? 'icon-sm' : 'sm'}
     className={mergeClass([
@@ -370,7 +370,7 @@ function CopyMode({mode: _mode, size = 'default', leading, trailing: _trailing, 
     />
     <InputTrailing>
       <CopyButton
-        data-slot="input-action"
+        data-hui-part="input-action"
         value={value}
         label={noun}
         onCopy={onCopy}

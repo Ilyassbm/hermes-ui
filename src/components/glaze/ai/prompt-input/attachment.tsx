@@ -116,7 +116,7 @@ function PromptAttachment({attachment, onRemove, onRetry, labels, className, ...
   const {name, size, progress = 0, status, error} = attachment;
   const percent = Math.round(Math.min(1, Math.max(0, Number.isFinite(progress) ? progress : 0)) * 100);
   return <AttachmentChip
-    data-slot="prompt-attachment"
+    data-hui-part="prompt-attachment"
     state={status}
     title={name}
     className={cn('max-w-64', className)}

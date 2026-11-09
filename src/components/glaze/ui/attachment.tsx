@@ -35,8 +35,8 @@ const attachmentVariants = cva(
   {
     variants: {
       size: {
-        default: 'min-w-48 pe-3 has-[>[data-slot=attachment-actions]]:pe-1 [--attachment-media:var(--row)]',
-        sm: 'min-w-40 pe-2 has-[>[data-slot=attachment-actions]]:pe-1 [--attachment-media:var(--space-6)]',
+        default: 'min-w-48 pe-3 has-[>[data-hui-part=attachment-actions]]:pe-1 [--attachment-media:var(--row)]',
+        sm: 'min-w-40 pe-2 has-[>[data-hui-part=attachment-actions]]:pe-1 [--attachment-media:var(--space-6)]',
       },
     },
     defaultVariants: {size: 'default'},
@@ -50,7 +50,7 @@ type AttachmentProps = React.ComponentProps<'div'> & VariantProps<typeof attachm
 /** A file as a chip: media, name, size or status, actions. */
 function Attachment({className, state = 'done', size = 'default', ...props}: AttachmentProps) {
   return <div
-    data-slot="attachment"
+    data-hui-part="attachment"
     data-state={state}
     data-size={size}
     aria-busy={state === 'uploading' || state === 'processing' || undefined}
@@ -75,7 +75,7 @@ function AttachmentMedia({className, children, ref: callerRef, ...props}: React.
   }, []);
   return <div
     ref={setRef}
-    data-slot="attachment-media"
+    data-hui-part="attachment-media"
     className={cn(
       'relative flex size-(--attachment-media) shrink-0 items-center justify-center overflow-hidden rounded-tag bg-field text-text-2',
       '[&_img]:size-full [&_img]:object-cover [&_svg]:pointer-events-none',
@@ -89,7 +89,7 @@ function AttachmentMedia({className, children, ref: callerRef, ...props}: React.
 }
 
 function AttachmentContent({className, ...props}: React.ComponentProps<'div'>) {
-  return <div data-slot="attachment-content" className={cn('flex min-w-0 flex-1 flex-col', className)} {...props}/>;
+  return <div data-hui-part="attachment-content" className={cn('flex min-w-0 flex-1 flex-col', className)} {...props}/>;
 }
 
 /** Keeps the extension and a few characters before it, so trace-2026-09-30.json reads trace-20…-30.json. */
@@ -101,14 +101,14 @@ function tailOf(name: string) {
 
 /** The file name. A plain string is cut in the middle so the extension always shows. */
 function AttachmentTitle({className, children, ...props}: React.ComponentProps<'span'>) {
-  return <span data-slot="attachment-title" className={cn('flex min-w-0 type-label text-text-1 group-data-[size=sm]/attachment:type-label-sm', className)} {...props}>
+  return <span data-hui-part="attachment-title" className={cn('flex min-w-0 type-label text-text-1 group-data-[size=sm]/attachment:type-label-sm', className)} {...props}>
     {typeof children === 'string' ? <Truncate position="middle" tail={tailOf(children)} focusable={false}>{children}</Truncate> : children}
   </span>;
 }
 
 /** Size, progress or the reason it failed. Tabular figures, so a counting size never jitters. Hidden at size="sm". */
 function AttachmentDescription({className, ...props}: React.ComponentProps<'span'>) {
-  return <span data-slot="attachment-description" className={cn('block min-w-0 truncate type-caption text-text-2 data group-data-[state=error]/attachment:text-fail-text group-data-[size=sm]/attachment:hidden', className)} {...props}/>;
+  return <span data-hui-part="attachment-description" className={cn('block min-w-0 truncate type-caption text-text-2 data group-data-[state=error]/attachment:text-fail-text group-data-[size=sm]/attachment:hidden', className)} {...props}/>;
 }
 
 type AttachmentProgressProps = Omit<React.ComponentProps<'div'>, 'children'> & {
@@ -122,7 +122,7 @@ type AttachmentProgressProps = Omit<React.ComponentProps<'div'>, 'children'> & {
 function AttachmentProgress({value, label, className, ...props}: AttachmentProgressProps) {
   const clamped = Math.min(100, Math.max(0, Math.round(value)));
   return <div
-    data-slot="attachment-progress"
+    data-hui-part="attachment-progress"
     role="progressbar"
     aria-label={label}
     aria-valuemin={0}
@@ -137,18 +137,18 @@ function AttachmentProgress({value, label, className, ...props}: AttachmentProgr
 }
 
 function AttachmentActions({className, ...props}: React.ComponentProps<'div'>) {
-  return <div data-slot="attachment-actions" className={cn('relative z-(--z-raised) flex shrink-0 items-center gap-0.5', className)} {...props}/>;
+  return <div data-hui-part="attachment-actions" className={cn('relative z-(--z-raised) flex shrink-0 items-center gap-0.5', className)} {...props}/>;
 }
 
 /** A ghost icon button: remove, retry, download. Its aria-label names the file. */
 function AttachmentAction({className, variant, size = 'icon-sm', ...props}: ButtonProps) {
-  return <Button data-slot="attachment-action" variant={variant ?? 'ghost'} size={size} className={className} {...props}/>;
+  return <Button data-hui-part="attachment-action" variant={variant ?? 'ghost'} size={size} className={className} {...props}/>;
 }
 
 /** The files on one prompt or message. Wraps by default; scroll keeps a composer one row tall. */
 function AttachmentGroup({className, layout = 'wrap', ...props}: React.ComponentProps<'div'> & {layout?: 'wrap' | 'scroll'}) {
   return <div
-    data-slot="attachment-group"
+    data-hui-part="attachment-group"
     data-layout={layout}
     role="group"
     className={cn('flex min-w-0 gap-2', layout === 'wrap' ? 'flex-wrap' : 'snap-x overflow-x-auto overscroll-x-contain [scrollbar-width:none] *:flex-none *:snap-start', className)}
@@ -370,7 +370,7 @@ function AttachmentDrop({
 
   return <AttachmentDropContext.Provider value={{open, disabled, dragging: shown, accept, multiple}}>
     <div
-      data-slot="attachment-drop"
+      data-hui-part="attachment-drop"
       data-variant={variant}
       data-dragging={shown || undefined}
       data-disabled={disabled || undefined}
@@ -384,7 +384,7 @@ function AttachmentDrop({
       <AttachmentDropOverlay label={overlayLabel} rejectLabel={rejectLabel}/>
       <input
         ref={inputRef}
-        data-slot="attachment-drop-input"
+        data-hui-part="attachment-drop-input"
         type="file"
         tabIndex={-1}
         aria-hidden
@@ -411,7 +411,7 @@ function AttachmentDropOverlay({label, rejectLabel}: {label?: React.ReactNode; r
   if (!dragging) return null;
   const reject = dragging === 'reject';
   return <div
-    data-slot="attachment-drop-overlay"
+    data-hui-part="attachment-drop-overlay"
     data-status={reject ? 'fail' : undefined}
     aria-hidden
     className={cn(
@@ -426,19 +426,19 @@ function AttachmentDropOverlay({label, rejectLabel}: {label?: React.ReactNode; r
 
 /** A zone's title: what it takes the files for. */
 function AttachmentDropTitle({className, ...props}: React.ComponentProps<'p'>) {
-  return <p data-slot="attachment-drop-title" className={cn('type-label text-text-1 group-data-disabled/attachment-drop:text-text-disabled', className)} {...props}/>;
+  return <p data-hui-part="attachment-drop-title" className={cn('type-label text-text-1 group-data-disabled/attachment-drop:text-text-disabled', className)} {...props}/>;
 }
 
 /** What it takes: types and the size limit. */
 function AttachmentDropDescription({className, ...props}: React.ComponentProps<'p'>) {
-  return <p data-slot="attachment-drop-description" className={cn('type-body-sm text-text-2 data group-data-disabled/attachment-drop:text-text-disabled group-data-[variant=zone]/attachment-drop:-mt-2', className)} {...props}/>;
+  return <p data-hui-part="attachment-drop-description" className={cn('type-body-sm text-text-2 data group-data-disabled/attachment-drop:text-text-disabled group-data-[variant=zone]/attachment-drop:-mt-2', className)} {...props}/>;
 }
 
 /** The way in without dragging: a secondary Button that opens the file picker. */
 function AttachmentDropTrigger({variant, size = 'sm', onClick, disabled, ...props}: ButtonProps) {
   const {open, disabled: dropDisabled} = useAttachmentDrop();
   return <Button
-    data-slot="attachment-drop-trigger"
+    data-hui-part="attachment-drop-trigger"
     variant={variant ?? 'secondary'}
     size={size}
     disabled={disabled || dropDisabled}

@@ -434,16 +434,16 @@ function CappedOutput({text, lines, chars = 20_000, labels}: {text: string; line
   const hiddenChars = Math.max(0, byLines.length - limit);
   const shown = all ? body : hiddenChars ? `${byLines.slice(0, limit)}…` : byLines;
   const more = hiddenLines > 0 || hiddenChars > 0;
-  return <div data-slot="tool-call-output" className="flex min-w-0 flex-col gap-1">
+  return <div data-hui-part="tool-call-output" className="flex min-w-0 flex-col gap-1">
     <pre dir="ltr" data-all={all || undefined} className="min-w-0 overflow-x-auto text-start type-code-sm whitespace-pre-wrap text-text-2 [overflow-wrap:anywhere] data-all:max-h-96 data-all:overflow-y-auto"><code>{shown}</code></pre>
     {trimmed && <p className="type-caption text-text-2 data">{words.trimmed(chars)}</p>}
-    {more && <ShowMoreRow data-slot="tool-call-more" onClick={() => setAll(v => !v)}>{all ? words.showLess : hiddenLines > 0 ? words.showMore(hiddenLines, 'lines') : words.showMore(hiddenChars, 'characters')}</ShowMoreRow>}
+    {more && <ShowMoreRow data-hui-part="tool-call-more" onClick={() => setAll(v => !v)}>{all ? words.showLess : hiddenLines > 0 ? words.showMore(hiddenLines, 'lines') : words.showMore(hiddenChars, 'characters')}</ShowMoreRow>}
   </div>;
 }
 
 /** "+12 −3": the lines a patch added and removed, with the words a screen reader hears instead of the signs. */
 function DiffCount({added, removed, addedLabel = 'added', removedLabel = 'removed', className}: {added: number; removed: number; addedLabel?: string; removedLabel?: string; className?: string}) {
-  return <span data-slot="diff-count" dir="ltr" className={cn('data', className)}><span aria-hidden>+</span>{added}<span className="sr-only"> {addedLabel}</span> <span aria-hidden>−</span>{removed}<span className="sr-only"> {removedLabel}</span></span>;
+  return <span data-hui-part="diff-count" dir="ltr" className={cn('data', className)}><span aria-hidden>+</span>{added}<span className="sr-only"> {addedLabel}</span> <span aria-hidden>−</span>{removed}<span className="sr-only"> {removedLabel}</span></span>;
 }
 
 /** The first lines of a unified patch, signed, with counts. */
@@ -554,7 +554,7 @@ function ToolCall({call, size = 'default', onReply, actions, label, doneLabel, d
   useEffect(() => { if (failed) setOpenState(true); }, [failed]);
 
   const shared = {
-    'data-slot': 'tool-call',
+    'data-hui-part': 'tool-call',
     'data-status': call.status,
     'data-tool': call.tool,
     'data-size': size,
@@ -573,19 +573,19 @@ function ToolCall({call, size = 'default', onReply, actions, label, doneLabel, d
     const full = command ?? patterns ?? (call.input && firstOf(call.input, useful)) ?? detail;
     const question = typeof r.confirm === 'function' ? r.confirm(call.input ?? {}, call) : r.confirm ?? `${r.ask} this ${r.noun}?`;
     const footer = onReply
-      ? <CardFooter data-slot="tool-call-actions">
+      ? <CardFooter data-hui-part="tool-call-actions">
           <Button size="sm" variant="secondary" onClick={() => onReply('reject')}>{words.deny}</Button>
           <Button size="sm" variant="confirm" onClick={() => onReply('once')}>{words.allow}</Button>
         </CardFooter>
-      : actions ? <CardFooter data-slot="tool-call-actions">{actions}</CardFooter> : null;
+      : actions ? <CardFooter data-hui-part="tool-call-actions">{actions}</CardFooter> : null;
     return <div {...shared} {...props} ref={rootRef} className={cn(rootClass, 'my-1')}>
-      <Card data-slot="tool-call-approval" role="group" aria-labelledby={titleId}>
-        <CardHeader><CardTitle id={titleId} data-slot="tool-call-title">{question}</CardTitle></CardHeader>
+      <Card data-hui-part="tool-call-approval" role="group" aria-labelledby={titleId}>
+        <CardHeader><CardTitle id={titleId} data-hui-part="tool-call-title">{question}</CardTitle></CardHeader>
         <CardContent className="gap-2">
-          {call.permission?.message && <p data-slot="tool-call-request" className="type-body-sm text-text-2">{call.permission.message}</p>}
+          {call.permission?.message && <p data-hui-part="tool-call-request" className="type-body-sm text-text-2">{call.permission.message}</p>}
           {full && (command
-            ? <pre dir="ltr" data-slot="tool-call-command" className="well min-w-0 rounded-overlay px-3 py-2 text-start type-code-sm whitespace-pre-wrap text-text-1 [overflow-wrap:anywhere]"><Command>{full}</Command></pre>
-            : <p data-slot="tool-call-command" className="well min-w-0 rounded-overlay px-3 py-2 type-body-sm whitespace-pre-wrap text-text-1 [overflow-wrap:anywhere]">{full}</p>)}
+            ? <pre dir="ltr" data-hui-part="tool-call-command" className="well min-w-0 rounded-overlay px-3 py-2 text-start type-code-sm whitespace-pre-wrap text-text-1 [overflow-wrap:anywhere]"><Command>{full}</Command></pre>
+            : <p data-hui-part="tool-call-command" className="well min-w-0 rounded-overlay px-3 py-2 type-body-sm whitespace-pre-wrap text-text-1 [overflow-wrap:anywhere]">{full}</p>)}
         </CardContent>
         {footer}
       </Card>
@@ -593,8 +593,8 @@ function ToolCall({call, size = 'default', onReply, actions, label, doneLabel, d
   }
 
   const rendered = children ?? r.body?.(call, {size, labels}) ?? null;
-  const note = failed && call.error ? <p data-slot="tool-call-error" className="type-body-sm text-text-1 [overflow-wrap:anywhere]">{call.error}</p>
-    : denied && call.reason ? <p data-slot="tool-call-reason" className="type-body-sm text-text-2 [overflow-wrap:anywhere]">{call.reason}</p>
+  const note = failed && call.error ? <p data-hui-part="tool-call-error" className="type-body-sm text-text-1 [overflow-wrap:anywhere]">{call.error}</p>
+    : denied && call.reason ? <p data-hui-part="tool-call-reason" className="type-body-sm text-text-2 [overflow-wrap:anywhere]">{call.reason}</p>
       : null;
   const expands = rendered !== null || note !== null;
 
@@ -609,22 +609,22 @@ function ToolCall({call, size = 'default', onReply, actions, label, doneLabel, d
 
   const row = <>
     <StepGlyph state={glyph}/>
-    <span data-slot="tool-call-label" className="shrink-0 text-text-2">{denied ? word : text}</span>
+    <span data-hui-part="tool-call-label" className="shrink-0 text-text-2">{denied ? word : text}</span>
     {/* The target truncates first, down to 48px. On a phone it wraps to a second line instead, so the meaning stays. */}
     <span
-      data-slot="tool-call-detail"
+      data-hui-part="tool-call-detail"
       dir={mono ? 'ltr' : undefined}
       title={typeof detail === 'string' ? detail : undefined}
       className={cn('min-w-12 truncate text-start text-text-1 max-sm:overflow-visible max-sm:whitespace-normal max-sm:[overflow-wrap:anywhere]', mono && 'mono', !detail && 'min-w-0')}
     >{detailShown}</span>
-    <span data-slot="tool-call-end" className="flex shrink-0 items-center gap-2 whitespace-nowrap text-text-2 data empty:hidden">{end}</span>
+    <span data-hui-part="tool-call-end" className="flex shrink-0 items-center gap-2 whitespace-nowrap text-text-2 data empty:hidden">{end}</span>
     <Disclosure open={expands} end/>
   </>;
 
   if (!expands) {
     return <div {...shared} {...props} ref={rootRef} className={rootClass}>
       {/* tabIndex -1: out of the tab order, but it can take focus when Allow and Deny go. */}
-      <div ref={rowRef} tabIndex={-1} data-slot="tool-call-row" className={rowVariants({size, opens: false})} {...force}>
+      <div ref={rowRef} tabIndex={-1} data-hui-part="tool-call-row" className={rowVariants({size, opens: false})} {...force}>
         {row}
       </div>
     </div>;
@@ -638,13 +638,13 @@ function ToolCall({call, size = 'default', onReply, actions, label, doneLabel, d
     ref={rootRef}
     className={rootClass}
   >
-    <CollapsiblePrimitive.Trigger ref={rowRef} data-slot="tool-call-row" {...force} className={rowVariants({size})}>
+    <CollapsiblePrimitive.Trigger ref={rowRef} data-hui-part="tool-call-row" {...force} className={rowVariants({size})}>
       {row}
     </CollapsiblePrimitive.Trigger>
     {/* The panel cuts: no height tween. The body opens at its natural height, under the verb. */}
-    <CollapsiblePrimitive.Panel data-slot="tool-call-content" className="flex min-w-0 flex-col gap-2 ps-6 pt-0.5 pb-2">
+    <CollapsiblePrimitive.Panel data-hui-part="tool-call-content" className="flex min-w-0 flex-col gap-2 ps-6 pt-0.5 pb-2">
       {note}
-      {rendered !== null && <div data-slot="tool-call-well" className="flex min-w-0 flex-col gap-3 well rounded-overlay px-3 py-2">{rendered}</div>}
+      {rendered !== null && <div data-hui-part="tool-call-well" className="flex min-w-0 flex-col gap-3 well rounded-overlay px-3 py-2">{rendered}</div>}
     </CollapsiblePrimitive.Panel>
   </CollapsiblePrimitive.Root>;
 }
@@ -731,7 +731,7 @@ function ToolCallList({calls, live, hideCompleted = false, orphanTtl = 2000, siz
   const visible = hideCompleted ? ready.filter(c => c.status !== 'completed') : ready;
   const active = live ?? visible.some(c => !isTerminal(c.status));
   const items = groupToolCalls(visible, active);
-  return <div data-slot="tool-call-list" className={cn('flex min-w-0 flex-col', className)} {...props}>
+  return <div data-hui-part="tool-call-list" className={cn('flex min-w-0 flex-col', className)} {...props}>
     {items.map(item => item.type === 'group'
       ? <ToolCallGroup key={item.key} calls={item.calls} done={item.done} size={size} labels={labels}/>
       : <ToolCall key={item.key} call={item.call} size={size} labels={labels} onReply={onReply && (reply => onReply(item.call, reply))} actions={actions?.(item.call)}/>)}

@@ -342,7 +342,7 @@ export async function send(text, attachments = []) {
     messages: [...st.messages, { id: nid('u'), role: 'user', text: body, at: Date.now(), attachments: attachments.map(a => ({ name: a.name, kind: a.type?.startsWith('image/') ? 'image' : 'file' })) }],
     live: { phase: 'thinking', verb: '', subagents: 0, startedAt: Date.now(), reasoning: '' }
   }))
-  // The turn exists from the moment the prompt leaves, so "réfléchit…" has a turn to sit in before the first token.
+  // The turn exists from the moment the prompt leaves, so "thinking…" has a turn to sit in before the first token.
   patchDraft(d => d)
   try {
     const hadSession = Boolean(store.get().sid)
@@ -404,7 +404,7 @@ function failTurn(reason) {
   }
   store.set(s => ({
     live: null,
-    error: reason || "La réponse n'est pas arrivée.",
+    error: reason || "The response did not arrive.",
     messages: s.messages.map(m => (m.status === 'streaming' ? { ...m, status: m.text ? 'done' : 'failed' } : m))
   }))
   stopApprovalPoll()
@@ -435,7 +435,7 @@ function askApproval(a) {
   patchDraft(d => {
     const from = d.adapter || emptyToolAdapter(d.gen || 0)
     const id = approvalTarget(d) || `approval-${requestId}`
-    const { state, actions } = askStep(from, id, command ? [command] : [], "Autoriser laisse lancer cette commande sans redemander.")
+    const { state, actions } = askStep(from, id, command ? [command] : [], "Allow runs this command without asking again.")
     return { ...d, adapter: state, toolActions: [...d.toolActions, ...actions] }
   })
 }
@@ -482,7 +482,7 @@ export async function answerApproval(choice) {
   try {
     await host.request('approval.respond', { session_id: sid, choice, ...(approval.requestId ? { request_id: approval.requestId } : {}) })
   } catch (e) {
-    store.set({ error: `Réponse non transmise : ${e?.message || e}` })
+    store.set({ error: `Response not sent: ${e?.message || e}` })
   }
 }
 
@@ -630,7 +630,7 @@ export function handleEvent(ev) {
         }
       })
       addFiles(filesFromText(text))
-      store.set({ live: null, approval: null, ...(failed && !text ? { error: p.error || "La réponse n'est pas arrivée." } : {}) })
+      store.set({ live: null, approval: null, ...(failed && !text ? { error: p.error || "The response did not arrive." } : {}) })
       stopApprovalPoll()
       if (s.bot) void loadSessions(s.bot)
       return

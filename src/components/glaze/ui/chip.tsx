@@ -55,7 +55,7 @@ const chipRemoveClasses = cn(
 const fmt = new Intl.NumberFormat('en-US');
 
 function ChipCount({children, className}: {children: ReactNode; className?: string}) {
-  return <span data-slot="chip-count" className={cn('data text-text-2', className)}>{typeof children === 'number' ? fmt.format(children) : children}</span>;
+  return <span data-hui-part="chip-count" className={cn('data text-text-2', className)}>{typeof children === 'number' ? fmt.format(children) : children}</span>;
 }
 
 type ToggleChipProps = TogglePrimitive.Props & {
@@ -83,7 +83,7 @@ function Chip(props: ChipProps) {
   if (props.onRemove) return <ValueChip {...props}/>;
   const {className, count, children, ...rest} = props as ToggleChipProps;
   return <TogglePrimitive
-    data-slot="chip"
+    data-hui-part="chip"
     className={state => cn(chipVariants(), toggleClasses, typeof className === 'function' ? className(state) : className)}
     {...rest}
   >
@@ -94,9 +94,9 @@ function Chip(props: ChipProps) {
 
 /** Where focus goes after a chip is removed: the next chip's remove button, else the previous one. */
 function focusAfterRemove(button: HTMLElement, fallback?: RefObject<HTMLElement | null>) {
-  const scope = button.closest('[data-slot=chip-group]') ?? button.closest('[data-slot=chip-value]')?.parentElement;
+  const scope = button.closest('[data-hui-part=chip-group]') ?? button.closest('[data-hui-part=chip-value]')?.parentElement;
   if (!scope) return () => {};
-  const all = [...scope.querySelectorAll<HTMLElement>('[data-slot=chip-remove]:not(:disabled)')];
+  const all = [...scope.querySelectorAll<HTMLElement>('[data-hui-part=chip-remove]:not(:disabled)')];
   const i = all.indexOf(button);
   const target = all[i + 1] ?? all[i - 1];
   return () => {
@@ -113,7 +113,7 @@ function ValueChip({className, count, children, onRemove, removeLabel, invalid, 
     requestAnimationFrame(refocus);
   };
   return <span
-    data-slot="chip-value"
+    data-hui-part="chip-value"
     data-invalid={invalid || undefined}
     data-disabled={disabled || undefined}
     className={cn(chipVariants(), valueClasses, className)}
@@ -124,7 +124,7 @@ function ValueChip({className, count, children, onRemove, removeLabel, invalid, 
     {invalid && <span className="sr-only">(not accepted)</span>}
     <button
       type="button"
-      data-slot="chip-remove"
+      data-hui-part="chip-remove"
       onClick={remove}
       onKeyDown={event => { if (event.key === 'Backspace' || event.key === 'Delete') { event.preventDefault(); remove(event); } }}
       disabled={disabled}
@@ -138,7 +138,7 @@ function ValueChip({className, count, children, onRemove, removeLabel, invalid, 
 
 /** A row of chips 4px apart that wraps. The scope removal moves focus within. */
 function ChipGroup({className, ...props}: ComponentProps<'div'>) {
-  return <div data-slot="chip-group" className={cn('flex flex-wrap items-center gap-1', className)} {...props}/>;
+  return <div data-hui-part="chip-group" className={cn('flex flex-wrap items-center gap-1', className)} {...props}/>;
 }
 
 export {Chip, ChipCount, ChipGroup, chipVariants, toggleClasses as chipToggleClasses, valueClasses as chipValueClasses, chipRemoveClasses, type ChipProps};

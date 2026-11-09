@@ -157,7 +157,7 @@ function Reasoning({streaming = false, duration, defaultOpen = false, open: open
   };
   return <ReasoningContext.Provider value={{streaming, words, open, duration, heading: label, text, parts: !!parts, fromTop: auto.fromTop}}>
     <CollapsiblePrimitive.Root
-      data-slot="reasoning"
+      data-hui-part="reasoning"
       data-streaming={streaming || undefined}
       open={open}
       onOpenChange={next => onOpenChange(next)}
@@ -194,7 +194,7 @@ function ReasoningTrigger({className, label, children, ...props}: TriggerProps) 
   const empty = parts && !body.trim();
   const text = label?.({streaming, duration, heading}) ?? (streaming ? (heading ?? words.thinking) : empty ? words.stoppedEarly : words.thoughtFor(duration === undefined ? words.moment : seconds(duration, words.moment)));
   return <CollapsiblePrimitive.Trigger
-    data-slot="reasoning-trigger"
+    data-hui-part="reasoning-trigger"
     className={mergeClass(rowVariants(), className)}
     {...props}
   >
@@ -202,8 +202,8 @@ function ReasoningTrigger({className, label, children, ...props}: TriggerProps) 
     {children ?? <>
       <ActivityText active={streaming} className={cn('max-w-full min-w-0 shrink-0 truncate text-text-2')}>{text}</ActivityText>
       {/* Folded, the newest heading follows the time spent; streaming, it is the label itself. */}
-      <span data-slot="reasoning-heading" className="min-w-0 truncate text-text-2 empty:hidden">{!streaming && !label ? heading : null}</span>
-      <span data-slot="reasoning-status" className="flex shrink-0 items-center justify-end whitespace-nowrap text-text-2">
+      <span data-hui-part="reasoning-heading" className="min-w-0 truncate text-text-2 empty:hidden">{!streaming && !label ? heading : null}</span>
+      <span data-hui-part="reasoning-status" className="flex shrink-0 items-center justify-end whitespace-nowrap text-text-2">
         {/* The label already says "Thinking" until a heading replaces it; then the word returns beside the arc. */}
         {streaming && (heading ? <Status status="running" size="sm" className="text-text-2">{words.thinking}</Status> : <ActivityArc/>)}
       </span>
@@ -227,10 +227,10 @@ function ReasoningContent({className, children, ...props}: React.ComponentProps<
   }, [children, text, open, streaming, fromTop]);
 
   // The panel cuts open and closed: no height tween.
-  return <CollapsiblePrimitive.Panel data-slot="reasoning-content">
+  return <CollapsiblePrimitive.Panel data-hui-part="reasoning-content">
     <div
       ref={stick.ref}
-      data-slot="reasoning-content"
+      data-hui-part="reasoning-content"
       data-attached={stick.attached}
       aria-busy={streaming || undefined}
       tabIndex={tabStop}

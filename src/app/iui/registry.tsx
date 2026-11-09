@@ -28,6 +28,7 @@ import { toast } from '@/components/glaze/ui/toast'
 import { Response } from '@/components/glaze/ai/response'
 import { openExternal, send as sendMessage } from '@/lib/hermes'
 import { catalog } from './catalog'
+import { UI } from '../strings'
 
 // ---------- What the app hands to a spec ----------
 
@@ -63,7 +64,7 @@ function useWrite(bindings?: Record<string, string>) {
 }
 
 const STATUS = { done: 'ok', running: 'running', waiting: 'waiting', failed: 'fail', todo: 'idle' } as const
-const STATUS_WORD = { done: 'Fait', running: 'En cours', waiting: 'En attente', failed: 'Échec', todo: 'À faire' } as const
+const STATUS_WORD = UI.iui.status
 const GAP = { sm: 'gap-2', md: 'gap-3', lg: 'gap-5' } as const
 
 /** A `Button` child of a card, marked by its own renderer so the card can lift it into the footer. */
@@ -174,7 +175,7 @@ export const { registry, handlers } = defineRegistry(catalog, {
       <Chart
         type={props.kind === 'bar' ? 'bar' : 'line'}
         area={props.kind === 'area'}
-        label={props.title ?? 'Graphique'}
+        label={props.title ?? UI.iui.chartFallback}
         height={props.height}
         data={props.data}
         xKey={props.xKey}
@@ -225,7 +226,7 @@ export const { registry, handlers } = defineRegistry(catalog, {
       const write = useWrite(bindings)
       return (
         <div className="flex min-w-0 flex-col gap-3">
-          <SegmentedControl value={props.value} onValueChange={(next: string) => write(next)} aria-label="Onglets">
+          <SegmentedControl value={props.value} onValueChange={(next: string) => write(next)} aria-label={UI.iui.tabsLabel}>
             {props.tabs.map((tab: any) => (
               <Fragment key={tab.id}>
                 <SegmentedControlItem value={tab.id}>{tab.label}</SegmentedControlItem>
@@ -275,11 +276,11 @@ export const { registry, handlers } = defineRegistry(catalog, {
       return (
         <div className="flex min-w-0 items-center gap-2">
           <span className="type-label-sm me-auto text-text-2">{props.label}</span>
-          <Button variant="secondary" size="icon-sm" aria-label={`Moins : ${props.label}`} disabled={props.value <= props.min} onClick={() => write(clamp(props.value - step))}>
+          <Button variant="secondary" size="icon-sm" aria-label={UI.iui.less(props.label)} disabled={props.value <= props.min} onClick={() => write(clamp(props.value - step))}>
             <Icon icon={Subtract} size={14} />
           </Button>
           <span className="type-label min-w-(--control-sm) text-center tabular-nums text-text-1">{props.value}</span>
-          <Button variant="secondary" size="icon-sm" aria-label={`Plus : ${props.label}`} disabled={props.value >= props.max} onClick={() => write(clamp(props.value + step))}>
+          <Button variant="secondary" size="icon-sm" aria-label={UI.iui.more(props.label)} disabled={props.value >= props.max} onClick={() => write(clamp(props.value + step))}>
             <Icon icon={Add} size={14} />
           </Button>
         </div>
@@ -300,7 +301,7 @@ export const { registry, handlers } = defineRegistry(catalog, {
             max={props.max}
             step={props.step ?? 1}
             showValue
-            locale="fr-FR"
+            locale="en-US"
             thumbLabels={[props.label]}
             onValueChange={(next: number | readonly number[]) => write(Array.isArray(next) ? next[0] : next)}
           />
@@ -373,7 +374,7 @@ export const { registry, handlers } = defineRegistry(catalog, {
             })
           }}
         >
-          {isSend && sent ? 'Envoyé' : props.label}
+          {isSend && sent ? UI.iui.sent : props.label}
         </Button>
       )
     })
@@ -389,9 +390,9 @@ export const { registry, handlers } = defineRegistry(catalog, {
     copy: async params => {
       try {
         await navigator.clipboard.writeText(String(params?.text ?? ''))
-        toast('Copié')
+        toast(UI.iui.copied)
       } catch {
-        toast.fail('Copie impossible')
+        toast.fail(UI.iui.copyFailed)
       }
     },
     open: async params => {
