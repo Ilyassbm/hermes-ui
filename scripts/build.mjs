@@ -83,6 +83,13 @@ if (copy.status !== 0) process.exit(copy.status ?? 1)
 const motion = spawnSync(process.execPath, [resolve(root, 'scripts/check-motion.mjs')], { stdio: 'inherit' })
 if (motion.status !== 0) process.exit(motion.status ?? 1)
 
+// 0j. The resume gate (1.3.6): every payload shape a stored conversation has come back in is replayed through
+//     `openConversation`. Opening an old conversation broke three times, each in a different shape — deferred ack,
+//     `text` instead of `content`, `human`/`ai` nested under `message` — and this is what keeps the fourth from
+//     shipping.
+const resume = spawnSync(process.execPath, [resolve(root, 'scripts/check-resume.mjs')], { stdio: 'inherit' })
+if (resume.status !== 0) process.exit(resume.status ?? 1)
+
 // 1. Tailwind v4 → one stylesheet. app.css pulls `tailwindcss/theme` + `tailwindcss/utilities` in (never the full
 //    `tailwindcss`, whose Preflight is a global reset) and Glaze's own scoped entry.
 const compiled = await postcss([tailwind()]).process(readFileSync(from, 'utf8'), { from, to: cssOut })

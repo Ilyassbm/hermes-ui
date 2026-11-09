@@ -60327,7 +60327,7 @@ import { Fragment as tve, useEffect as rve, useMemo as nve, useState as cX } fro
 var lX = {
   name: "hermes-ui",
   private: !0,
-  version: "1.3.6",
+  version: "1.3.7",
   type: "module",
   scripts: {
     build: "node scripts/build.mjs",
@@ -60344,6 +60344,7 @@ var lX = {
     "check:copy": "node scripts/check-copy.mjs",
     "check:iui": "node scripts/check-iui.mjs",
     "check:motion": "node scripts/check-motion.mjs",
+    "check:resume": "node scripts/check-resume.mjs",
     "check:iui-skill": "node scripts/gen-iui-skill.mjs --check",
     "gen:iui": "node scripts/gen-iui-skill.mjs",
     "gen:logos": "node scripts/gen-provider-logos.mjs",
