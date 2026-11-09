@@ -1,0 +1,29 @@
+# Entry for NousResearch/hermes-agent: plugin-catalog/hermes-ui.yaml
+# Copy this file to that path in a fork, replace <SHA> with the full 40-character
+# commit SHA of the release you want reviewed, and open the pull request.
+# Docs: https://hermes-agent.nousresearch.com/docs/developer-guide/plugins/catalog-submission
+
+name: hermes-ui
+repo: https://github.com/Ilyassbm/hermes-ui
+sha: <SHA>
+description: A bespoke chat workspace for Hermes Desktop and the Webapp — bots rail, live activity, rich replies, slash commands, per-bot models and a settings page.
+maintainer: Ilyass Bm
+tier: community
+category: desktop
+requires_hermes: ">=0.23"
+docs_url: https://github.com/Ilyassbm/hermes-ui#readme
+version: "1.0.0"
+image: https://raw.githubusercontent.com/Ilyassbm/hermes-ui/<SHA>/docs/screenshots/01-chat.jpg
+screenshots:
+  - https://raw.githubusercontent.com/Ilyassbm/hermes-ui/<SHA>/docs/screenshots/01-chat.jpg
+  - https://raw.githubusercontent.com/Ilyassbm/hermes-ui/<SHA>/docs/screenshots/02-model.jpg
+  - https://raw.githubusercontent.com/Ilyassbm/hermes-ui/<SHA>/docs/screenshots/03-usage.jpg
+  - https://raw.githubusercontent.com/Ilyassbm/hermes-ui/<SHA>/docs/screenshots/04-settings.jpg
+readme: true
+platforms: []
+title: Hermes UI
+capabilities:
+  provides_tools: []
+  provides_hooks: []
+  provides_middleware: []
+  requires_env: []
