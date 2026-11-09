@@ -17,6 +17,8 @@ export const store = createStore({
   loading: false,
   messages: [], // [{ id, role, text, reasoning, toolActions, model, at, status, thinkStart, thinkEnd, gen }]
   live: null, // { phase, verb, subagents, startedAt, reasoning } while a turn runs
+  /** The last turn that Stop ended: `{ startedAt, endedAt }`, so the line can fold into "Worked for 12s". */
+  worked: null,
   approval: null, // { requestId, command, description, allowPermanent }
   info: { model: '', title: '' },
   files: [], // [{ path, at }]
@@ -291,7 +293,7 @@ export async function selectBot(botName, { keepConversation = false } = {}) {
 }
 
 function blankConversation() {
-  return { sid: null, storedId: null, messages: [], live: null, approval: null, files: [], previewFile: null, info: { model: '', title: '' }, error: '', retryOpen: false, loading: false }
+  return { sid: null, storedId: null, messages: [], live: null, worked: null, approval: null, files: [], previewFile: null, info: { model: '', title: '' }, error: '', retryOpen: false, loading: false }
 }
 
 // ── transport ────────────────────────────────────────────────────────────────
@@ -457,6 +459,8 @@ export async function send(text, attachments = []) {
   store.set(st => ({
     error: '',
     retryOpen: false,
+    // A new prompt starts a new clock: the previous stop's "Worked for" line goes with it.
+    worked: null,
     messages: [...st.messages, { id: nid('u'), role: 'user', text: body, at: Date.now(), attachments: attachments.map(a => ({ name: a.name, kind: a.type?.startsWith('image/') ? 'image' : 'file' })) }],
     live: { phase: 'thinking', verb: '', subagents: 0, startedAt: Date.now(), reasoning: '' }
   }))
@@ -484,9 +488,16 @@ export async function send(text, attachments = []) {
   }
 }
 
+/**
+ * Stop the running turn. The gateway's `session.interrupt` takes a 30 s deadline of its own (the SDK's default is 30 s
+ * too, but the call is named here so a change is visible); only an answer that is not an interrupt counts as a failure,
+ * and then the live state is kept exactly as it was. On success the turn folds: `live` goes, the stream's calls are
+ * settled, the turn stops reading as live, and `worked` hands the activity line its "Worked for 12s".
+ */
 export async function stop() {
-  const { sid, messages } = store.get()
-  if (!sid) return
+  const { sid, messages, live } = store.get()
+  if (!sid) return false
+  const startedAt = live?.startedAt || Date.now()
   // The turn's live calls are settled before the network cancel is awaited (rule tool-call-stop): an event that
   // arrives while the interrupt is in flight can then never leave a row spinning.
   const last = messages[messages.length - 1]
@@ -494,11 +505,23 @@ export async function stop() {
     const gen = last.gen ?? 0
     patchDraft(d => ({ ...d, toolActions: [...d.toolActions, { type: 'stop', gen }] }))
   }
+  let res = null
   try {
-    await host.request('session.interrupt', { session_id: sid })
+    res = await host.request('session.interrupt', { session_id: sid }, 30_000)
   } catch {
-    /* the turn may already be over */
+    return false
   }
+  // `not_interrupted` says the turn changed under the keypress: nothing was cancelled, so nothing is folded either.
+  if (res && (res.status === 'not_interrupted' || res.interrupted === false)) return false
+  patchDraft(d => ({ ...d, status: 'done', thinkEnd: d.thinkEnd || Date.now() }))
+  store.set(s => ({
+    live: null,
+    approval: null,
+    worked: { startedAt, endedAt: Date.now() },
+    messages: s.messages.map(m => (m.status === 'streaming' ? { ...m, status: 'done', thinkEnd: m.thinkEnd || Date.now() } : m))
+  }))
+  stopApprovalPoll()
+  return true
 }
 
 export async function retryLast() {

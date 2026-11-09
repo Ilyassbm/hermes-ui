@@ -27,6 +27,7 @@ import { botIdentity, sinceLabel } from './format'
 import { capsOf } from './keys'
 import { UI } from './strings'
 import { toggleAside, view } from './ui-state'
+import { WorkingDot } from './thread/working'
 
 type HeaderProps = {
   ctx: any
@@ -38,6 +39,7 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
   const bots = useStore(store, s => s.bots)
   const sessionsByBot = useStore(store, s => s.sessionsByBot)
   const storedId = useStore(store, s => s.storedId)
+  const live = useStore(store, s => s.live)
   const asideOpen = useStore(view, s => s.asideOpen)
   const railOpen = useStore(view, s => s.railOpen)
 
@@ -75,6 +77,7 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
           onKeyDown={press(openMostRecent)}
         >
           <BotAvatar size={18} colors={identity.colors} shape={identity.shape} label={name} hoverGiggle={false} />
+          {live && !storedId ? <WorkingDot className="hui-tab-dot" /> : null}
           <span className="hui-tab-text">{name}</span>
         </div>
 
@@ -90,6 +93,7 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
             onKeyDown={press(() => void openConversation(s.id))}
           >
             <span className="hui-tab-text">{s.title || UI.header.conversation}</span>
+            {live && s.id === storedId ? <WorkingDot className="hui-tab-dot" /> : null}
           </div>
         ))}
       </div>

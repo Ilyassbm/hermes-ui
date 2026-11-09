@@ -36,6 +36,8 @@ const COMMAND_DEBOUNCE = 120
 export function Composer({ bot, name, input, sid, status, generation, onSent }: ComposerProps) {
   const [files, setFiles] = useState<Picked[]>([])
   const [commands, setCommands] = useState<CommandItem[]>([])
+  // Stop's one failure, said quietly under the box: the turn is still live, so the line keeps counting.
+  const [stopNote, setStopNote] = useState('')
   const asked = useRef<ReturnType<typeof setTimeout> | null>(null)
   const submitKey = useStore(settings, s => s.sendKey)
 
@@ -98,7 +100,13 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
           // The toolbar's left side: the model picker, before the paperclip (toolsFirst puts it there in the DOM too).
           tools={<ModelMenu />}
           toolsFirst
-          onStop={() => void stop()}
+          onStop={() => {
+            // Stop answers whether the gateway really interrupted: a refusal keeps the live line and says so here.
+            setStopNote('')
+            void stop().then(ok => {
+              if (!ok) setStopNote(UI.working.stopFailed)
+            })
+          }}
           commands={commands}
           attachments={attachments}
           onAttach={list =>
@@ -123,10 +131,16 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
             const text = value.serialized || value.text
             const list = files.map(f => f.file)
             setFiles([])
+            setStopNote('')
             void send(text, list)
             onSent?.()
           }}
         />
+        {stopNote ? (
+          <p role="status" data-hui-part="composer-note" className="hui-composer-note">
+            {stopNote}
+          </p>
+        ) : null}
       </div>
     </div>
   )

@@ -2,7 +2,7 @@ import type {Icon as PhosphorIcon, IconProps as PhosphorProps} from '@phosphor-i
 import {
   ArrowBendDownRightIcon, ArrowClockwiseIcon, ArrowDownIcon, ArrowElbowDownLeftIcon, ArrowLeftIcon, ArrowRightIcon,
   ArrowSquareOutIcon, ArrowUDownLeftIcon, ArrowUUpLeftIcon, ArrowUpIcon, ArrowUpRightIcon, ArrowsInLineVerticalIcon,
-  ArrowsOutLineVerticalIcon, BrainIcon, CalendarBlankIcon, CaretDownIcon, CaretLeftIcon, CaretRightIcon, CaretUpIcon,
+  ArrowsOutLineVerticalIcon, ArrowsClockwiseIcon, BrainIcon, CalendarBlankIcon, CaretDownIcon, CaretLeftIcon, CaretRightIcon, CaretUpIcon,
   CaretUpDownIcon, ChartLineIcon, CheckIcon, CheckCircleIcon, CircleNotchIcon, ClockIcon, CodeIcon, ColumnsIcon,
   CopyIcon, DotsThreeIcon, DownloadSimpleIcon, EyeIcon, EyeSlashIcon, FileIcon, FileArchiveIcon, FileAudioIcon,
   FileCodeIcon, FileCsvIcon, FileImageIcon, FileTextIcon, FileVideoIcon, FunnelIcon, GearSixIcon, GlobeIcon, InfoIcon,
@@ -79,6 +79,8 @@ export const More = DotsThreeIcon;
 export const Pause = PauseIcon;
 export const Pending = CircleNotchIcon;
 export const Play = PlayIcon;
+/** The usage foot's refresh: two arrows in a circle (lucide's refresh-cw). */
+export const Refresh = ArrowsClockwiseIcon;
 export const Retry = ArrowClockwiseIcon;
 export const Return = ArrowElbowDownLeftIcon;
 export const Search = MagnifyingGlassIcon;

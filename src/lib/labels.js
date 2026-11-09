@@ -1,45 +1,69 @@
 // English copy for the live activity line, bot identity helpers, time formats.
 //
 // Lot 13: every word here lives in UI.activity / UI.time (src/app/strings.ts); this module only maps a tool name to
-// the sentence its row prints.
+// the sentence its row prints. Lot 23 adds the present tense beside the past one: the line under a running turn says
+// "reads a file" while the tool row folds into "read a file" afterwards, so both come from the same table.
 import { UI } from '../app/strings'
 
+/** One row: the tool names it answers, the past phrase, the present phrase (functions for the parameterised ones). */
 const TOOL_VERBS = [
-  [/^read_file$/, UI.activity.read],
-  [/^(write_file|create_file)$/, UI.activity.write],
-  [/^(patch|edit_file|apply_patch)$/, UI.activity.edit],
-  [/^search_files$/, UI.activity.searchFiles],
-  [/^(terminal|shell|bash|process)/, UI.activity.shell],
-  [/^web_search$/, UI.activity.webSearch],
-  [/^web_extract$/, UI.activity.webRead],
-  [/^(browser|browser_exec|drive_preview)/, UI.activity.browse],
-  [/^execute_code$/, UI.activity.code],
-  [/^vision_analyze$/, UI.activity.vision],
-  [/^image_generate$/, UI.activity.image],
-  [/^text_to_speech$/, UI.activity.speech],
-  [/^skill_(view|manage)$|^skills_list$/, UI.activity.skill],
-  [/^memory$/, UI.activity.memory],
-  [/^session_search$/, UI.activity.session],
-  [/^(todo|todo_list)$/, UI.activity.todo],
-  [/^clarify$/, UI.activity.clarify],
-  [/^(cronjob|cronjob_manage)$/, UI.activity.cron],
-  [/^send_message$/, UI.activity.message],
-  [/^tool_(search|describe|call)$/, UI.activity.tool],
-  [/^connectors__([a-z0-9-]+)__/, m => UI.activity.uses(cap(m[1]))],
-  [/^mcp__([a-z0-9-]+)__/, m => UI.activity.uses(cap(m[1]))]
+  [/^read_file$/, UI.activity.read, UI.activity.present.read],
+  [/^(write_file|create_file)$/, UI.activity.write, UI.activity.present.write],
+  [/^(patch|edit_file|apply_patch)$/, UI.activity.edit, UI.activity.present.edit],
+  [/^search_files$/, UI.activity.searchFiles, UI.activity.present.searchFiles],
+  [/^(terminal|shell|bash|process)/, UI.activity.shell, UI.activity.present.shell],
+  [/^web_search$/, UI.activity.webSearch, UI.activity.present.webSearch],
+  [/^web_extract$/, UI.activity.webRead, UI.activity.present.webRead],
+  [/^(browser|browser_exec|drive_preview)/, UI.activity.browse, UI.activity.present.browse],
+  [/^execute_code$/, UI.activity.code, UI.activity.present.code],
+  [/^vision_analyze$/, UI.activity.vision, UI.activity.present.vision],
+  [/^image_generate$/, UI.activity.image, UI.activity.present.image],
+  [/^text_to_speech$/, UI.activity.speech, UI.activity.present.speech],
+  [/^skill_(view|manage)$|^skills_list$/, UI.activity.skill, UI.activity.present.skill],
+  [/^memory$/, UI.activity.memory, UI.activity.present.memory],
+  [/^session_search$/, UI.activity.session, UI.activity.present.session],
+  [/^(todo|todo_list)$/, UI.activity.todo, UI.activity.present.todo],
+  [/^clarify$/, UI.activity.clarify, UI.activity.present.clarify],
+  [/^(cronjob|cronjob_manage)$/, UI.activity.cron, UI.activity.present.cron],
+  [/^send_message$/, UI.activity.message, UI.activity.present.message],
+  [/^tool_(search|describe|call)$/, UI.activity.tool, UI.activity.present.tool],
+  [/^connectors__([a-z0-9-]+)__/, m => UI.activity.uses(cap(m[1])), m => UI.activity.present.uses(cap(m[1]))],
+  [/^mcp__([a-z0-9-]+)__/, m => UI.activity.uses(cap(m[1])), m => UI.activity.present.uses(cap(m[1]))]
 ]
 
 function cap(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s
 }
 
-export function toolVerb(name) {
+/** The words a tool name resolves to: the past phrase, or the present one the live line prints. */
+function toolWords(name, present) {
   const n = String(name || '')
-  for (const [re, verb] of TOOL_VERBS) {
-    const m = re.exec(n)
-    if (m) return typeof verb === 'function' ? verb(m) : verb
+  for (const row of TOOL_VERBS) {
+    const m = row[0].exec(n)
+    if (m) {
+      const words = present ? row[2] : row[1]
+      const text = typeof words === 'function' ? words(m) : words
+      return typeof text === 'string' ? text : String(text ?? '')
+    }
   }
-  return n ? UI.activity.fallback(n) : UI.activity.works
+  if (!n) return present ? UI.activity.present.works : UI.activity.works
+  return present ? UI.activity.present.fallback(n) : UI.activity.fallback(n)
+}
+
+/** "read a file", "searched the web": what a tool row says once the call ended. */
+export function toolVerb(name) {
+  return toolWords(name, false)
+}
+
+/** "reads a file", "searches the web": what the live activity line says while the call runs. */
+export function toolVerbPresent(name) {
+  return toolWords(name, true)
+}
+
+/** "12s", "1m 04s": the clock the live line counts. Rounds down, so 59.9s reads 59s and 60s reads 1m 00s. */
+export function workingTime(ms) {
+  const s = Math.max(0, Math.floor((Number.isFinite(ms) ? ms : 0) / 1000))
+  return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`
 }
 
 // The default profile is Branco (Chief of Staff) in Ilyass's setup, as in the OS chat mode.

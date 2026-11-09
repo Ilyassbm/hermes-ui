@@ -89,6 +89,24 @@ const idRows = ID_CASES.map(([hash, expected]) => {
   return { hash, expected, got, ok }
 })
 
+// The launch watch's question: does this address belong to the app's chat, which /hui replaces?
+const CHAT_CASES = [
+  ['#/', true],
+  ['', true],
+  ['#/local-abc123', true],
+  ['#/abc%2Fdef', true],
+  ['#/hui', false],
+  ['#/hui/glaze', false],
+  ['#/settings', false],
+  ['#/capabilities/plugins', false]
+]
+const chatRows = CHAT_CASES.map(([hash, expected]) => {
+  const got = mod.isChatRoute(hash)
+  const ok = got === expected
+  if (!ok) failures.push({ hash, expected, got })
+  return { hash, expected, got, ok }
+})
+
 const pad = (value, width) => String(value).padEnd(width)
 console.log(`check-takeover: bundled ${outfile}\n`)
 console.log(`${pad('hash', 24)} ${pad('attendu', 10)} ${pad('obtenu', 10)} ok`)
@@ -99,9 +117,13 @@ console.log(`\n${pad('hash', 24)} ${pad('id attendu', 12)} ${pad('id obtenu', 12
 for (const row of idRows) {
   console.log(`${pad(JSON.stringify(row.hash), 24)} ${pad(JSON.stringify(row.expected), 12)} ${pad(JSON.stringify(row.got), 12)} ${row.ok ? 'oui' : 'NON'}`)
 }
+console.log(`\n${pad('hash', 24)} ${pad('chat', 10)} ${pad('chat attendu', 12)} ok`)
+for (const row of chatRows) {
+  console.log(`${pad(JSON.stringify(row.hash), 24)} ${pad(String(row.got), 10)} ${pad(String(row.expected), 12)} ${row.ok ? 'oui' : 'NON'}`)
+}
 
 if (failures.length) {
   console.error(`\ncheck-takeover: ${failures.length} cas en échec`)
   process.exit(1)
 }
-console.log(`\ncheck-takeover: OK — ${rows.length + idRows.length} cas, route et id conformes`)
+console.log(`\ncheck-takeover: OK — ${rows.length + idRows.length + chatRows.length} cas, route, id et chat conformes`)

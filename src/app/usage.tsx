@@ -11,8 +11,11 @@
 // `resetsAt`: under a day away it is just the hour, further out it is the short weekday and the hour, and with no date
 // at all the row keeps only the percentage.
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { Icon, Refresh } from '@/components/glaze/icon'
 import { Button } from '@/components/glaze/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/glaze/ui/popover'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/glaze/ui/tooltip'
+import { store } from '@/lib/hermes'
 import { ProviderLogo } from './provider-logo'
 import { UI } from './strings'
 
@@ -131,6 +134,24 @@ function write(ctx: any, key: string, value: string) {
  */
 export function UsageMeters({ cards, ctx }: { cards: UsageCard[]; ctx: any }) {
   const [openId, setOpenId] = useState<string>(() => read(ctx, 'usageOpen', ''))
+  // The foot's refresh: one request at a time, the icon turning while it runs, and the last numbers kept on failure.
+  const [refreshing, setRefreshing] = useState(false)
+  const [refreshFailed, setRefreshFailed] = useState(false)
+  const refresh = async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    setRefreshFailed(false)
+    try {
+      const res = await ctx?.rest?.('/usage?fresh=1', { timeoutMs: 20000 })
+      const providers = Array.isArray(res?.providers) ? res.providers : null
+      if (providers) store.set({ usage: providers })
+    } catch {
+      // The last reading stays on screen: an empty meter would read as "no subscription".
+      setRefreshFailed(true)
+    } finally {
+      setRefreshing(false)
+    }
+  }
   // The collapsed height, in the DOM: `data-hui-usage-height` on the block is what a reviewer reads in the app (86
   // with both panels shut), instead of trusting the stylesheet's arithmetic alone.
   const box = useRef<HTMLDivElement | null>(null)
@@ -152,8 +173,9 @@ export function UsageMeters({ cards, ctx }: { cards: UsageCard[]; ctx: any }) {
   }
 
   return (
-    <div ref={box} className="hui-usage" data-hui-usage-count={cards.length}>
-      {cards.map(card => {
+    <div className="hui-usage-wrap">
+      <div ref={box} className="hui-usage" data-hui-usage-count={cards.length}>
+        {cards.map(card => {
         const open = openId === card.id
         return (
           <Popover key={card.id} open={open} onOpenChange={next => setOpen(card.id, next)}>
@@ -195,7 +217,33 @@ export function UsageMeters({ cards, ctx }: { cards: UsageCard[]; ctx: any }) {
             </PopoverContent>
           </Popover>
         )
-      })}
+        })}
+      </div>
+      {/* Right of the two meters: one 24×24 control, its icon turning while `/usage?fresh=1` runs. */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="hui-usage-refresh"
+                aria-label={UI.usage.refresh}
+                aria-busy={refreshing || undefined}
+                data-ui-tooltip="hui-tip-usage-refresh"
+                disabled={refreshing}
+                onClick={() => void refresh()}
+              />
+            }
+          >
+            <span className={refreshing ? 'hui-usage-refresh-icon' : undefined}>
+              <Icon icon={Refresh} size={12} />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent id="hui-tip-usage-refresh">{refreshFailed ? UI.usage.refreshFailed : UI.usage.refresh}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   )
 }

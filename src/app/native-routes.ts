@@ -67,6 +67,16 @@ export function classifyRoute(hash: string | null | undefined): RouteClass {
   return 'native'
 }
 
+/**
+ * True when a hash is one of the app's chat routes the takeover replaces: its home (`#/`) or one session
+ * (`#/<id>`). Settings, the demo and `/hui` are not. The launch watch uses it to re-ask the address itself rather
+ * than wait for a `hashchange` the app may never fire.
+ */
+export function isChatRoute(hash: string | null | undefined): boolean {
+  const kind = classifyRoute(hash)
+  return kind === 'new-chat' || kind === 'session'
+}
+
 /** The stored session id a `session` route carries, decoded; null when the route is anything else. */
 export function sessionIdOf(hash: string | null | undefined): string | null {
   if (classifyRoute(hash) !== 'session') return null

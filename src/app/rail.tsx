@@ -9,7 +9,7 @@
 // 72×102) are hand-set, and the lint stays at zero because no rule of it is restyled through a className.
 import { cloneElement, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactElement, type ReactNode } from 'react'
 import { Icon, Add, ChevronDown, ChevronRight, Search, Settings, Time } from '@/components/glaze/icon'
-import { ActivityArc } from '@/components/glaze/ai/activity'
+import { WorkingDot, WorkingStatus } from './thread/working'
 import { Badge } from '@/components/glaze/ui/badge'
 import { Button } from '@/components/glaze/ui/button'
 import { Kbd } from '@/components/glaze/ui/kbd'
@@ -179,7 +179,7 @@ export function Rail({ ctx }: { ctx: any }) {
                     <BotAvatar size={56} colors={row.identity.colors} shape={row.identity.shape} label={row.label} />
                     {busy(row.name) ? (
                       <span className="hui-work" role="img" aria-label={UI.rail.working}>
-                        <ActivityArc />
+                        <WorkingDot />
                       </span>
                     ) : null}
                   </span>
@@ -230,7 +230,7 @@ export function Rail({ ctx }: { ctx: any }) {
                         <BotAvatar size={46} colors={row.identity.colors} shape={row.identity.shape} label={row.label} />
                         {busy(row.name) ? (
                           <span className="hui-work" role="img" aria-label={UI.rail.working}>
-                            <ActivityArc />
+                            <WorkingDot />
                           </span>
                         ) : null}
                       </span>
@@ -247,7 +247,12 @@ export function Rail({ ctx }: { ctx: any }) {
                             <span className="hui-row-time" data-ui-number="">{sinceLabel(row.active)}</span>
                           ) : null}
                         </span>
-                        {row.output ? <span className="hui-row-output" title={row.output}>{row.output}</span> : null}
+                        {/* While the turn runs, the last output gives its line to the working clock; it returns after. */}
+                        {busy(row.name) ? (
+                          <WorkingStatus live={live} />
+                        ) : row.output ? (
+                          <span className="hui-row-output" title={row.output}>{row.output}</span>
+                        ) : null}
                       </span>
                     </div>
                   </BotContextMenu>

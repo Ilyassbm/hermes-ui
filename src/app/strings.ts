@@ -189,7 +189,10 @@ export const UI = {
     compact: (window: string, percent: number) => `${window} · ${percent} %`,
     expand: (provider: string) => `Show the usage limits of ${provider}`,
     collapse: (provider: string) => `Hide the usage limits of ${provider}`,
-    noReset: 'No reset date'
+    noReset: 'No reset date',
+    /** The foot's refresh control, right of the two meters. */
+    refresh: 'Refresh usage',
+    refreshFailed: "Couldn't refresh usage"
   },
 
   /** The composer, and every state Glaze's PromptInput can print. */
@@ -355,7 +358,50 @@ export const UI = {
     tool: 'used a tool',
     uses: (name: string) => `used ${name}`,
     works: 'is working',
-    fallback: (name: string) => `used ${name.replace(/_/g, ' ')}`
+    fallback: (name: string) => `used ${name.replace(/_/g, ' ')}`,
+    /** The same vocabulary in the present tense: the line under the turn says what runs now. */
+    present: {
+      read: 'reads a file',
+      write: 'writes a file',
+      edit: 'edits a file',
+      searchFiles: 'searches the files',
+      shell: 'runs a command',
+      webSearch: 'searches the web',
+      webRead: 'reads a web page',
+      browse: 'browses the web',
+      code: 'runs code',
+      vision: 'looks at an image',
+      image: 'generates an image',
+      speech: 'prepares audio',
+      skill: 'reads its skills',
+      memory: 'updates its memory',
+      session: 'searches its conversations',
+      todo: 'organises its tasks',
+      clarify: 'asks you a question',
+      cron: 'schedules a task',
+      message: 'sends a message',
+      tool: 'uses a tool',
+      uses: (name: string) => `uses ${name}`,
+      works: 'is working',
+      fallback: (name: string) => `uses ${name.replace(/_/g, ' ')}`
+    }
+  },
+
+  /** The line that shows a turn is still running: its verb, its counting time, and what Stop says. */
+  working: {
+    /** Nothing has happened yet. */
+    thinking: 'thinking',
+    /** Text is arriving. */
+    writing: 'writing',
+    /** Delegated work, with the number of tasks when the call names them. */
+    delegates: (n: number) => (n > 1 ? `delegates ${n} tasks` : 'delegates a task'),
+    /** The folded line once a turn was stopped. */
+    worked: (time: string) => `Worked for ${time}`,
+    /** The rail's one line under the bot's name, and the tab's name for its dot. */
+    now: 'working',
+    label: (name: string) => `${name} is working`,
+    /** Stop failed: the turn is still live, said quietly under the composer. */
+    stopFailed: "Couldn't stop the turn — it is still running."
   },
 
   /** Slash commands run by the page itself. */

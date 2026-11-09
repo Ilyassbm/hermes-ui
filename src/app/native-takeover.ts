@@ -14,11 +14,15 @@
 import { host } from '@hermes/plugin-sdk'
 import { toast } from '@/components/glaze/ui/toast'
 import { boot, loadBots, newConversation, openConversation, selectBot, store } from '@/lib/hermes'
-import { classifyRoute, HUI_PATH, sessionIdOf, type RouteClass } from './native-routes'
+import { classifyRoute, HUI_PATH, isChatRoute, sessionIdOf, type RouteClass } from './native-routes'
 import { UI } from './strings'
 
 const STORAGE_KEY = 'replaceNative'
 const GUARD_MS = 500
+/** The launch watch: 20 passes, 400ms apart (8 s). Long enough for the app's own router to restore, short enough
+ *  that it is over before a person can miss it. */
+const WATCH_MS = 400
+const WATCH_TRIES = 20
 
 type Ctx = any
 
@@ -138,8 +142,13 @@ export async function handleRoute(hash: string, { launch = false }: { launch?: b
 }
 
 /**
- * Wires the takeover once per load. The first pass waits for the app: either the gateway is already `open` (one tick,
- * then go) or we listen for that one transition and drop the listener — no polling loop.
+ * Wires the takeover once per load.
+ *
+ * A reload must never leave the person on the app's old page. That is why the first pass no longer waits for the
+ * gateway — the home route needs no session — and why the plugin re-reads `location.hash` itself for the first eight
+ * seconds instead of trusting one `hashchange`: the app's router restores its route after ours, sometimes with a
+ * `replaceState` that fires no event at all. `popstate` covers the back button. A pass only acts on the app's chat
+ * routes (`#/`, `#/<id>`); `/hui` and every native page are left alone.
  */
 export function installTakeover(ctx: Ctx): void {
   ctxRef = ctx
@@ -151,17 +160,26 @@ export function installTakeover(ctx: Ctx): void {
   }
 
   ctx.addEventListener(window, 'hashchange', () => run(false))
+  ctx.addEventListener(window, 'popstate', () => run(false))
 
-  // The launch's own pass: the restored conversation stays, whatever the hash says.
-  const firstTick = () => ctx.setTimeout(() => run(true), 0)
-  if (host.state.gateway.get() === 'open') {
-    firstTick()
-    return
+  // The launch's own pass, repeated while the address is still a chat route: `launch` keeps the restored conversation.
+  let tries = 0
+  const watch = () => {
+    if (!replaceNativeOn()) return
+    if (isChatRoute(window.location.hash)) run(true)
+    tries += 1
+    const kind = classifyRoute(window.location.hash)
+    if (tries < WATCH_TRIES && kind !== 'hui' && kind !== 'native') ctx.setTimeout(watch, WATCH_MS)
   }
-  const off = host.state.gateway.listen(state => {
-    if (state !== 'open') return
-    off()
-    firstTick()
-  })
-  ctx.onDispose(() => off())
+  ctx.setTimeout(watch, 0)
+
+  // A second pass when the gateway opens: a plugin registered before it is what the app was waiting for.
+  if (host.state.gateway.get() !== 'open') {
+    const off = host.state.gateway.listen(state => {
+      if (state !== 'open') return
+      off()
+      run(true)
+    })
+    ctx.onDispose(() => off())
+  }
 }

@@ -206,8 +206,15 @@ def _content_text(raw: Any) -> str:
 
 
 def _last_output(raw: Any, limit: int = 140) -> str:
-    """One line for the rail: links keep their label, the markdown marks go, the spaces collapse, 140 characters max."""
+    """One line for the rail: links keep their label, the markdown marks go, the spaces collapse, 140 characters max.
+
+    Lot 23: media lines go too. `MEDIA:/opt/…` is a path the thread renders as an attachment, and the desktop
+    uploader's `[Image attached at: …]` is the same marker for a person's own file — the rail's line says what the bot
+    wrote, never where a file lives.
+    """
     text = _content_text(raw)
+    text = re.sub(r"(?i)media:\s*\S+", "", text)
+    text = re.sub(r"(?i)\[image attached at:[^\]]*\]", "", text)
     text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)
     text = re.sub(r"[#*_`>]", "", text)
     text = re.sub(r"\s+", " ", text).strip()
