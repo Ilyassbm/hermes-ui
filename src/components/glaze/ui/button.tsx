@@ -100,7 +100,7 @@ function useNameCheck() {
     if (process.env.NODE_ENV === 'production' || !node.current) return;
     if (!visibleName(node.current)) {
       node.current.setAttribute('data-unnamed', '');
-      console.error('Glaze Button has no accessible name. Give it text children, or aria-label on an icon size.', node.current);
+      console.warn('Glaze Button has no accessible name. Give it text children, or aria-label on an icon size.', node.current);
     } else node.current.removeAttribute('data-unnamed');
   });
   return node;

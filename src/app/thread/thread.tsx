@@ -10,7 +10,7 @@ import type { PromptInputHandle } from '@/components/glaze/ai/prompt-input'
 import { Attachment, AttachmentContent, AttachmentGlyph, AttachmentGroup, AttachmentMedia, AttachmentTitle } from '@/components/glaze/ui/attachment'
 import { Chip, ChipGroup } from '@/components/glaze/ui/chip'
 import { Skeleton, SkeletonText } from '@/components/glaze/ui/skeleton'
-import { openConversation, retryLast, store } from '@/lib/hermes'
+import { openConversation, retryBoot, retryLast, selectBot, store } from '@/lib/hermes'
 import { hourOf } from '@/lib/labels'
 import { useStore } from '@/lib/store'
 import { botIdentity } from '../format'
@@ -38,6 +38,8 @@ export function Thread({ bot, name, input }: ThreadProps) {
   const error = useStore(store, s => s.error)
   const loading = useStore(store, s => s.loading)
   const retryOpen = useStore(store, s => s.retryOpen)
+  const retryBootFlag = useStore(store, s => s.retryBoot)
+  const retryBot = useStore(store, s => s.retryBot)
   const storedId = useStore(store, s => s.storedId)
   const identity = botIdentity(bot || 'default')
 
@@ -64,7 +66,7 @@ export function Thread({ bot, name, input }: ThreadProps) {
           <ConversationContent className="mx-auto flex w-full max-w-measure flex-col pt-6 pb-6">
 
             {!ready ? (
-              <p className="py-10 text-center type-body-sm text-text-3">{UI.thread.connecting}</p>
+              <LoadingThread />
             ) : loading ? (
               <LoadingThread />
             ) : messages.length ? (
@@ -123,8 +125,14 @@ export function Thread({ bot, name, input }: ThreadProps) {
               <ConversationError
                 kind="server"
                 message={error}
-                // A failed resume has no prompt to replay: its Retry opens the same conversation again.
-                onRetry={() => (retryOpen && storedId ? void openConversation(storedId) : void retryLast())}
+                // A failed boot replays the roster read, a refused bot selects it again, and a failed resume has no
+                // prompt to replay: its Retry opens the same conversation again.
+                onRetry={() => {
+                  if (retryBootFlag) return void retryBoot()
+                  if (retryBot) return void selectBot(retryBot)
+                  if (retryOpen && storedId) return void openConversation(storedId)
+                  return void retryLast()
+                }}
                 labels={{ retry: UI.thread.retry }}
                 className="mx-0"
               />

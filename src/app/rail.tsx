@@ -56,6 +56,7 @@ export function Rail({ ctx }: { ctx: any }) {
   const live = useStore(store, s => s.live)
   const approval = useStore(store, s => s.approval)
   const usage = useStore(store, s => s.usage)
+  const connecting = useStore(store, s => s.connecting)
   const { rows } = useBots(ctx)
 
   const [pinned, setPinned] = useState<string[]>(() => read(ctx, 'pinned', DEFAULT_PINNED))
@@ -162,6 +163,11 @@ export function Rail({ ctx }: { ctx: any }) {
         data-shade-top={shade.top || undefined}
         data-shade-bottom={shade.bottom || undefined}
       >
+        {/* The gateway socket is still opening (Desktop connects after the first render): one quiet line where the
+            roster will land, instead of an empty rail that reads as "no bots". */}
+        {connecting ? (
+          <p className="hui-rail-state" role="status">{UI.rail.connecting}</p>
+        ) : null}
         {pinnedRows.length ? (
           <div className="hui-pinned" role="listbox" aria-label={UI.rail.pinnedLabel}>
             {pinnedRows.map(row => (

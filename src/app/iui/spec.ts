@@ -38,13 +38,13 @@ const IMAGE_OK = /^(https:\/\/|\/(?!\/)|data:image\/(png|jpeg|webp);)/i
 export function sanitizeSpec(raw: unknown): IuiResult {
   const issues: IuiIssue[] = []
   if (!isObject(raw) || typeof raw.root !== 'string' || !isObject(raw.elements)) {
-    return { spec: null, issues: [{ at: '/', reason: 'spec sans root ni elements' }] }
+    return { spec: null, issues: [{ at: '/', reason: 'spec has no root or elements' }] }
   }
 
   const root = raw.root
   const source = raw.elements as Record<string, unknown>
   const state = isObject(raw.state) ? (clip(raw.state, issues, '/state') as Record<string, unknown>) : undefined
-  if (!isObject(source[root])) return { spec: null, issues: [{ at: `/${root}`, reason: 'root introuvable dans elements' }] }
+  if (!isObject(source[root])) return { spec: null, issues: [{ at: `/${root}`, reason: 'root is not in elements' }] }
 
   const elements: Record<string, UIElement> = {}
   const seen = new Set<string>()

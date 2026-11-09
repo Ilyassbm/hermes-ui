@@ -35,7 +35,8 @@ function useQuietChrome(ctx: any) {
     chromeQuieted = true
     const t = setTimeout(() => {
       try {
-        const sidebar = host.paneVisibility?.('sessions')
+        // The core sessions rail is `chat-sidebar` (apps/desktop store/layout.ts CHAT_SIDEBAR_PANE_ID).
+        const sidebar = host.paneVisibility?.('chat-sidebar')
         if (sidebar?.get?.()) void ctx.runAction('view.toggleSidebar')
       } catch {
         /* older desktop: leave the chrome alone */
@@ -61,8 +62,10 @@ export function App({ ctx }: { ctx: any }) {
     loadSettings(ctx)
   }, [ctx])
 
+  // The gateway opens after the first render on Desktop: boot asks at once and waits for the socket inside
+  // `requestReady`, instead of requiring `gateway === 'open'` before the roster is even requested.
   useEffect(() => {
-    if (gateway === 'open') void boot()
+    void boot()
   }, [gateway])
 
   // Under 1100px the right panel is an overlay, and it starts closed: there is no room for three columns.

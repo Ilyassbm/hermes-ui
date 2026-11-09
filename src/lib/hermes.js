@@ -28,7 +28,13 @@ export const store = createStore({
   usage: null,
   error: '',
   /** The error banner's Retry reopens the conversation (a failed `session.resume`), not the last prompt. */
-  retryOpen: false
+  retryOpen: false,
+  /** The gateway was still opening past the wait: Retry runs the boot again. */
+  retryBoot: false,
+  /** The profile whose backend refused selection: Retry selects it again. */
+  retryBot: null,
+  /** True while the boot waits for the gateway socket: the rail's status line says "Connecting…". */
+  connecting: false
 })
 
 let ctxRef = null
@@ -230,12 +236,18 @@ export function toTurns(raw) {
 // ── bots & sessions ──────────────────────────────────────────────────────────
 
 export async function loadBots() {
+  store.set({ connecting: true })
   let profiles = []
   try {
-    const res = await host.request('profiles.list', {})
+    const res = await requestReady('profiles.list', {})
     profiles = Array.isArray(res?.profiles) ? res.profiles : []
   } catch (e) {
-    store.set({ error: `Profils illisibles : ${e?.message || e}` })
+    // No banner while the gateway is merely late: `requestReady` waited its ~20 s first. Past that, the page says so
+    // quietly and keeps working with the bot it already knows (see `bootOnce`).
+    store.set({
+      error: e instanceof GatewayUnavailable ? UI.boot.gatewayUnavailable : UI.boot.profilesUnreadable,
+      retryBoot: true
+    })
   }
   let routes = []
   try {
@@ -255,7 +267,7 @@ export async function loadBots() {
       route
     }
   })
-  store.set({ bots })
+  store.set({ bots, connecting: false })
   return bots
 }
 
@@ -282,18 +294,34 @@ export async function selectBot(botName, { keepConversation = false } = {}) {
   const bot = store.get().bots.find(b => b.name === botName)
   if (!bot) return
   ctxRef?.storage?.set('lastBot', botName)
-  store.set({ bot: botName, ...(keepConversation ? {} : blankConversation()) })
+  store.set({ bot: botName, retryBot: null, ...(keepConversation ? {} : blankConversation()) })
   try {
     await host.ensureAgent(bot.connectionId, botName)
-  } catch (e) {
-    store.set({ error: `${botName} injoignable : ${e?.message || e}` })
+  } catch {
+    // The banner names the bot and offers Retry; nothing is printed to the console (rule: errors live in the UI).
+    store.set({ error: UI.boot.botUnreachable(botName), retryBot: botName })
   }
   void loadSessions(botName)
   void loadRoutines()
 }
 
 function blankConversation() {
-  return { sid: null, storedId: null, messages: [], live: null, worked: null, approval: null, files: [], previewFile: null, info: { model: '', title: '' }, error: '', retryOpen: false, loading: false }
+  return {
+    sid: null,
+    storedId: null,
+    messages: [],
+    live: null,
+    worked: null,
+    approval: null,
+    files: [],
+    previewFile: null,
+    info: { model: '', title: '' },
+    error: '',
+    retryOpen: false,
+    retryBoot: false,
+    retryBot: null,
+    loading: false
+  }
 }
 
 // ── transport ────────────────────────────────────────────────────────────────
@@ -325,6 +353,59 @@ function isTimeout(e) {
 }
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+
+// ── gateway wait ─────────────────────────────────────────────────────────────
+
+/** The SDK's error when `host.request` runs before the gateway socket is open (`sdk/index.ts:1510`). */
+export function isGatewayUnavailable(e) {
+  return /gateway unavailable/i.test(String(e?.message || e))
+}
+
+/** The wait before each retry: 200 → 400 → 800 → 1600 → 3200 → 4000 ms, then 4 s steps. */
+export const GATEWAY_BACKOFF_MS = [200, 400, 800, 1600, 3200, 4000]
+/** The ceiling: past this the page says so and offers Retry instead of waiting forever. */
+export const GATEWAY_WAIT_MS = 20_000
+
+/** What `requestReady` throws once the socket never opened: a typed refusal, not the SDK's bare sentence. */
+export class GatewayUnavailable extends Error {
+  constructor(method, cause) {
+    super(`Hermes gateway unavailable (${method})`)
+    this.name = 'GatewayUnavailable'
+    this.code = 'GATEWAY_UNAVAILABLE'
+    this.method = method
+    this.cause = cause
+  }
+}
+
+/**
+ * `host.request`, held while the gateway socket is still opening. Desktop opens it after the first render (a remote
+ * connection), so a page that asks on mount gets "Hermes gateway unavailable" (`sdk/index.ts:1510`) where the native
+ * app simply waits. This is that wait: a retry only for that exact refusal, with the spec's backoff, and a typed
+ * `GatewayUnavailable` at the ~20 s ceiling. Any other failure is thrown on the first attempt — a permission refusal
+ * is never replayed.
+ *
+ * `options.long` sends session calls through `longRequest` (the foreground profile route and its 120 s deadline);
+ * `options.bot` names the profile for that route. `options.waitMs` / `options.backoffMs` are the harness's seam: a
+ * proof can exercise the ceiling without sleeping 20 s, and production always uses the defaults.
+ */
+export async function requestReady(method, params = {}, options = {}) {
+  const call = () => (options.long ? longRequest(method, params, options.bot) : host.request(method, params, options.timeoutMs))
+  const waitMs = Number.isFinite(options.waitMs) ? options.waitMs : GATEWAY_WAIT_MS
+  const backoff = Array.isArray(options.backoffMs) && options.backoffMs.length ? options.backoffMs : GATEWAY_BACKOFF_MS
+  const started = Date.now()
+  let attempt = 0
+  for (;;) {
+    try {
+      return await call()
+    } catch (e) {
+      if (!isGatewayUnavailable(e)) throw e
+      const wait = backoff[Math.min(attempt, backoff.length - 1)]
+      if (Date.now() - started + wait > waitMs) throw new GatewayUnavailable(method, e)
+      attempt += 1
+      await sleep(wait)
+    }
+  }
+}
 
 /**
  * One extra try, 700 ms later: the SDK documents that a cold profile backend can lose the hydration-timeout race once
@@ -361,7 +442,11 @@ export async function openConversation(storedId) {
   store.set({ ...blankConversation(), storedId, loading: true })
   try {
     const res = await retryOnce(() =>
-      longRequest('session.resume', { session_id: storedId, cols: 96, source: 'desktop', ...(bot ? { profile: bot } : {}) })
+      requestReady(
+        'session.resume',
+        { session_id: storedId, cols: 96, source: 'desktop', ...(bot ? { profile: bot } : {}) },
+        { long: true, bot }
+      )
     )
     const { turns, files } = toTurns(res?.messages)
     store.set({
@@ -375,8 +460,8 @@ export async function openConversation(storedId) {
     if (res?.running) startApprovalPoll()
   } catch (e) {
     // The banner says what happened, and its Retry replays this very call (see `retryOpen` in the store).
-    console.warn('[hermes-ui] session.resume failed', e)
-    store.set({ loading: false, error: UI.thread.resumeFailed, retryOpen: true })
+    const late = e instanceof GatewayUnavailable || isGatewayUnavailable(e)
+    store.set({ loading: false, error: late ? UI.boot.gatewayUnavailable : UI.thread.resumeFailed, retryOpen: true, retryBoot: false })
   }
 }
 
@@ -794,7 +879,7 @@ export async function loadRoutines() {
   const { bot } = store.get()
   if (!bot) return
   try {
-    const res = await host.request('cron.manage', { action: 'list', include_disabled: true, profile: bot })
+    const res = await requestReady('cron.manage', { action: 'list', include_disabled: true, profile: bot })
     const jobs = Array.isArray(res?.jobs) ? res.jobs : []
     const mine = jobs.filter(j => {
       const tag = /^\[bot:([a-z0-9][a-z0-9_-]*)\]/i.exec(j.name || '')
@@ -863,12 +948,13 @@ export function openPreview(path) {
   view.set({ asideOpen: true })
 }
 
-export async function boot() {
+export async function boot(force = false) {
   // One boot per app session, shared: the page asks for it when the gateway opens, and the takeover asks for it again
   // before it opens a session route. Two concurrent runs would each pick a bot and reset the conversation under the
   // other, so callers await the same promise instead of re-checking `ready` (which is set before the bot is selected).
+  // `force` is the banner's Retry: it reloads the roster past a boot that ended with no gateway.
   if (!bootPromise) {
-    bootPromise = bootOnce().catch(e => {
+    bootPromise = bootOnce(force).catch(e => {
       bootPromise = null
       throw e
     })
@@ -878,13 +964,26 @@ export async function boot() {
 
 let bootPromise = null
 
-async function bootOnce() {
-  if (store.get().ready) return
+/** The banner's Retry after "The Hermes gateway isn't answering yet": one fresh boot, nothing blocking. */
+export async function retryBoot() {
+  bootPromise = null
+  store.set({ error: '', retryBoot: false, retryBot: null })
+  return boot(true)
+}
+
+async function bootOnce(force = false) {
+  if (store.get().ready && !force) return
   const bots = await loadBots()
   const last = ctxRef?.storage?.get('lastBot', null)
   const active = host.state.profile.get()
-  const pick = bots.find(b => b.name === last) || bots.find(b => b.name === active) || bots[0]
-  store.set({ ready: true })
-  if (pick) await selectBot(pick.name)
+  // A failed roster read is not a dead page: the bot already known (last choice, then the active profile) stays
+  // selected, so the tabs, the composer and the `/` commands all keep working, and the banner offers Retry.
+  const known = last || active
+  const pick = bots.find(b => b.name === last) || bots.find(b => b.name === active) || bots[0] || (known ? { name: known } : null)
+  store.set({ ready: true, connecting: false })
+  if (pick) {
+    if (bots.length) await selectBot(pick.name)
+    else store.set({ bot: pick.name })
+  }
   void loadUsage()
 }

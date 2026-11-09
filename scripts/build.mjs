@@ -72,6 +72,11 @@ if (overlay.status !== 0) process.exit(overlay.status ?? 1)
 const timeouts = spawnSync(process.execPath, [resolve(root, 'scripts/check-request-timeouts.mjs')], { stdio: 'inherit' })
 if (timeouts.status !== 0) process.exit(timeouts.status ?? 1)
 
+// 0h. The copy gate (lot 24): the plugin ships to an English catalog. A French word or any accented character outside
+//     a comment fails the build, so the two strings that escaped through a JS error path cannot come back.
+const copy = spawnSync(process.execPath, [resolve(root, 'scripts/check-copy.mjs')], { stdio: 'inherit' })
+if (copy.status !== 0) process.exit(copy.status ?? 1)
+
 // 1. Tailwind v4 → one stylesheet. app.css pulls `tailwindcss/theme` + `tailwindcss/utilities` in (never the full
 //    `tailwindcss`, whose Preflight is a global reset) and Glaze's own scoped entry.
 const compiled = await postcss([tailwind()]).process(readFileSync(from, 'utf8'), { from, to: cssOut })

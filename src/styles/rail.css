@@ -187,6 +187,16 @@
   mask-image: linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent);
 }
 
+/* The boot's one status line: the gateway socket is opening and the roster has not landed yet. Quiet (text-3),
+   never a banner: the page underneath is already its normal skeleton. */
+.glaze .hui-rail-state {
+  margin: 8px 0 4px;
+  padding: 0 2px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--text-3);
+}
+
 /* Pinned bots: centred tiles that wrap, 236px at most, 8px apart. */
 .glaze .hui-pinned {
   display: flex;

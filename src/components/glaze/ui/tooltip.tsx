@@ -77,7 +77,7 @@ function readLabel(children: TooltipChildren, warn = true) {
   for (const child of React.Children.toArray(children)) {
     if (typeof child === 'string' || typeof child === 'number') text += child;
     else if (isPart(child, TooltipShortcut)) shortcut = child;
-    else if (warn && child && process.env.NODE_ENV !== 'production') console.error('Tooltip holds a label and a TooltipShortcut only. Move links, buttons and longer text into a Popover.');
+    else if (warn && child && process.env.NODE_ENV !== 'production') console.warn('Tooltip holds a label and a TooltipShortcut only. Move links, buttons and longer text into a Popover.');
   }
   return {text: text.trim(), shortcut};
 }

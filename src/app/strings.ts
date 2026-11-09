@@ -8,6 +8,13 @@
 // Nothing in this module imports anything: it is the leaf every other module may reach for.
 
 export const UI = {
+  /** The gateway wait at startup, and the quiet banner when it never opens. */
+  boot: {
+    gatewayUnavailable: "The Hermes gateway isn't answering yet — the page is still usable.",
+    profilesUnreadable: "Couldn't read the bot list.",
+    botUnreachable: (name: string) => `${name} is unreachable.`
+  },
+
   /** The bots rail: search, the team fold, the pinned tiles, the app menu. */
   rail: {
     appName: 'Hermes',
@@ -24,6 +31,8 @@ export const UI = {
     waiting: 'Waiting',
     appMenu: 'Application menu',
     settings: 'Settings',
+    /** The rail's one status line while the gateway socket is still opening. */
+    connecting: 'Connecting…',
     scheduled: 'Scheduled tasks',
     agents: 'Agents & connections',
     shortcuts: 'Keyboard shortcuts',
