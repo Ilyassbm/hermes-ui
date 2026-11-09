@@ -2,7 +2,7 @@
 //
 // Following is Glaze's: the viewport stays at the end while a turn streams, lets go the moment the person scrolls up,
 // and ConversationJump ("Aller en bas") is the way back — we never scroll it ourselves.
-import { type RefObject } from 'react'
+import { type RefObject, useMemo } from 'react'
 import { Conversation, ConversationContent, ConversationError, ConversationJump, ConversationProvider, ConversationViewport, useConversation } from '@/components/glaze/ai/conversation'
 import { Message, MessageBubble, MessageBubbleContent, MessageContent, MessageGroup, MessageHeader, MessageTime } from '@/components/glaze/ai/message'
 import { Response } from '@/components/glaze/ai/response'
@@ -17,6 +17,7 @@ import { botIdentity } from '../format'
 import { BotAvatar } from '../bot-avatar'
 import { Composer } from './composer'
 import { UI } from '../strings'
+import { MediaGroup, splitMedia } from './media'
 import { AssistantTurn } from './turn'
 
 const SUGGESTIONS = UI.thread.suggestions
@@ -90,9 +91,7 @@ export function Thread({ bot, name, input }: ThreadProps) {
                             ))}
                           </AttachmentGroup>
                         ) : null}
-                        <MessageBubble>
-                          <MessageBubbleContent>{m.text}</MessageBubbleContent>
-                        </MessageBubble>
+                        <UserText text={m.text} />
                       </MessageContent>
                     </Message>
                   ) : (
@@ -160,6 +159,32 @@ function LoadingThread() {
         <SkeletonText type="body" lines={3} last={0.55} />
       </div>
     </div>
+  )
+}
+
+/**
+ * The person's message: the bubble keeps the text as it was typed, and a media line the incoming attachment wrote
+ * (the desktop uploader appends `[Image attached at: /…]`) becomes the same block the answers get, under the bubble.
+ * With no marker the bubble is exactly what it always was, and nothing is requested.
+ */
+function UserText({ text }: { text: string }) {
+  const segments = useMemo(() => splitMedia(text), [text])
+  const body = segments
+    .filter(segment => segment.kind === 'text')
+    .map(segment => (segment.kind === 'text' ? segment.text : ''))
+    .join('\n\n')
+    .trim()
+  return (
+    <>
+      {body ? (
+        <MessageBubble>
+          <MessageBubbleContent>{body}</MessageBubbleContent>
+        </MessageBubble>
+      ) : null}
+      {segments.map((segment, index) =>
+        segment.kind === 'media' ? <MediaGroup key={`media-${index}`} paths={segment.paths} /> : null
+      )}
+    </>
   )
 }
 

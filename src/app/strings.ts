@@ -164,6 +164,16 @@ export const UI = {
     unreadableTitle: 'Path unreadable'
   },
 
+  /** The media blocks in the thread: an image, another file, its preview and its download. */
+  media: {
+    download: 'Download',
+    openPreview: 'Open preview',
+    unavailable: 'File not available',
+    tooLarge: 'Too large to download here',
+    zoom: 'Zoom the image',
+    zoomOut: 'Zoom out'
+  },
+
   /** The subscription meters at the foot of the rail: one compact row each, and the panel a row opens. */
   usage: {
     title: (provider: string, plan: string) => `Usage limits · ${provider}${plan ? ` · ${plan}` : ''}`,

@@ -34,7 +34,7 @@ import { SegmentedControl, SegmentedControlItem } from '@/components/glaze/ui/se
 import { Status } from '@/components/glaze/ui/status'
 import { toast } from '@/components/glaze/ui/toast'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/glaze/ui/tooltip'
-import { loadRoutines, store } from '@/lib/hermes'
+import { loadRoutines, openPreview, rest, store } from '@/lib/hermes'
 import { useStore } from '@/lib/store'
 import { sinceLabel } from './format'
 import { UI } from './strings'
@@ -158,7 +158,8 @@ export function Aside({ ctx }: { ctx: any }) {
 
   const [copied, setCopied] = useState('')
   const [query, setQuery] = useState('')
-  const [selected, setSelected] = useState<FileRow | null>(null)
+  // The preview's file comes from the store: a media block's Open preview names it from the thread.
+  const selected = useStore(store, s => s.previewFile) as FileRow | null
   const [preview, setPreview] = useState<Preview | null>(null)
   const [mode, setMode] = useState<'rendered' | 'source'>('rendered')
   const [routinesOpen, setRoutinesOpen] = useState<boolean>(() => read(ctx, 'asideRoutinesOpen', false))
@@ -220,49 +221,46 @@ export function Aside({ ctx }: { ctx: any }) {
   }
 
   const closePreview = () => {
-    setSelected(null)
+    store.set({ previewFile: null })
     setPreview(null)
   }
 
-  const showFile = async (file: FileRow) => {
-    const path = file.path
-    setSelected(file)
-    setMode('rendered')
+  // Reads the file once per path. An image is drawn from /blob; anything else from /file, which also carries the size.
+  useEffect(() => {
+    if (!selected) {
+      setPreview(null)
+      return undefined
+    }
+    const path = selected.path
+    let alive = true
+    const done = (next: Preview) => {
+      if (alive) setPreview(next)
+    }
     setPreview({ path, loading: true })
+    setMode('rendered')
 
     if (isImage(path)) {
-      // An image is drawn from /blob; /file only fills the size line, and may refuse at its own 1 MiB cap.
+      // /file only fills the size line, and may refuse at its own 1 MiB cap.
       void Promise.resolve(ctx?.rest?.(`/file?path=${encodeURIComponent(path)}`))
-        .then((res: any) => setPreview(current => (current && current.path === path ? { ...current, size: res?.size } : current)))
+        .then((res: any) => {
+          if (alive) setPreview(current => (current && current.path === path ? { ...current, size: res?.size } : current))
+        })
         .catch(() => undefined)
-      try {
-        const blob: any = await ctx?.rest?.(`/blob?path=${encodeURIComponent(path)}`)
-        setPreview(current =>
-          current && current.path === path
-            ? { ...current, loading: false, dataUrl: blob?.dataUrl, mime: blob?.mime, kind: 'binary' }
-            : current
-        )
-      } catch (error) {
-        setPreview(current =>
-          current && current.path === path ? { ...current, loading: false, error: failureOf(error) } : current
-        )
+      rest(`/blob?path=${encodeURIComponent(path)}`)
+        .then((blob: any) => done({ path, loading: false, dataUrl: blob?.dataUrl, mime: blob?.mime, kind: 'binary' }))
+        .catch((error: any) => done({ path, loading: false, error: failureOf(error) }))
+      return () => {
+        alive = false
       }
-      return
     }
 
-    try {
-      const res: any = await ctx?.rest?.(`/file?path=${encodeURIComponent(path)}`)
-      if (res?.error) {
-        setPreview({ ...res, path, loading: false })
-        return
-      }
-      setPreview({ ...res, path, loading: false })
-    } catch (error) {
-      setPreview(current =>
-        current && current.path === path ? { ...current, loading: false, error: failureOf(error) } : current
-      )
+    rest(`/file?path=${encodeURIComponent(path)}`)
+      .then((res: any) => done({ ...res, path, loading: false }))
+      .catch((error: any) => done({ path, loading: false, error: failureOf(error) }))
+    return () => {
+      alive = false
     }
-  }
+  }, [selected, ctx])
 
   const toggleRoutines = () => {
     const next = !routinesOpen
@@ -312,7 +310,7 @@ export function Aside({ ctx }: { ctx: any }) {
               shown.length ? (
                 <ItemGroup variant="plain" aria-label={UI.aside.filesLabel}>
                   {shown.map(file => (
-                    <AsideRow key={file.path} label={UI.aside.openFile(file.path)} onClick={() => void showFile(file)}>
+                    <AsideRow key={file.path} label={UI.aside.openFile(file.path)} onClick={() => openPreview(file.path)}>
                       <ItemMedia variant="icon">
                         <Icon icon={iconFor(file.path)} size={14} />
                       </ItemMedia>

@@ -22,6 +22,7 @@
     "lint:ui": "node scripts/lint-ui.mjs",
     "check:tools": "node scripts/check-tool-mapping.mjs",
     "check:bots": "/opt/hermes/.venv/bin/python -I scripts/check-bots-api.py",
+    "test:files": "/opt/hermes/.venv/bin/python -I dashboard/test_file_routes.py",
     "install-local": "node scripts/build.mjs --install"
   },
   "devDependencies": {

@@ -6,7 +6,6 @@
 import { useEffect, useReducer, useRef } from 'react'
 import { Activity } from '@/components/glaze/ai/activity'
 import { AgentTurn, MessageFooter } from '@/components/glaze/ai/message'
-import { Response } from '@/components/glaze/ai/response'
 import { ToolCallList, toolCallsReducer, type ToolCallData } from '@/components/glaze/ai/tool-call'
 import { Button } from '@/components/glaze/ui/button'
 import { CopyButton } from '@/components/glaze/ui/copy-button'
@@ -17,6 +16,7 @@ import { settings } from '../settings-state'
 import { UI } from '../strings'
 import { IUI_TAGS } from '../iui/block'
 import { BotAvatar } from '../bot-avatar'
+import { MessageText } from './media'
 import { Thinking } from './thinking'
 import { emptyCalls, turnReducer, type ToolAction } from './tool-events'
 import { TOOL_LABELS } from './tools'
@@ -120,11 +120,7 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
         />
       ) : null}
 
-      {text ? (
-        <Response streaming={streaming} tags={IUI_TAGS}>
-          {text}
-        </Response>
-      ) : null}
+      {text ? <MessageText text={text} streaming={streaming} tags={IUI_TAGS} /> : null}
 
       {text && !streaming ? (
         <MessageFooter>

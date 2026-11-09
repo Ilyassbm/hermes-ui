@@ -18,6 +18,8 @@
 @import "./settings.css";
 /* Lot 21: the aicss shimmer on a live label and the reasoning block it folds into (40px lines, 180px pane, 320ms). */
 @import "./thinking.css";
+/* Lot 22: the thread's media blocks — an image's thumbnail and dialog, another file's card. */
+@import "./media.css";
 /* The vendored aicss avatar: its identity colours, scoped to .hui-bot. */
 @import "./bot.css";
 

@@ -308,8 +308,20 @@ async def bots(fresh: int = 0) -> dict:
 # symlink that lands outside them, and the secret names Hermes keeps in a profile. The error body is always
 # {"error": "refused" | "missing" | "too_large"}; no traceback, no path echo beyond what the caller sent.
 
+def _image_roots(root: Path) -> list[Path]:
+    """`<root>/images`, and `<root>/profiles/<profil>/images` for every profile: the one folder a profile keeps its
+    uploads in. Named one by one on purpose — never the root or a profile as a whole, so a profile that lives outside
+    the root's subtree is still refused everywhere but its images."""
+    out = [root / "images"]
+    try:
+        out.extend(p / "images" for p in sorted((root / "profiles").iterdir()) if p.is_dir())
+    except Exception:
+        pass
+    return out
+
+
 def _allowed_roots() -> list[Path]:
-    """The profile home Hermes names, and the user's own home: the two trees the panel may read."""
+    """The profile home Hermes names, the user's own home, and each profile's images: the trees the panel may read."""
     roots: list[Path] = []
     try:
         roots.append(_hermes_root().expanduser().resolve())
@@ -325,6 +337,14 @@ def _allowed_roots() -> list[Path]:
         roots.append(Path.home().resolve())
     except Exception:
         pass
+    # The images folders are explicit: the panel serves a profile's uploads even when the profile itself sits out of
+    # the root's tree, and nothing else of that profile.
+    for base in list(roots):
+        for images in _image_roots(base):
+            try:
+                roots.append(images.expanduser().resolve())
+            except Exception:
+                pass
     out: list[Path] = []
     for root in roots:
         if root not in out:

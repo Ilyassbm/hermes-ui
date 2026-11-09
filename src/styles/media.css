@@ -1,0 +1,227 @@
+/* Lot 22 — the media blocks in the thread: an image's thumbnail and its dialog, another file's card.
+
+   Plain CSS beside rail.css and shell.css, every selector under .glaze, so nothing reaches the native app and the
+   build's check-css gate stays green. Colour comes from the theme only: --paper for a card, --field for the
+   thumbnail's well, --shell for the quiet refusal, --line-faint for an edge, --text-1/2/3 for the three inks.
+
+   Geometry from the spec: the thumbnail stops at 320 × 240 with --radius-overlay corners (the sheet has no
+   --radius-md token), a card is the reading column's width up to 520px, and the gaps are 8px. Every target is at
+   least 24 × 24 — the thumbnail carries its own minimum, so even a 16px icon stays reachable — and the only two
+   controls of a card sit 8px apart, which is what lintapple's control-gap rule reads. */
+
+/* ---------- 1. The group ---------- */
+
+/* One marker: the block takes the column. Several: two columns at most, 8px apart. */
+.glaze .hui-media-single {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.glaze .hui-media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* ---------- 2. The block ---------- */
+
+.glaze .hui-media {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  max-width: 520px;
+}
+
+/* The thumbnail: a button so the whole picture opens the dialog, with the frame's radius on the image itself. */
+.glaze .hui-media-thumb {
+  display: block;
+  width: fit-content;
+  height: auto;
+  gap: 0;
+  max-width: 100%;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-overlay);
+  background: var(--field);
+  overflow: hidden;
+  cursor: zoom-in;
+}
+.glaze .hui-media-thumb:focus-visible {
+  outline: 2px solid var(--line-focus);
+  outline-offset: 2px;
+}
+.glaze .hui-media-thumb img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 320px;
+  max-height: 240px;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+/* The name, the size and Download, under the thumbnail: 8px apart, the name able to truncate. */
+.glaze .hui-media-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.glaze .hui-media-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--text-1);
+}
+
+.glaze .hui-media-size {
+  flex: none;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 3. The file card ---------- */
+
+.glaze .hui-media-file {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--line-faint);
+  border-radius: var(--radius-overlay);
+  background: var(--paper);
+}
+
+.glaze .hui-media-glyph {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-tag);
+  background: var(--field);
+  color: var(--text-2);
+}
+
+.glaze .hui-media-text {
+  display: flex;
+  flex: 1 1 120px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.glaze .hui-media-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+
+/* The disabled Download's wrapper: the tooltip's trigger, since a disabled button takes no pointer events. */
+.glaze .hui-media-blocked {
+  display: inline-flex;
+  border-radius: var(--radius-pill);
+}
+.glaze .hui-media-blocked:focus-visible {
+  outline: 2px solid var(--line-focus);
+  outline-offset: 2px;
+}
+
+/* ---------- 4. The quiet refusal ---------- */
+
+.glaze .hui-media-error {
+  border-style: dashed;
+  background: var(--shell);
+}
+.glaze .hui-media-error .hui-media-name {
+  color: var(--text-2);
+}
+
+.glaze .hui-media-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-3);
+}
+
+/* ---------- 5. The image's dialog ---------- */
+
+/* The whole picture: the shell takes the viewport less 24px a side, the body carries nothing but the image. */
+.glaze .hui-media-dialog {
+  width: calc(100vw - 48px);
+  max-width: calc(100vw - 48px);
+  max-height: calc(100dvh - 48px);
+}
+
+.glaze .hui-media-dialog-body {
+  gap: 0;
+  padding: 0;
+  overflow: auto;
+}
+
+.glaze .hui-media-zoom {
+  display: flex;
+  width: 100%;
+  height: auto;
+  justify-content: flex-start;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 8px;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  text-align: start;
+}
+.glaze .hui-media-zoom:focus-visible {
+  outline: 2px solid var(--line-focus);
+  outline-offset: -2px;
+}
+.glaze .hui-media-zoom img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100dvh - 160px);
+  height: auto;
+  margin: 0 auto;
+  object-fit: contain;
+}
+/* A second click shows the image at its own size; the body scrolls around it. No transition: reduced motion has
+   nothing to cut, and the size is the whole of the change. */
+.glaze .hui-media-zoom.is-zoom {
+  cursor: zoom-out;
+  overflow: auto;
+}
+.glaze .hui-media-zoom.is-zoom img {
+  max-width: none;
+  max-height: none;
+}
+
+/* The image while `/blob` answers: the thumbnail's footprint, so nothing jumps when it lands. */
+.glaze .hui-media-sketch {
+  width: 100%;
+  max-width: 320px;
+  height: 200px;
+  border-radius: var(--radius-overlay);
+}

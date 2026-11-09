@@ -4,6 +4,7 @@
 import { host } from '@hermes/plugin-sdk'
 import { askStep, emptyToolAdapter, replyStep, toolEventStep, turnEndStep } from '../app/thread/tool-events'
 import { UI } from '../app/strings'
+import { view } from '../app/ui-state'
 import { createStore } from './store'
 
 export const store = createStore({
@@ -19,6 +20,8 @@ export const store = createStore({
   approval: null, // { requestId, command, description, allowPermanent }
   info: { model: '', title: '' },
   files: [], // [{ path, at }]
+  /** The file the right panel is previewing (null: the list). Set from the panel and from a media block's Open preview. */
+  previewFile: null,
   routines: [],
   usage: null,
   error: '',
@@ -288,7 +291,7 @@ export async function selectBot(botName, { keepConversation = false } = {}) {
 }
 
 function blankConversation() {
-  return { sid: null, storedId: null, messages: [], live: null, approval: null, files: [], info: { model: '', title: '' }, error: '', retryOpen: false, loading: false }
+  return { sid: null, storedId: null, messages: [], live: null, approval: null, files: [], previewFile: null, info: { model: '', title: '' }, error: '', retryOpen: false, loading: false }
 }
 
 // ── transport ────────────────────────────────────────────────────────────────
@@ -809,6 +812,32 @@ export function openExternal(url) {
 
 export function bindContext(ctx) {
   ctxRef = ctx
+}
+
+/**
+ * The plugin's own backend, scoped by the host to `/api/plugins/hermes-ui`: the two read-only file routes the panel
+ * and the thread's media blocks share. Rejected rather than undefined when the page has no host yet, so a caller's
+ * `catch` shows the quiet refusal instead of reading a property off `undefined`.
+ */
+export function rest(path, options) {
+  const call = ctxRef?.rest
+  if (typeof call !== 'function') return Promise.reject(new Error('No backend'))
+  try {
+    return Promise.resolve(call.call(ctxRef, path, options))
+  } catch (error) {
+    return Promise.reject(error)
+  }
+}
+
+/**
+ * Opens one file in the right panel. A media block's Open preview and the panel's own rows use this one door: the row
+ * joins the conversation's files, the panel reads `previewFile` from the store, and the column opens if it was shut.
+ */
+export function openPreview(path) {
+  const file = { path, at: Date.now(), action: 'write' }
+  addFiles([file])
+  store.set({ previewFile: file })
+  view.set({ asideOpen: true })
 }
 
 export async function boot() {
