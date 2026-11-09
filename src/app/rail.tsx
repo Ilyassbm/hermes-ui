@@ -1,11 +1,11 @@
 // The rail: the bots, the way into the rest of the app, and what is left on each subscription.
 //
-// Laid out like the OpenBot column Dex described: a 38px top bar (the app's menu on the left, the new-discussion
+// Laid out like the OpenBot column Dex described: a 44px top bar (the app's menu on the left, the new-discussion
 // button on the right), a search field drawn as a button, the pinned bots as tiles, the rest of the team as rows, and
 // the usage cards at the foot. The data is the same as lot 2's rail — `use-bots` for what each bot said last and when,
 // `store` for the selection and the conversation lists, `labels` for names, roles and the avatar identities.
 //
-// The styles live in src/styles/rail.css, on Glaze's tokens, scoped to .glaze: the shapes the spec pins (280, 38, 62,
+// The styles live in src/styles/rail.css, on Glaze's tokens, scoped to .glaze: the shapes the spec pins (280, 44, 62,
 // 72×102) are hand-set, and the lint stays at zero because no rule of it is restyled through a className.
 import { cloneElement, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactElement, type ReactNode } from 'react'
 import { Icon, Add, ChevronDown, ChevronRight, Search, Settings, Time } from '@/components/glaze/icon'
@@ -133,7 +133,7 @@ export function Rail({ ctx }: { ctx: any }) {
               <TooltipTrigger
                 render={<div role="button" tabIndex={0} className="hui-icon-btn hui-rail-gear" aria-label={UI.rail.settings} onClick={() => openSettings()} onKeyDown={enter(() => openSettings())} />}
               >
-                <Icon icon={Settings} size={14} />
+                <Icon icon={Settings} size={12} />
               </TooltipTrigger>
               <TooltipContent>{UI.rail.settings}</TooltipContent>
             </Tooltip>
@@ -143,7 +143,7 @@ export function Rail({ ctx }: { ctx: any }) {
               <TooltipTrigger
                 render={<div role="button" tabIndex={0} className="hui-icon-btn" aria-label={UI.rail.newWithBot} onClick={() => openPicker('new')} onKeyDown={enter(() => openPicker('new'))} />}
               >
-                <Icon icon={Add} size={16} />
+                <Icon icon={Add} size={12} />
               </TooltipTrigger>
               <TooltipContent shortcut={capsOf('hermes-ui.newChatWithBot')}>{UI.rail.newWithBot}</TooltipContent>
             </Tooltip>
@@ -156,7 +156,10 @@ export function Rail({ ctx }: { ctx: any }) {
           role="button"
           tabIndex={0}
           className="hui-search"
-          aria-label={UI.rail.searchLabel}
+          // The name is the visible text plus the keys the field draws: "Search Ctrl Alt K". An aria-label that said
+          // something else left the pictured shortcut out of the accessible name (lot 17).
+          aria-label={`${UI.rail.search} ${capsOf('hermes-ui.search').join(' ')}`}
+          title={UI.rail.searchLabel}
           onClick={() => openPicker('search')}
           onKeyDown={enter(() => openPicker('search'))}
         >
@@ -181,7 +184,7 @@ export function Rail({ ctx }: { ctx: any }) {
                   tabIndex={0}
                   className="hui-tile"
                   aria-selected={row.name === current}
-                  aria-label={row.label}
+                  aria-label={row.role ? `${row.label}, ${row.role}` : row.label}
                   onClick={() => selectBot(row.name)}
                   onKeyDown={enter(() => selectBot(row.name))}
                 >
@@ -230,7 +233,7 @@ export function Rail({ ctx }: { ctx: any }) {
                       tabIndex={0}
                       className="hui-bot-row"
                       aria-selected={row.name === current}
-                      aria-label={row.label}
+                      aria-label={row.role ? `${row.label}, ${row.role}` : row.label}
                       onClick={() => selectBot(row.name)}
                       onKeyDown={enter(() => selectBot(row.name))}
                     >
@@ -255,7 +258,7 @@ export function Rail({ ctx }: { ctx: any }) {
                             <span className="hui-row-time" data-ui-number="">{sinceLabel(row.active)}</span>
                           ) : null}
                         </span>
-                        {row.output ? <span className="hui-row-output">{row.output}</span> : null}
+                        {row.output ? <span className="hui-row-output" title={row.output}>{row.output}</span> : null}
                       </span>
                     </div>
                   </BotContextMenu>
@@ -289,7 +292,7 @@ function AppMenu({ ctx }: { ctx: any }) {
           keypress and the mouseup that followed a mouse click closed it at once (lot 7). */}
       <DropdownMenuTrigger
         openOnHover={false}
-        render={<Button variant="ghost" size="sm" className="hui-rail-app" aria-label={UI.rail.appMenu} />}
+        render={<Button variant="ghost" size="sm" className="hui-rail-app" aria-label={`Agentise, ${UI.rail.appMenu.toLowerCase()}`} />}
       >
         <span>Agentise</span>
         <Icon icon={ChevronDown} size={12} />

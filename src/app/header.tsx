@@ -1,5 +1,6 @@
-// The centre's header: the open bot's conversations as tabs on the left, the panel's toggle on the right. 38px, no
-// rule, no fill: the paper of the sheet shows through, and the row sits on the same line as the rail's top bar.
+// The centre's header: the open bot's conversations as tabs on the left, then the controls (the full list, a new
+// conversation), and the panel's toggle on the right. 44px, no rule, no fill: the paper of the sheet shows through,
+// and the row sits on the same line as the rail's 44px top bar. The tablist holds tabs only (lot 17).
 //
 // The tabs are the bot itself, the three most recent conversations (the open one is always there, even older), the way
 // into the full list, and a new conversation. Lot 14 moved the model picker to the composer's bottom bar, where it sits
@@ -91,16 +92,21 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
             <span className="hui-tab-text">{s.title || UI.header.conversation}</span>
           </div>
         ))}
+      </div>
 
+      {/* The list and the new conversation are controls, not tabs: they sit outside the tablist (a `role="tablist"`
+          may only hold tabs) and 8px apart, the gap the icon cluster needs (lot 17). */}
+      <div className="hui-hdr-actions">
         {sessions.length ? (
           <DropdownMenu>
             {/* Glaze's Button in the render slot: a real <button>, where a `div role="button"` opened the menu on a
-                keypress but let the click's mouseup close it again (lot 7). */}
+                keypress but let the click's mouseup close it again (lot 7). The native title is the hover hint; the
+                name stays the same string, so the two cannot drift. */}
             <DropdownMenuTrigger
               openOnHover={false}
-              render={<Button variant="ghost" size="icon-sm" className="hui-icon-btn hui-tab-list" aria-label={UI.header.allConversations} />}
+              render={<Button variant="ghost" size="icon-sm" className="hui-icon-btn hui-tab-list" aria-label={UI.header.allConversations} title={UI.header.allConversations} />}
             >
-              <Icon icon={List} size={14} />
+              <Icon icon={List} size={12} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" side="bottom" size="sm" className="hui-conv-menu">
               <div className="hui-conv-filter">
@@ -140,7 +146,7 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
             <TooltipTrigger
               render={<div role="button" tabIndex={0} className="hui-icon-btn hui-tab-new" aria-label={UI.header.newConversation} onClick={() => newConversation()} onKeyDown={press(() => newConversation())} />}
             >
-              <Icon icon={Add} size={14} />
+              <Icon icon={Add} size={12} />
             </TooltipTrigger>
             <TooltipContent shortcut={capsOf('hermes-ui.newConversation')}>{UI.header.newConversation}</TooltipContent>
           </Tooltip>
@@ -154,18 +160,18 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
               <TooltipTrigger
                 render={<div role="button" tabIndex={0} className="hui-icon-btn" aria-label={UI.header.toggleRail} onClick={() => view.set({ railOpen: !railOpen })} />}
               >
-                <Icon icon={SidebarSimple} size={14} />
+                <Icon icon={SidebarSimple} size={12} />
               </TooltipTrigger>
-              <TooltipContent>{UI.header.showBots}</TooltipContent>
+              <TooltipContent>{UI.header.toggleRail}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         ) : null}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger
-              render={<Button variant="ghost" size="icon-sm" aria-label={asideOpen ? UI.header.hideAside : UI.header.showAside} onClick={() => toggleAside(ctx)} />}
+              render={<Button variant="ghost" size="icon-sm" className="hui-icon-btn" aria-label={asideOpen ? UI.header.hideAside : UI.header.showAside} onClick={() => toggleAside(ctx)} />}
             >
-              <Icon icon={SidebarSimple} size={14} mirrored />
+              <Icon icon={SidebarSimple} size={12} mirrored />
             </TooltipTrigger>
             <TooltipContent shortcut={capsOf('hermes-ui.toggleAside')}>{asideOpen ? UI.header.hideAside : UI.header.showAside}</TooltipContent>
           </Tooltip>

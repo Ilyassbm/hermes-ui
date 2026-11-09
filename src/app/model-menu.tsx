@@ -143,7 +143,7 @@ export function ModelMenu() {
         variant="ghost"
         size="sm"
         className="hui-model-trigger"
-        aria-label={UI.model.trigger(label, effortLabel(effort))}
+        aria-label={UI.model.trigger(label, effortShort(effort))}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => {

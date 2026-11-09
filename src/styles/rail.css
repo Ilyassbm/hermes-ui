@@ -1,7 +1,7 @@
 /* The rail: the OpenBot-shaped column — its top bar, its search field, the pinned bots as tiles, the rest of the team
    as rows, and the subscription meters at the foot. Plain CSS on Glaze's tokens, all of it under .glaze so nothing
    reaches the native app (the build's check-css gate looks for exactly that). No Tailwind utility in here: the shapes
-   the spec fixes to the pixel (280px, 38px, 62px, 72×102) are not things a scale has names for.
+   the spec fixes to the pixel (280px, 44px, 62px, 72×102) are not things a scale has names for.
 
    Colours, from the spec: page for the ground, paper for the selected row, hover for the pointer, text-1 / text-2 for
    the two weights of ink, line-faint for the rules. */
@@ -24,13 +24,15 @@
 
 /* ---------- Top bar: the app menu, then the new-discussion button ---------- */
 
+/* 44px: a 28px control keeps 8px of clear above and below inside the bar, which is the inset lintapple asks of a
+   marked container (lot 17). It stays the same line as the centre's header, which takes the same height. */
 .glaze .hui-rail-top {
   display: flex;
   align-items: center;
-  gap: 3px;
-  flex: 0 0 38px;
-  height: 38px;
-  padding: 2px 3px 0 10px;
+  gap: 8px;
+  flex: 0 0 44px;
+  height: 44px;
+  padding: 0 8px 0 12px;
   border-bottom: 1px solid var(--line-faint);
 }
 
@@ -48,7 +50,7 @@
   height: 28px;
   padding: 0 8px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-1);
   cursor: default;
@@ -64,7 +66,7 @@
 .glaze .hui-rail-actions {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 8px;
   margin-inline-start: auto;
 }
 
@@ -96,6 +98,12 @@
 .glaze .hui-icon-btn:focus-visible {
   outline: 2px solid var(--line-focus);
   outline-offset: -2px;
+}
+/* The glyph is 12px whatever the call site asks for: (28 − 12) / 2 leaves 8px of clear on each side, the content
+   inset lintapple reads (lot 17). A 14 or 16px glyph in this box measured 7 and 6px. */
+.glaze .hui-icon-btn > svg {
+  width: 12px;
+  height: 12px;
 }
 
 /* ---------- Search: a button drawn as a field ---------- */
@@ -180,14 +188,17 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   /* The tile takes the width of its content, with a floor: 72px is the empty-tile look, 132px the ceiling past
      which the role is ellipsised. A fixed 72px truncated « Chief of Staff » (scrollWidth 86 > clientWidth 66). */
   width: max-content;
   min-width: 72px;
   max-width: 132px;
   height: 102px;
-  padding: 4px 2px;
+  /* An explicit ground, so the name's contrast is measurable: on a bare tile the browser walked up to the rail and
+     axe answered "overlapped by another element" (lot 17). */
+  background: var(--paper);
+  padding: 2px;
   border-radius: 8px;
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out), scale var(--dur-state) var(--ease-out);
@@ -199,7 +210,9 @@
   scale: 0.96;
 }
 .glaze .hui-tile[aria-selected='true'] {
-  background: var(--paper);
+  /* Every tile is paper now, so selection is the ink wash the row uses, not a second paper — otherwise the selected
+     tile would look like the others (lot 17 gave the tile an explicit ground for its contrast). */
+  background: var(--pressed);
 }
 .glaze .hui-tile:focus-visible {
   outline: 2px solid var(--line-focus);
@@ -211,6 +224,9 @@
   width: 100%;
   max-width: 100%;
   font-size: 12px;
+  /* A 16px line box holds the 12px face whole: with the default line height the glyph box ran 1.17px past the
+     ellipsis clip (lot 17). */
+  line-height: 16px;
   font-weight: 450;
   color: var(--text-1);
   text-align: center;
@@ -225,13 +241,15 @@
   display: block;
   min-width: 2ch;
   max-width: 100%;
-  height: 18px;
+  /* 20px box on a 19px line: the role sits whole inside its own ellipsis clip (it measured 1.84px of bottom
+     clipping at 18px / 17px), and the tile's 2px gaps keep the 102px tile. */
+  height: 20px;
   padding: 0 4px;
   border: 0.5px solid var(--line-faint);
   border-radius: 4px;
   background: var(--hover);
   font-size: 12px;
-  line-height: 17px;
+  line-height: 19px;
   color: var(--text-2);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -243,10 +261,10 @@
 .glaze .hui-team-head {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   width: 100%;
   height: 32px;
-  padding: 0 7px;
+  padding: 0 8px;
   border-radius: 6px;
   font-size: 12px;
   color: var(--text-2);
@@ -293,8 +311,9 @@
   gap: 8px;
   height: 62px;
   padding: 8px;
-  /* The row reaches 4px past the list's margin on both sides, so the wash covers the whole column width. */
-  margin: 0 -4px 4px;
+  /* 8px between two rows (the stack reads its children's boxes, so the gap lives in the margin); the row still
+     reaches 4px past the list's margin on both sides, so the wash covers the whole column width. */
+  margin: 0 -4px 8px;
   border-radius: 8px;
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out), scale var(--dur-state) var(--ease-out);
@@ -356,6 +375,8 @@
     display: none;
   }
 }
+/* One line, ellipsised: the row is 62px and carries the bot, its role, its time and the first line of what it said.
+   The full output is on the row's `title`, so the truncation is announced rather than lost. */
 .glaze .hui-row-output {
   min-width: 0;
   font-size: 13px;
@@ -418,9 +439,10 @@
 
 /* ---------- The foot: one compact meter per subscription (lot 14) ---------- */
 
-/* Two 34px rows and the foot's 8 + 10 of padding: 86px with both panels shut, against the ~350px the two cards took
-   (each card: 10px of padding top and bottom, a 16px title, a 12px gap and three windows of a 18px label + 16px reset
-   + 6px gap + 4px track, plus the old 10px gap between cards). The detail is one click away, in the popover. */
+/* Two 34px rows, 8px apart, and the foot's 8 + 10 of padding: 94px with both panels shut, against the ~350px the two
+   cards took (each card: 10px of padding top and bottom, a 16px title, a 12px gap and three windows of a 18px label +
+   16px reset + 6px gap + 4px track, plus the old 10px gap between cards). The detail is one click away, in the popover.
+   Lot 17: the 8px between the two rows is the control gap lintapple reads. */
 .glaze .hui-rail-foot {
   flex: none;
   display: flex;
@@ -433,7 +455,9 @@
 .glaze .hui-usage {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  /* Two 34px rows and 8px between them: the foot measures 94px with both panels shut (2 × 34 + 8 + the foot's
+     8 + 10 of padding). The gap is what lintapple reads between two adjacent controls. */
+  gap: 8px;
 }
 
 /* One row per provider: the mark, the name, the binding window in tabular figures at the inline end, and the 2px bar
@@ -445,7 +469,9 @@
   gap: 6px;
   width: 100%;
   height: 34px;
-  padding: 0 2px 2px;
+  /* 8px at each end: the 12px mark and the value that closes the row both clear the row's edge by 8 (they measured
+     2px before lot 17). */
+  padding: 0 8px 2px;
   border: 0;
   border-radius: 6px;
   background: transparent;

@@ -90,6 +90,7 @@ function SendButton({status = 'ready', onStop, empty, blockedReason, generation,
       focusableWhenDisabled={blocked || shown === 'stopping'}
       aria-busy={shown === 'stopping' || undefined}
       aria-label={names[shown]}
+      title={names[shown]}
       aria-describedby={blocked ? reasonId : undefined}
       aria-keyshortcuts={isWorking ? 'Escape' : 'Enter'}
       onClick={isWorking ? stop : onClick}

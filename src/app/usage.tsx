@@ -3,8 +3,8 @@
 // Lot 14: the two cards took half the rail (~350px). Each provider is now a 34px row — its mark, its name, the
 // binding window in tabular figures at the inline end, and a 2px bar under the line — and the detail Ilyass was
 // reading (every window, its reset, its percentage, a full-width bar) lives in a popover the row opens. One panel at a
-// time, remembered per provider, collapsed by default: the foot measures 86px when both are shut (2 × 34 + the foot's
-// 8 + 10 of padding) instead of ~350px.
+// time, remembered per provider, collapsed by default: the foot measures 94px when both are shut (2 × 34 + the 8px
+// between the rows + the foot's 8 + 10 of padding) instead of ~350px.
 //
 // The gateway's `/usage` names its windows per provider (`session`/`five_hour`, `week`/`weekly`, `monthly`), so the
 // three spellings are read for each, and a provider that sends none simply has no row. The reset time is the window's
@@ -159,7 +159,10 @@ export function UsageMeters({ cards, ctx }: { cards: UsageCard[]; ctx: any }) {
           <Popover key={card.id} open={open} onOpenChange={next => setOpen(card.id, next)}>
             <PopoverTrigger
               render={<Button type="button" variant="ghost" size="sm" className="hui-usage-row" data-provider={card.id} />}
-              aria-label={open ? UI.usage.collapse(card.name) : UI.usage.expand(card.name)}
+              // No aria-label: the row says "Claude 5h · 33 %" on screen, and the name must be that text (an
+              // aria-label of "Expand Claude" left the visible words out of the name — lot 17). The detail's own
+              // title is the hover hint.
+              title={card.title}
             >
               <ProviderLogo provider={card.id} size={12} className="hui-usage-logo" />
               <span className="hui-usage-name">{card.name}</span>

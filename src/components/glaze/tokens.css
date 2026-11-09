@@ -15,8 +15,9 @@
      and the panel's hairline (the Flat group), so the one glass pill in a group is always the lead.
    - No shadows. Depth is a layer drawn inside a shape: the glass's sheen, dark centre and rim, the shell around a panel.
      An overlay lifts with a 1px ink ring on a page a step darker than paper. --shadow-none is the only shadow token.
-   - Text a person reads takes --text-1 or --text-2 (5.5:1 on paper, the floor). --text-3 is ink at 45%, 3.3:1,
-     for placeholders and icons beside a label, never for a sentence or a value.
+   - Text a person reads takes --text-1 or --text-2 (5.5:1 on paper, the floor). --text-3 is ink at 58% in light and 54% in
+     dark, 4.9:1 or better on paper, field and page, so a placeholder or an icon beside a label also clears AA; it is still
+     never used for a sentence or a value.
    - Mono inside sans text is set at --mono-scale of the surrounding size, on the same baseline, in the parent's line
      height. Glaze Sans and Glaze Mono share an x-height of 0.51em and a cap height of 0.715em, but a mono lowercase
      letter is 0.600em wide against the sans's 0.478em average, 26% wider, so at the same size mono reads a size
@@ -53,7 +54,7 @@
   --ink: #050505; /* solid ink, a neutral near-black: every text and line is this at an alpha | chart mark, tooltip */
   --ink-80: rgb(5 5 5 / 0.80); /* ink at 80%, 11.9:1 on paper: the text colour | text-1, focus ring */
   --ink-60: rgb(5 5 5 / 0.60); /* ink at 60%, 5.5:1 on paper | text-2 */
-  --ink-45: rgb(5 5 5 / 0.45); /* ink at 45%, 3.3:1 on paper: a mark or a control edge, not text | text-3, line-strong */
+  --ink-45: rgb(5 5 5 / 0.45); /* ink at 45%, 3.3:1 on paper: a mark or a control edge, not text | line-strong */
   --ink-32: rgb(5 5 5 / 0.32); /* ink at 32%: a focused field's line, about a third | line-focus, text-disabled */
   --ink-15: rgb(5 5 5 / 0.15); /* ink at 15%: a field's resting line | line-control */
   --ink-10: rgb(5 5 5 / 0.10); /* ink at 10%: an overlay's ring | line */
@@ -63,7 +64,7 @@
   /* == Text == */
   --text-1: rgb(5 5 5 / 0.80); /* primary text, ink at 80%, 11.9:1 on paper | headings, body, labels, values */
   --text-2: rgb(5 5 5 / 0.60); /* secondary text, 5.5:1 on paper and 5.3:1 on the page, the floor for reading | descriptions, hints, meta */
-  --text-3: rgb(5 5 5 / 0.45); /* placeholders and icons beside a label, 3.3:1; never a sentence | placeholder, leading icon */
+  --text-3: rgb(5 5 5 / 0.58); /* placeholders and icons beside a label, 5.10:1 on paper, 4.92:1 on field, 5.07:1 on page (WCAG AA ≥ 4.6) | placeholder, leading icon */
   --text-disabled: rgb(5 5 5 / 0.32); /* a disabled label; no contrast claim | disabled control */
   --text-inverse: #ffffff; /* text on solid ink | tooltip, ink glass label */
 
@@ -272,7 +273,7 @@
 
   --text-1: #f4f4f3;
   --text-2: rgb(244 244 243 / 0.60);
-  --text-3: rgb(244 244 243 / 0.45);
+  --text-3: rgb(244 244 243 / 0.54); /* 5.29:1 on paper (#929291), 4.91:1 on field, 5.59:1 on page — WCAG AA asks 4.6 */
   --text-disabled: rgb(244 244 243 / 0.34);
   --text-inverse: #050505;
 

@@ -816,7 +816,9 @@ function PromptInput({
   const inline = layout === 'inline';
   const shellMode = mode === 'shell';
   const attachEl = onAttach && <>
-    <Button size="icon-sm" variant="ghost" aria-label={words.attach} disabled={disabled} onClick={() => fileRef.current?.click()}>
+    {/* 28px, not 26: a 12px glyph in a 28px box clears the edge by 8px, which is the content inset lintapple reads
+        (lot 17; it measured 7px in the 26px small control). The native title is the hover hint. */}
+    <Button size="icon-sm" variant="ghost" className="size-7" aria-label={words.attach} title={words.attach} disabled={disabled} onClick={() => fileRef.current?.click()}>
       <Icon icon={Add} size={12}/>
     </Button>
     <input ref={fileRef} type="file" multiple hidden accept={accept} tabIndex={-1} onChange={event => {
@@ -845,9 +847,11 @@ function PromptInput({
     onStop={stop}
     onClick={send}
     type="button"
+    // 28px like the attach button: (28 − 12) / 2 = 8px of content inset on each side (lot 17).
+    className="size-7"
     labels={words}
   />;
-  const toolsEl = (className: string) => <div inert={shellMode} data-hui-part="prompt-input-tools" className={cn('flex min-w-0 items-center gap-1 empty:hidden', shellMode && 'opacity-40', className)}>{tools}</div>;
+  const toolsEl = (className: string) => <div inert={shellMode} data-hui-part="prompt-input-tools" className={cn('flex min-w-0 items-center gap-2 empty:hidden', shellMode && 'opacity-40', className)}>{tools}</div>;
   const editorEl =
     <div className="relative min-w-0 flex-1">
       {empty && <span aria-hidden data-hui-part="prompt-input-placeholder" className={cn('pointer-events-none absolute inset-x-0 top-0 truncate text-text-3 select-none', shellMode ? 'type-code' : 'type-body')}>
@@ -960,13 +964,13 @@ function PromptInput({
         : <div data-hui-part="prompt-input-body" className="flex min-w-0 gap-1.5 px-3 pt-2.5 pb-2">{shellPrompt}{editorEl}</div>}
     </div>
 
-    {!inline && <div data-hui-part="prompt-input-toolbar" data-ui-container="" data-ui-actions="" className="@container/prompt-toolbar flex min-h-(--control-sm) min-w-0 flex-wrap items-center gap-1 pt-(--shell-inset)">
+    {!inline && <div data-hui-part="prompt-input-toolbar" data-ui-container="" data-ui-actions="" className="@container/prompt-toolbar flex min-h-(--control-sm) min-w-0 flex-wrap items-center gap-2 p-2">
       {/* The tools lead when the caller says so (the model picker, lot 14): DOM, visual and focus order agree. */}
       {toolsFirst && tools ? <>{toolsEl('shrink-0')}{attachEl}</> : <>{attachEl}{toolsEl('flex-1 basis-0 overflow-x-auto [scrollbar-width:none]')}</>}
       {!tools && <span aria-hidden className="flex-1"/>}
       {statusEl}
       {/* Meta, the mic and Send stay together at the end of the row. */}
-      <div className="ms-auto flex shrink-0 items-center gap-1">
+      <div className="ms-auto flex shrink-0 items-center gap-2">
         {meta && <div data-hui-part="prompt-input-meta" className="shrink-0">{meta}</div>}
         {voice && <PromptInputMic size="sm" {...voice} disabled={disabled || voice.disabled}/>}
         {sendEl}

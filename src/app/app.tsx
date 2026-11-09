@@ -2,7 +2,7 @@
 //
 // Three columns on the page surface: the rail (280px), the centre (paper, a sheet with 8px of page showing on the right
 // and the bottom, starting at the top edge so its header lines up with the rail's) and the right panel (320px). No rules
-// between them: the surfaces do the separating. The centre carries its own 38px header; the bot picker floats over
+// between them: the surfaces do the separating. The centre carries its own 44px header; the bot picker floats over
 // everything, and `/` is the one key this page listens for when the caret is not in a field.
 //
 // The page is always dark, and its stylesheet is injected in a <style> on mount, scoped to .glaze: the native app's own

@@ -71,11 +71,12 @@ function KbdShortcut({keys, className, ...props}: Omit<KbdProps, 'children'> & {
   // Until the platform is known, a key whose two forms differ is a blank cap of the minimum width.
   const neutral = platform === 'unknown' ? shortcut(keys, 'mac').map((m, i) => m.shown === parts[i].shown) : null;
   if (!parts.length) return null;
-  return <kbd data-hui-part="kbd-group" data-platform={platform === 'unknown' ? undefined : platform} className={cn('inline-flex max-w-full flex-wrap items-center gap-1 font-[inherit]', className)} {...props}>
+  // The caps are a picture of the combo: a role="img" with the spoken form as its name, so a screen reader says
+  // "Command K" (or "Control K") once, and never "⌘ ⌥ K". No hidden text node to clip (lot 17).
+  return <kbd data-hui-part="kbd-group" data-platform={platform === 'unknown' ? undefined : platform} role="img" aria-label={parts.map(p => p.spoken).join(' ')} className={cn('inline-flex max-w-full flex-wrap items-center gap-1 font-[inherit]', className)} {...props}>
     {parts.map((p, i) => neutral && !neutral[i]
       ? <kbd key={i} data-hui-part="kbd" data-placeholder="" aria-hidden className={kbdClass}/>
       : <kbd key={i} data-hui-part="kbd" aria-hidden className={kbdClass}>{p.shown}</kbd>)}
-    {platform !== 'unknown' && <span className="sr-only">{parts.map(p => p.spoken).join(' ')}</span>}
   </kbd>;
 }
 

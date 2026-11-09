@@ -136,9 +136,11 @@ function ValueChip({className, count, children, onRemove, removeLabel, invalid, 
   </span>;
 }
 
-/** A row of chips 4px apart that wraps. The scope removal moves focus within. */
+/** A row of chips 8px apart that wraps. The scope removal moves focus within. */
 function ChipGroup({className, ...props}: ComponentProps<'div'>) {
-  return <div data-hui-part="chip-group" className={cn('flex flex-wrap items-center gap-1', className)} {...props}/>;
+  // A labelled row of chips is a group: that is what makes aria-label valid on the div (axe's aria-prohibited-attr
+  // named this row in lot 17), and it keeps the 8px gap between two chips that lintapple reads.
+  return <div data-hui-part="chip-group" role={props['aria-label'] || props['aria-labelledby'] ? 'group' : undefined} className={cn('flex flex-wrap items-center gap-2', className)} {...props}/>;
 }
 
 export {Chip, ChipCount, ChipGroup, chipVariants, toggleClasses as chipToggleClasses, valueClasses as chipValueClasses, chipRemoveClasses, type ChipProps};
