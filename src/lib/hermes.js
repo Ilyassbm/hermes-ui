@@ -55,6 +55,11 @@ function textOf(content) {
       .filter(Boolean)
       .join('\n')
   }
+  // A block object (`{type:'text', text:'…'}`) reaches us unwrapped on some live resumes.
+  if (content && typeof content === 'object') {
+    if (typeof content.text === 'string') return content.text
+    if (typeof content.content === 'string') return content.content
+  }
   return ''
 }
 
@@ -163,9 +168,18 @@ export function stripAttachmentMarkers(text) {
 export function toTurns(raw) {
   const turns = []
   const files = []
+  /** The gateway has answered a live resume with the agent's own history: `human`/`ai` for roles, or the row nested
+   *  under `message`. Normalise once, before anything reads a role. */
+  const rows = (raw || []).map(m => {
+    if (!m || typeof m !== 'object') return m
+    const inner = m.message && typeof m.message === 'object' ? m.message : m
+    const rawRole = inner.role ?? m.role ?? m.type
+    const role = rawRole === 'human' ? 'user' : rawRole === 'ai' ? 'assistant' : rawRole === 'tool_result' ? 'tool' : rawRole
+    return inner === m ? { ...m, role } : { ...m, ...inner, role }
+  })
   // A tool's result comes as its own message, keyed by the call it answers: index them before walking the turns.
   const results = new Map()
-  for (const m of raw || []) {
+  for (const m of rows) {
     if (!m || m.role !== 'tool') continue
     const id = m.tool_call_id || m.tool_use_id || m.id
     if (id) {
@@ -188,7 +202,7 @@ export function toTurns(raw) {
     cur = null
     adapter = null
   }
-  for (const m of raw || []) {
+  for (const m of rows) {
     if (!m || m.display_kind === 'hidden' || m.role === 'system') continue
     if (m.role === 'user') {
       closeTurn()
@@ -500,7 +514,20 @@ export async function openConversation(storedId) {
     const detail = `resume ${Array.isArray(res?.messages) ? res.messages.length : 'none'}/${stored}${res?.hydrating ? ' hydrating' : ''} · ${historyNote}`
     const { turns, files } = toTurns(payload?.messages)
     if (!turns.length && (payload?.message_count || 0) > 0) {
-      store.set({ loading: false, error: UI.thread.emptyHistory, errorDetail: detail, retryOpen: true })
+      // Messages arrived and still produced nothing: that is a reader problem, not an empty backend, and the two must
+      // not wear the same banner. `shape` says what the rows actually looked like.
+      const rows = Array.isArray(payload?.messages) ? payload.messages : []
+      const shape = rows.length
+        ? `messages ${rows.length} · keys ${Object.keys(rows[0] || {}).slice(0, 8).join(',')} · roles ${JSON.stringify(
+            rows.reduce((acc, m) => ({ ...acc, [String(m?.role ?? m?.type ?? 'none')]: (acc[String(m?.role ?? m?.type ?? 'none')] || 0) + 1 }), {})
+          )} · hidden ${rows.filter(m => m?.display_kind === 'hidden').length}`
+        : 'messages none'
+      store.set({
+        loading: false,
+        error: UI.thread.unreadableHistory,
+        errorDetail: `${detail} · ${shape}`,
+        retryOpen: true
+      })
       return
     }
     store.set({

@@ -267,6 +267,8 @@ export const UI = {
     resumeFailed: "Couldn't open this conversation — the bot's backend didn't answer in time.",
     /** The gateway answered, but with no history: a silent blank page under an active tab is the worst answer. */
     emptyHistory: "This conversation came back empty — the backend knows it but returned no history. Try again, or open it in the native view.",
+    /** Messages arrived but none of them could be read: a shape we do not understand, not an empty conversation. */
+    unreadableHistory: "This conversation came back in a shape this page cannot read. Try again, or open it in the native view — the line below says what arrived.",
     /** `prompt.submit` left no session event behind within 5 s: the turn never started. */
     turnNotStarted: "The turn didn't start — no answer came back from the gateway.",
     jumpLatest: 'Jump to latest',
