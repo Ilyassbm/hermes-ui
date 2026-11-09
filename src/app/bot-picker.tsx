@@ -10,7 +10,13 @@
 // has to close the dialog even when the app's own window listener saw the key first, and a digit has to pick before
 // it reaches the field it would be typed into. Every row's click, the digits and Enter all call `pick`: select the
 // bot, create the discussion, then close. Closing first is what made the digit look dead in lot 9.
-import { useEffect, useMemo, useRef, useState } from 'react'
+//
+// Lot 11: closing that fast used to park the dialog. The entrance was a transition on the popup itself, Base UI waits
+// for `getAnimations()` on the popup to settle before it unmounts, and a transition that never started never settles —
+// so the node stayed at `opacity: 0` with its `fixed inset-0` scrim over the app, taking every click. The popup and the
+// scrim now end on duration 0 (overlayEndsNow) and the entrance is an animation on the panel inside them; the guard
+// below is the second lock, 400 ms after any close.
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Icon, Search } from '@/components/glaze/icon'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/glaze/ui/dialog'
 import { Input } from '@/components/glaze/ui/input'
@@ -39,6 +45,17 @@ type Choices = BotChoice | ConvChoice
 
 const DEFAULT_PINNED = ['default']
 
+/**
+ * Lot 11's belt, 400 ms after a close. Escape and a digit close the picker in the same breath as they open it, while
+ * the entrance is still running: Base UI unmounts the popup when `getAnimations()` on it reports nothing running, a
+ * transition that never started never finishes, and the dialog stayed mounted at `opacity: 0` with its scrim over the
+ * app, taking every click. The stylesheet no longer puts a transition on the nodes Base UI follows (overlayEndsNow);
+ * this is the second lock — a picker dialog or the scrim that came with it is still in the DOM that long after the
+ * close, so the <Dialog> is remounted shut on a new key and React is what removes it. Once per close: a second
+ * failure must not turn into a loop.
+ */
+const UNMOUNT_GUARD_MS = 400
+
 export function BotPicker({ ctx }: { ctx: any }) {
   const mode = useStore(view, s => s.picker)
   const bots = useStore(store, s => s.bots)
@@ -51,6 +68,10 @@ export function BotPicker({ ctx }: { ctx: any }) {
   const listRef = useRef<HTMLDivElement | null>(null)
   /** One pick per open: the dialog's listener and a stray second key must not both act. */
   const busy = useRef(false)
+  /** The unmount guard's key: bumping it remounts the <Dialog> shut, which is how a stuck node is removed. */
+  const [mountKey, setMountKey] = useState(0)
+  /** One forced remount per close: a guard that fires again would only loop. */
+  const guardRan = useRef(false)
 
   // A stored pin list, the same one the rail writes.
   const pinned = useMemo<string[]>(() => {
@@ -77,6 +98,40 @@ export function BotPicker({ ctx }: { ctx: any }) {
   }, [open, mode])
 
   const needle = query.trim().toLowerCase()
+
+  /**
+   * Marks the scrim this dialog brought, so the guard below can tell it from another overlay's: Base UI renders the
+   * backdrop as the popup's sibling, inside the same portal.
+   */
+  useEffect(() => {
+    if (!open) return
+    const popup = document.querySelector('.hui-picker')
+    popup?.parentElement?.querySelector('[data-slot="dialog-overlay"]')?.setAttribute('data-picker-scrim', '')
+  }, [open, mountKey])
+
+  /**
+   * The guard itself, armed by the picker being closed whatever closed it — Escape, a digit, a row, a click on the
+   * backdrop (which reaches us as `onOpenChange(false)`, so `open` going false is the one signal every way out
+   * shares). 400 ms later, a picker dialog, an open dialog, or the scrim it came with is still in the DOM: nothing
+   * legitimate is mounted then, so the <Dialog> is remounted shut and React removes the node.
+   */
+  useEffect(() => {
+    if (open) {
+      guardRan.current = false
+      return
+    }
+    const timer = window.setTimeout(() => {
+      if (guardRan.current) return
+      const stuck =
+        document.querySelector('[data-slot="dialog-content"][data-open]') ||
+        document.querySelector('[data-slot="dialog-content"].hui-picker') ||
+        document.querySelector('[data-picker-scrim]')
+      if (!stuck) return
+      guardRan.current = true
+      setMountKey(key => key + 1)
+    }, UNMOUNT_GUARD_MS)
+    return () => window.clearTimeout(timer)
+  }, [open])
 
   /** The pinned bots, then the team, numbered 1–9 straight through: two sections, one count. */
   const { pinnedRows, teamRows } = useMemo(() => {
@@ -224,62 +279,66 @@ export function BotPicker({ ctx }: { ctx: any }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={next => { if (!next) openPicker(null) }}>
-      <DialogContent className="hui-picker" showCloseButton={false}>
-        <DialogTitle className="hui-sr">
-          {mode === 'search' ? 'Rechercher un bot ou une conversation' : 'Nouvelle discussion avec un bot'}
-        </DialogTitle>
-        <DialogDescription className="hui-sr">
-          Choisis un bot pour commencer une discussion, ou une conversation pour l’ouvrir.
-        </DialogDescription>
+    // The key is the guard's: a close that leaves the dialog or its scrim in the DOM bumps it, and React unmounts this
+    // whole tree (dialog, portal, scrim) before mounting it shut again.
+    <Fragment key={mountKey}>
+      <Dialog open={open} onOpenChange={next => { if (!next) openPicker(null) }}>
+        <DialogContent className="hui-picker" showCloseButton={false}>
+          <DialogTitle className="hui-sr">
+            {mode === 'search' ? 'Rechercher un bot ou une conversation' : 'Nouvelle discussion avec un bot'}
+          </DialogTitle>
+          <DialogDescription className="hui-sr">
+            Choisis un bot pour commencer une discussion, ou une conversation pour l’ouvrir.
+          </DialogDescription>
 
-        <div className="hui-picker-form">
-          <Input
-            mode="search"
-            autoFocus
-            value={query}
-            placeholder={mode === 'search' ? 'Rechercher un bot ou une conversation' : 'Nouvelle discussion avec…'}
-            aria-label={mode === 'search' ? 'Rechercher un bot ou une conversation' : 'Nouvelle discussion avec…'}
-            onChange={e => {
-              setQuery(e.target.value)
-              setIndex(0)
-            }}
-          />
-        </div>
+          <div className="hui-picker-form">
+            <Input
+              mode="search"
+              autoFocus
+              value={query}
+              placeholder={mode === 'search' ? 'Rechercher un bot ou une conversation' : 'Nouvelle discussion avec…'}
+              aria-label={mode === 'search' ? 'Rechercher un bot ou une conversation' : 'Nouvelle discussion avec…'}
+              onChange={e => {
+                setQuery(e.target.value)
+                setIndex(0)
+              }}
+            />
+          </div>
 
-        <div ref={listRef} className="hui-picker-list" role="listbox" aria-label="Bots et conversations">
-          {pinnedRows.length ? <p className="hui-picker-section">{needle ? 'Bots' : 'Épinglés'}</p> : null}
-          {pinnedRows.map(botRow)}
-          {teamRows.length ? <p className="hui-picker-section">Équipe</p> : null}
-          {teamRows.map(botRow)}
+          <div ref={listRef} className="hui-picker-list" role="listbox" aria-label="Bots et conversations">
+            {pinnedRows.length ? <p className="hui-picker-section">{needle ? 'Bots' : 'Épinglés'}</p> : null}
+            {pinnedRows.map(botRow)}
+            {teamRows.length ? <p className="hui-picker-section">Équipe</p> : null}
+            {teamRows.map(botRow)}
 
-          {convRows.length ? <p className="hui-picker-section">Conversations</p> : null}
-          {convRows.map(row => {
-            const at = choices.findIndex(candidate => candidate.key === row.key)
-            return (
-              <div
-                key={row.key}
-                role="option"
-                aria-selected={false}
-                data-active={at === index}
-                data-choice-index={at}
-                className="hui-picker-row"
-                onMouseEnter={() => setIndex(at)}
-                onClick={() => pick(row)}
-              >
-                <Icon icon={Search} size={14} />
-                <span className="hui-picker-text">
-                  <span className="hui-picker-name">{row.title}</span>
-                  <span className="hui-picker-detail">{row.botName}</span>
-                </span>
-                <span className="hui-picker-time">{sinceLabel(row.at)}</span>
-              </div>
-            )
-          })}
+            {convRows.length ? <p className="hui-picker-section">Conversations</p> : null}
+            {convRows.map(row => {
+              const at = choices.findIndex(candidate => candidate.key === row.key)
+              return (
+                <div
+                  key={row.key}
+                  role="option"
+                  aria-selected={false}
+                  data-active={at === index}
+                  data-choice-index={at}
+                  className="hui-picker-row"
+                  onMouseEnter={() => setIndex(at)}
+                  onClick={() => pick(row)}
+                >
+                  <Icon icon={Search} size={14} />
+                  <span className="hui-picker-text">
+                    <span className="hui-picker-name">{row.title}</span>
+                    <span className="hui-picker-detail">{row.botName}</span>
+                  </span>
+                  <span className="hui-picker-time">{sinceLabel(row.at)}</span>
+                </div>
+              )
+            })}
 
-          {!choices.length ? <p className="hui-picker-empty">Aucun résultat</p> : null}
-        </div>
-      </DialogContent>
-    </Dialog>
+            {!choices.length ? <p className="hui-picker-empty">Aucun résultat</p> : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </Fragment>
   )
 }

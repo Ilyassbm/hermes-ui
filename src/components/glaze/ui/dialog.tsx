@@ -9,7 +9,7 @@ import {Icon, Failed, Close as CloseIcon} from '@/components/glaze/icon';
 import {cn, mergeClass} from '@/lib/glaze/utils';
 import {useGlazeModal, useGlazePortal} from '@/lib/glaze/portal';
 import {createPortal} from 'react-dom';
-import {closesAfter, overlayMotion, overlayPanel, overlayShell, scrimClass, useDefaultAction, useOverlayOpen, useScrollBody, type DefaultAction} from '@/lib/glaze/overlay';
+import {closesAfter, overlayEndsNow, overlayPanel, overlayShell, scrimClass, useDefaultAction, useOverlayOpen, useScrollBody, type DefaultAction} from '@/lib/glaze/overlay';
 
 // Glaze's dialog, on Base UI's Dialog and AlertDialog. One component, three jobs:
 //
@@ -107,7 +107,9 @@ const dialogVariants = cva(
     // 16px of page shows on each side of a phone; 32px above and below a tall dialog.
     'max-h-[calc(100dvh-var(--space-8)*2)] w-[calc(100%-var(--space-4)*2)]',
     overlayShell,
-    overlayMotion,
+    // The popup is the node Base UI unmounts, so it carries no transition: it ends on duration 0 and the entrance is
+    // an animation on the panel inside it (lot 11). See overlayEndsNow.
+    overlayEndsNow,
     // A nested dialog dims its parent rather than stacking a second scrim.
     'after:pointer-events-none after:absolute after:inset-0 after:z-(--z-raised) after:rounded-[inherit] after:bg-scrim after:opacity-0 after:transition-opacity after:duration-(--dur-state) data-nested-dialog-open:after:opacity-100',
   ],
@@ -174,7 +176,9 @@ function DialogContent({className, size, showCloseButton, children, ref, onKeyDo
       {...props}
     >
       <FootSlotContext.Provider value={foot}>
-      <div data-slot="dialog-panel" className={cn(overlayPanel, 'relative')}>
+      {/* The entrance motion lives here, one level under the popup: an animation on a child cannot hold the popup's
+          unmount, which is what a transition on the popup itself did (lot 11). */}
+      <div data-slot="dialog-panel" data-enter="dialog-panel" className={cn(overlayPanel, 'relative')}>
         {children}
         {withClose && <DialogPrimitive.Close
           data-slot="dialog-close-button"

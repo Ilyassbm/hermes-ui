@@ -53,6 +53,13 @@ if (slash.status !== 0) process.exit(slash.status ?? 1)
 const keybinds = spawnSync(process.execPath, [resolve(root, 'scripts/check-keybinds.mjs')], { stdio: 'inherit' })
 if (keybinds.status !== 0) process.exit(keybinds.status ?? 1)
 
+// 0f. The unmount gate (lot 11): Base UI unmounts a popup on `getAnimations()`, so a transition on the node it follows
+//     parks the dialog — and its scrim, which eats every click — when the close lands during the entrance. A tracked
+//     `dialog-content` / `dialog-overlay` must end on duration 0 and carry no overlay-motion, and the picker must keep
+//     its 400ms guard. Static, the same TypeScript parser, before anything is compiled.
+const overlay = spawnSync(process.execPath, [resolve(root, 'scripts/check-overlay-unmount.mjs')], { stdio: 'inherit' })
+if (overlay.status !== 0) process.exit(overlay.status ?? 1)
+
 // 1. Tailwind v4 → one stylesheet. app.css pulls `tailwindcss/theme` + `tailwindcss/utilities` in (never the full
 //    `tailwindcss`, whose Preflight is a global reset) and Glaze's own scoped entry.
 const compiled = await postcss([tailwind()]).process(readFileSync(from, 'utf8'), { from, to: cssOut })

@@ -276,8 +276,21 @@ const overlayPanel = 'panel flex min-h-0 min-w-0 flex-col overflow-hidden';
 /** The overlay-motion recipe (styles.css): anchored, it slides --overlay-shift from its trigger; modal, it settles from --scale-overlay. In on --dur-overlay, out on --dur-state. */
 const overlayMotion = 'overlay-motion';
 
+/**
+ * The unmount contract (lot 11). Base UI unmounts a popup when `element.getAnimations()` reports nothing left to run
+ * (node_modules/@base-ui/react/internals/useAnimationsFinished.mjs). A CSS transition that never actually started —
+ * the close arrives while the entrance is still pending, which is exactly ⌘⌥N then Escape, or a digit — leaves an
+ * Animation stuck in `pending`, its `finished` promise never settles, and the node stays mounted: a dialog content at
+ * `opacity: 0` and its `fixed inset-0` scrim over the app, swallowing every click for as long as it takes.
+ *
+ * So the element Base UI follows ends on duration 0: with no transition to run, the unmount is synchronous whatever
+ * the entrance was doing. Any entrance motion belongs on a child of that element (an animation there cannot block the
+ * unmount). `data-instant` is the same escape hatch the tooltip takes.
+ */
+const overlayEndsNow = 'data-ending-style:duration-0 data-instant:duration-0'
+
 /** The scrim behind every modal overlay: ink at 24% in light, black at 64% in dark (--scrim). */
-const scrimClass = 'fixed inset-0 z-(--z-overlay) bg-scrim transition-opacity duration-(--dur-overlay) ease-out data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-(--dur-state)';
+const scrimClass = `fixed inset-0 z-(--z-overlay) bg-scrim transition-opacity duration-(--dur-overlay) ease-out data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-0 ${overlayEndsNow}`;
 
 // ---------- Lists: menus, the command list, select ----------
 
@@ -288,7 +301,7 @@ const scrimClass = 'fixed inset-0 z-(--z-overlay) bg-scrim transition-opacity du
 
 /** The list popup: the anchored overlay, 4px of padding, at least --menu-min wide, scrolling past --popup-max. */
 const menuPopupClass = cn(
-  overlaySurface, overlayMotion,
+  overlaySurface, overlayMotion, overlayEndsNow,
   'flex max-h-[min(var(--popup-max),var(--available-height))] min-w-(--menu-min) max-w-(--available-width) flex-col overflow-y-auto overscroll-contain p-1 [--menu-item-h:var(--menu-row)]',
   'data-[size=sm]:[--menu-item-h:var(--menu-row-sm)]',
 );
@@ -329,6 +342,7 @@ export {
   overlayShell,
   overlayPanel,
   overlayMotion,
+  overlayEndsNow,
   scrimClass,
   menuPopupClass,
   menuItemClass,

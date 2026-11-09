@@ -12,6 +12,7 @@
     "check:model-menu": "node scripts/check-model-menu.mjs",
     "check:slash": "node scripts/check-slash.mjs",
     "check:keybinds": "node scripts/check-keybinds.mjs",
+    "check:overlay": "node scripts/check-overlay-unmount.mjs",
     "check:takeover": "node scripts/check-takeover.mjs",
     "check:bundle": "node scripts/check-bundle.mjs",
     "check:iui": "node scripts/check-iui.mjs",
