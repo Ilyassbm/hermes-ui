@@ -13592,23 +13592,23 @@ async function ts(e) {
         { session_id: e, cols: 96, source: "desktop", ...t ? { profile: t } : {} },
         { long: !0, bot: t }
       )
-    ), o = n;
-    if (!Array.isArray(o?.messages) || !o.messages.length && (o?.message_count || 0) > 0) {
-      let i = await $C(
-        () => p2("session.resume", { session_id: e, cols: 96, source: "desktop" }, { long: !0 })
+    ), o = n, r = n?.session_id || e, a = Number(o?.message_count || 0);
+    if (!Array.isArray(o?.messages) || !o.messages.length && a > 0) {
+      let l = await $C(
+        () => p2("session.history", { session_id: r, ...t ? { profile: t } : {} }, { long: !0, bot: t })
       ).catch(() => null);
-      Array.isArray(i?.messages) && i.messages.length && (o = i);
+      Array.isArray(l?.messages) && l.messages.length && (o = { ...o, messages: l.messages, message_count: l.count || l.messages.length });
     }
-    let { turns: r, files: a } = bne(o?.messages);
-    if (!r.length && (o?.message_count || 0) > 0) {
+    let { turns: i, files: s } = bne(o?.messages);
+    if (!i.length && (o?.message_count || 0) > 0) {
       be.set({ loading: !1, error: E.thread.emptyHistory, retryOpen: !0 });
       return;
     }
     be.set({
       sid: n?.session_id || e,
       storedId: n?.stored_session_id || e,
-      messages: r,
-      files: a.map((i) => ({ ...i, at: i.at || Date.now() })),
+      messages: i,
+      files: s.map((l) => ({ ...l, at: l.at || Date.now() })),
       loading: !1,
       live: n?.running ? { phase: "thinking", verb: "", subagents: 0, startedAt: Date.now(), reasoning: "" } : null
     }), n?.running && VC();
@@ -60288,7 +60288,7 @@ import { Fragment as tye, useEffect as rye, useMemo as nye, useState as cX } fro
 var lX = {
   name: "hermes-ui",
   private: !0,
-  version: "1.3.0",
+  version: "1.3.1",
   type: "module",
   scripts: {
     build: "node scripts/build.mjs",

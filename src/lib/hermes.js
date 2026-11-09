@@ -460,15 +460,20 @@ export async function openConversation(storedId) {
         { long: true, bot }
       )
     )
-    // A resume that answers with no history is not a blank conversation: it is a refusal we would otherwise paint as
-    // "new chat" under an active tab. Try the same call without the profile hint once (a session can live on the
-    // gateway's own profile), then say so instead of showing nothing.
+    // `source: 'desktop'` makes the gateway answer a resume with a BOUNDED ack: `messages: []`, `hydrating: true`, and
+    // the stored count (`_resume_deferred`, tui_gateway/methods_session.py:938). The transcript then comes from
+    // `session.history`, which is what the native app pages in — without it every stored conversation opened blank
+    // under an active tab. Hydrate first, and only then say a conversation is empty.
     let payload = res
-    if (!Array.isArray(payload?.messages) || (!payload.messages.length && (payload?.message_count || 0) > 0)) {
-      const retry = await retryOnce(() =>
-        requestReady('session.resume', { session_id: storedId, cols: 96, source: 'desktop' }, { long: true })
+    const liveSid = res?.session_id || storedId
+    const stored = Number(payload?.message_count || 0)
+    if (!Array.isArray(payload?.messages) || (!payload.messages.length && stored > 0)) {
+      const hist = await retryOnce(() =>
+        requestReady('session.history', { session_id: liveSid, ...(bot ? { profile: bot } : {}) }, { long: true, bot })
       ).catch(() => null)
-      if (Array.isArray(retry?.messages) && retry.messages.length) payload = retry
+      if (Array.isArray(hist?.messages) && hist.messages.length) {
+        payload = { ...payload, messages: hist.messages, message_count: hist.count || hist.messages.length }
+      }
     }
     const { turns, files } = toTurns(payload?.messages)
     if (!turns.length && (payload?.message_count || 0) > 0) {
