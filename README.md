@@ -59,10 +59,6 @@ Three things follow from that, and none of them are reachable from a prompt:
 - **A stable reading of a stored conversation** — a turn earns its place only if it has an answer or a tool it ran, so
   a resumed thread never paints a column of empty "Thought for a moment" rows.
 
-## Demo
-
-A 90-second recording script, shot by shot, lives in [`docs/DEMO.md`](docs/DEMO.md).
-
 ## Install
 
 From the catalogue:
