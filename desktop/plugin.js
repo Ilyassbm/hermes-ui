@@ -17588,7 +17588,9 @@ tbody > :is(:where(.glaze, [data-system="glaze"]) .\\[tbody\\>\\&\\]\\:hover\\:b
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  width: 72px;
+  width: max-content;
+  min-width: 72px;
+  max-width: 132px;
   height: 102px;
   padding: 4px 2px;
   border-radius: 8px;
