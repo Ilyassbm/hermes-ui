@@ -59958,7 +59958,7 @@ import { Fragment as Nve, useEffect as Dve, useMemo as _ve, useState as WJ } fro
 var GJ = {
   name: "hermes-ui",
   private: !0,
-  version: "1.1.0",
+  version: "1.2.0",
   type: "module",
   scripts: {
     build: "node scripts/build.mjs",
