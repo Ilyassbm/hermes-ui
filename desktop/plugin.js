@@ -58060,7 +58060,7 @@ import { Fragment as w1e, useEffect as I1e, useMemo as S1e, useState as OY } fro
 var DY = {
   name: "hermes-ui",
   private: !0,
-  version: "0.2.0",
+  version: "1.0.0",
   type: "module",
   scripts: {
     build: "node scripts/build.mjs",

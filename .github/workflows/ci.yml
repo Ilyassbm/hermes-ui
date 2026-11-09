@@ -1,0 +1,54 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Slash commands
+        run: node scripts/check-slash.mjs
+
+      - name: Keybindings
+        run: node scripts/check-keybinds.mjs
+
+      - name: Overlay unmount
+        run: node scripts/check-overlay-unmount.mjs
+
+      - name: Menus
+        run: node scripts/check-menus.mjs
+
+      - name: Model menu
+        run: node scripts/check-model-menu.mjs
+
+      - name: Request timeouts
+        run: node scripts/check-request-timeouts.mjs
+
+      - name: Desktop surface
+        run: node scripts/check-surface.mjs
+
+      - name: Bundle shape
+        run: node scripts/check-bundle.mjs
+
+      - name: Stylesheet
+        run: node scripts/check-css.mjs
+
+      # The app loads desktop/plugin.js as-is: a bundle that does not match src/ would ship stale code.
+      - name: Bundle is up to date
+        run: git diff --exit-code -- desktop/plugin.js src/styles/.compiled.css
