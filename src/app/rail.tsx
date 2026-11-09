@@ -131,21 +131,21 @@ export function Rail({ ctx }: { ctx: any }) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger
-                render={<div role="button" tabIndex={0} className="hui-icon-btn hui-rail-gear" aria-label={UI.rail.settings} onClick={() => openSettings()} onKeyDown={enter(() => openSettings())} />}
+                render={<div role="button" tabIndex={0} className="hui-icon-btn hui-rail-gear" aria-label={UI.rail.settings} data-ui-tooltip="hui-tip-rail-settings" onClick={() => openSettings()} onKeyDown={enter(() => openSettings())} />}
               >
                 <Icon icon={Settings} size={12} />
               </TooltipTrigger>
-              <TooltipContent>{UI.rail.settings}</TooltipContent>
+              <TooltipContent id="hui-tip-rail-settings">{UI.rail.settings}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger
-                render={<div role="button" tabIndex={0} className="hui-icon-btn" aria-label={UI.rail.newWithBot} onClick={() => openPicker('new')} onKeyDown={enter(() => openPicker('new'))} />}
+                render={<div role="button" tabIndex={0} className="hui-icon-btn" aria-label={UI.rail.newWithBot} data-ui-tooltip="hui-tip-rail-new" onClick={() => openPicker('new')} onKeyDown={enter(() => openPicker('new'))} />}
               >
                 <Icon icon={Add} size={12} />
               </TooltipTrigger>
-              <TooltipContent shortcut={capsOf('hermes-ui.newChatWithBot')}>{UI.rail.newWithBot}</TooltipContent>
+              <TooltipContent id="hui-tip-rail-new" shortcut={capsOf('hermes-ui.newChatWithBot')}>{UI.rail.newWithBot}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
@@ -157,14 +157,17 @@ export function Rail({ ctx }: { ctx: any }) {
           tabIndex={0}
           className="hui-search"
           // The name is the visible text plus the keys the field draws: "Search Ctrl Alt K". An aria-label that said
-          // something else left the pictured shortcut out of the accessible name (lot 17).
+          // something else left the pictured shortcut out of the accessible name (lot 17). The caps are separate
+          // inline-flex boxes, so the space between them and before them is a text node: no pixel of it is painted
+          // (the 8px gap does the spacing), but the element's own text reads "Search Ctrl Alt K" and not
+          // "SearchCtrlAltK", which is what an accessible-name check compares the label to (lot 18).
           aria-label={`${UI.rail.search} ${capsOf('hermes-ui.search').join(' ')}`}
           title={UI.rail.searchLabel}
           onClick={() => openPicker('search')}
           onKeyDown={enter(() => openPicker('search'))}
         >
           <Icon icon={Search} size={14} />
-          <span>{UI.rail.search}</span>
+          <span>{UI.rail.search}</span>{' '}
           <Kbd keys="mod+alt+k" />
         </div>
       </div>
@@ -196,7 +199,7 @@ export function Rail({ ctx }: { ctx: any }) {
                       </span>
                     ) : null}
                   </span>
-                  <span className="hui-tile-name">{row.label}</span>
+                  <span className="hui-tile-name">{row.label}</span>{' '}
                   {row.role ? <span className="hui-role">{row.role}</span> : null}
                 </div>
               </BotContextMenu>
@@ -233,7 +236,9 @@ export function Rail({ ctx }: { ctx: any }) {
                       tabIndex={0}
                       className="hui-bot-row"
                       aria-selected={row.name === current}
-                      aria-label={row.role ? `${row.label}, ${row.role}` : row.label}
+                      // No aria-label: the row's name is its own content — "Growth, Chief of Staff, 9h, the last
+                      // message" — which is exactly what the eye reads. A label of "Growth, Chief of Staff" left
+                      // the time and the message out of the name, so the visible text was not part of it (lot 18).
                       onClick={() => selectBot(row.name)}
                       onKeyDown={enter(() => selectBot(row.name))}
                     >

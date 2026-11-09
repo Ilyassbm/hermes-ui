@@ -1,6 +1,6 @@
 'use client';
 
-import {useSyncExternalStore, type ComponentProps} from 'react';
+import {Fragment, useSyncExternalStore, type ComponentProps} from 'react';
 import {cn} from '@/lib/glaze/utils';
 
 // Glaze's key cap: one key on the keyboard, in Glaze Mono at 0.8 of a caption (9.6px, type-code-xs), on paper with a
@@ -74,9 +74,15 @@ function KbdShortcut({keys, className, ...props}: Omit<KbdProps, 'children'> & {
   // The caps are a picture of the combo: a role="img" with the spoken form as its name, so a screen reader says
   // "Command K" (or "Control K") once, and never "⌘ ⌥ K". No hidden text node to clip (lot 17).
   return <kbd data-hui-part="kbd-group" data-platform={platform === 'unknown' ? undefined : platform} role="img" aria-label={parts.map(p => p.spoken).join(' ')} className={cn('inline-flex max-w-full flex-wrap items-center gap-1 font-[inherit]', className)} {...props}>
-    {parts.map((p, i) => neutral && !neutral[i]
-      ? <kbd key={i} data-hui-part="kbd" data-placeholder="" aria-hidden className={kbdClass}/>
-      : <kbd key={i} data-hui-part="kbd" aria-hidden className={kbdClass}>{p.shown}</kbd>)}
+    {parts.map((p, i) => <Fragment key={i}>
+      {/* A space between two caps, as a text node: a flex container does not paint it (the 4px gap does the
+          spacing), but the combo reads and copies as "Ctrl Alt K" instead of "CtrlAltK", and an accessible-name
+          check that measures the element's own text sees the same words the screen shows (lot 18). */}
+      {i > 0 ? ' ' : null}
+      {neutral && !neutral[i]
+        ? <kbd data-hui-part="kbd" data-placeholder="" aria-hidden className={kbdClass}/>
+        : <kbd data-hui-part="kbd" aria-hidden className={kbdClass}>{p.shown}</kbd>}
+    </Fragment>)}
   </kbd>;
 }
 

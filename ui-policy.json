@@ -33,5 +33,11 @@
   "bannedCopy": ["unlock your potential", "seamlessly", "game-changing", "supercharge", "unleash"],
   "viewports": [{ "width": 390, "height": 844 }, { "width": 1440, "height": 900 }],
   "colorSchemes": ["dark", "light"],
-  "exceptions": []
+  "exceptions": [
+    {
+      "selector": ".hui-row-output",
+      "rules": ["content-clipping"],
+      "reason": "Two-line preview of the bot's last message in the rail row: a long message is truncated on purpose, and the full text is in the row title and opens the conversation."
+    }
+  ]
 }

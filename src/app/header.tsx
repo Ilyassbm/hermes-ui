@@ -144,11 +144,11 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger
-              render={<div role="button" tabIndex={0} className="hui-icon-btn hui-tab-new" aria-label={UI.header.newConversation} onClick={() => newConversation()} onKeyDown={press(() => newConversation())} />}
+              render={<div role="button" tabIndex={0} className="hui-icon-btn hui-tab-new" aria-label={UI.header.newConversation} data-ui-tooltip="hui-tip-header-new" onClick={() => newConversation()} onKeyDown={press(() => newConversation())} />}
             >
               <Icon icon={Add} size={12} />
             </TooltipTrigger>
-            <TooltipContent shortcut={capsOf('hermes-ui.newConversation')}>{UI.header.newConversation}</TooltipContent>
+            <TooltipContent id="hui-tip-header-new" shortcut={capsOf('hermes-ui.newConversation')}>{UI.header.newConversation}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>
@@ -169,11 +169,11 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger
-              render={<Button variant="ghost" size="icon-sm" className="hui-icon-btn" aria-label={asideOpen ? UI.header.hideAside : UI.header.showAside} onClick={() => toggleAside(ctx)} />}
+              render={<Button variant="ghost" size="icon-sm" className="hui-icon-btn" aria-label={asideOpen ? UI.header.hideAside : UI.header.showAside} data-ui-tooltip="hui-tip-header-aside" onClick={() => toggleAside(ctx)} />}
             >
               <Icon icon={SidebarSimple} size={12} mirrored />
             </TooltipTrigger>
-            <TooltipContent shortcut={capsOf('hermes-ui.toggleAside')}>{asideOpen ? UI.header.hideAside : UI.header.showAside}</TooltipContent>
+            <TooltipContent id="hui-tip-header-aside" shortcut={capsOf('hermes-ui.toggleAside')}>{asideOpen ? UI.header.hideAside : UI.header.showAside}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>

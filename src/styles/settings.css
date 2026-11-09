@@ -137,7 +137,7 @@
 
 /* Compact: the same rows, 10px shorter, and a tighter composer. Nothing is hidden, nothing is resized by a scale. */
 .glaze[data-density='compact'] .hui-bot-row {
-  height: 52px;
+  min-height: 52px;
   padding: 6px;
 }
 .glaze[data-density='compact'] .hui-bot-row .hui-avatar,

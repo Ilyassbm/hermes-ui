@@ -58,7 +58,7 @@ export const UI = {
 
   /** The model picker at the foot of the composer: the trigger, the provider groups, the effort. */
   model: {
-    trigger: (model: string, effort: string) => `Model: ${model}, effort ${effort}`,
+    trigger: (model: string, effort: string) => `Model and effort: ${model}, ${effort}`,
     effortShort: { low: 'Low', medium: 'Med', high: 'High' } as Record<string, string>,
     allModels: (name: string) => `All ${name} models…`,
     filterModels: (name: string) => `Filter ${name} models`,

@@ -104,10 +104,10 @@ export function Aside({ ctx }: { ctx: any }) {
           <h2 className="type-caption text-text-2">{UI.aside.routines}</h2>
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger render={<Button variant="ghost" size="icon-sm" className="hui-icon-btn" aria-label={UI.aside.createRoutine} onClick={() => open('nav.cron')} />}>
+              <TooltipTrigger render={<Button variant="ghost" size="icon-sm" className="hui-icon-btn" aria-label={UI.aside.createRoutine} data-ui-tooltip="hui-tip-aside-routine" onClick={() => open('nav.cron')} />}>
                 <Icon icon={Add} size={12} />
               </TooltipTrigger>
-              <TooltipContent>{UI.aside.createRoutine}</TooltipContent>
+              <TooltipContent id="hui-tip-aside-routine">{UI.aside.createRoutine}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>

@@ -223,6 +223,12 @@
   display: block;
   width: 100%;
   max-width: 100%;
+  /* The name paints above the avatar's drawing, not under it: the avatar's 56px box holds a 1.6× SVG whose
+     transformed box is ~90px tall, and its ground shadow reached the name's line. An accessibility check then
+     answered "background overlapped by another element" for the name, whose contrast could not be measured
+     (lot 18). A relative name with a stack level is the paint order the eye already sees. */
+  position: relative;
+  z-index: 1;
   font-size: 12px;
   /* A 16px line box holds the 12px face whole: with the default line height the glyph box ran 1.17px past the
      ellipsis clip (lot 17). */
@@ -309,7 +315,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 62px;
+  /* 62px is the avatar's row (46 + 8 + 8); a two-line preview makes the row taller instead of being clipped
+     (lot 18). */
+  min-height: 62px;
   padding: 8px;
   /* 8px between two rows (the stack reads its children's boxes, so the gap lives in the margin); the row still
      reaches 4px past the list's margin on both sides, so the wash covers the whole column width. */
@@ -375,16 +383,22 @@
     display: none;
   }
 }
-/* One line, ellipsised: the row is 62px and carries the bot, its role, its time and the first line of what it said.
-   The full output is on the row's `title`, so the truncation is announced rather than lost. */
+/* Two lines, ellipsised: the row is at least 62px and carries the bot, its role, its time and the first two lines of
+   what it said. One line cut the message at the first ~200px ("J'ai relu la séquence d'emails : les deux premiers")
+   and lintapple measured 470 to 694px of right clipping on every row (lot 17, then lot 18). The full output is on the
+   row's `title`, so the truncation is announced rather than lost. */
 .glaze .hui-row-output {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   min-width: 0;
   font-size: 13px;
   line-height: 18px;
   color: var(--text-2);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 /* The mark on the avatar's bottom corner: a 16px disc, ringed in the row's own ground, holding Glaze's activity arc

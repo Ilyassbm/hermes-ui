@@ -1,9 +1,10 @@
 'use client';
 
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useId, useRef, useState} from 'react';
 import {Icon, Check, Copy, Warning} from '@/components/glaze/icon';
 import {cn} from '@/lib/glaze/utils';
 import {Button, type ButtonProps} from '@/components/glaze/ui/button';
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@/components/glaze/ui/tooltip';
 
 // Glaze's copy button: a Button that copies a value and confirms in place. Ghost and icon-only by default, so it sits
 // quietly at the end of a row, a code block or a field; secondary (flat) where it is the card's own action.
@@ -93,26 +94,46 @@ function CopyButton({value, label, showLabel = false, timeout = 1600, onCopy, fo
   const s = size ?? (showLabel ? 'sm' : 'icon-sm');
   const glyph = state === 'copied' ? Check : state === 'failed' ? Warning : Copy;
   const iconSize = s === 'sm' || s === 'icon-sm' ? 12 : s === 'lg' || s === 'icon-lg' ? 16 : 14;
+  // The name the glyph cannot say. An icon-only copy button carries it as a label and as a tooltip that
+  // appears on hover and on keyboard focus; both read the same string, so they cannot drift, and the
+  // tooltip's id is per instance — a page with ten copy buttons has ten tooltips, not ten elements
+  // sharing one id (lot 18).
+  const name = label ? `Copy ${label}` : 'Copy';
+  const tip = `hui-tip-copy-${useId().replace(/:/g, '')}`;
+  const content = <>
+    <Icon icon={glyph} size={iconSize}/>
+    {showLabel && <span aria-hidden className="grid [grid-template-areas:'stack']">
+      <span className={cn('[grid-area:stack]', state !== 'idle' && state !== 'fetching' && 'invisible')}>Copy</span>
+      <span className={cn('[grid-area:stack]', state !== 'copied' && 'invisible')}>Copied</span>
+      <span className={cn('[grid-area:stack]', state !== 'failed' && 'invisible')}>Failed</span>
+    </span>}
+  </>;
 
   return <>
-    <Button
-      data-hui-part="copy-button"
-      data-state={state}
-      variant={variant}
-      size={s}
-      aria-label={label ? `Copy ${label}` : 'Copy'}
-      pending={state === 'fetching'}
-      onClick={copy}
-      className={className}
-      {...props}
-    >
-      <Icon icon={glyph} size={iconSize}/>
-      {showLabel && <span aria-hidden className="grid [grid-template-areas:'stack']">
-        <span className={cn('[grid-area:stack]', state !== 'idle' && state !== 'fetching' && 'invisible')}>Copy</span>
-        <span className={cn('[grid-area:stack]', state !== 'copied' && 'invisible')}>Copied</span>
-        <span className={cn('[grid-area:stack]', state !== 'failed' && 'invisible')}>Failed</span>
-      </span>}
-    </Button>
+    {showLabel ? (
+      <Button
+        data-hui-part="copy-button"
+        data-state={state}
+        variant={variant}
+        size={s}
+        aria-label={name}
+        pending={state === 'fetching'}
+        onClick={copy}
+        className={className}
+        {...props}
+      >{content}</Button>
+    ) : (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger
+            render={<Button data-hui-part="copy-button" data-state={state} variant={variant} size={s} aria-label={name} data-ui-tooltip={tip} pending={state === 'fetching'} onClick={copy} className={className} {...props} />}
+          >
+            {content}
+          </TooltipTrigger>
+          <TooltipContent id={tip}>{name}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )}
     <span role="status" data-hui-part="copy-button-status" className="sr-only">{announcement}</span>
   </>;
 }

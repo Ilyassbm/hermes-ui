@@ -168,7 +168,7 @@ export function ModelMenu() {
         }}
       >
         <ProviderLogo provider={logoFor(model || meta?.provider)} size={16} className="hui-model-logo" />
-        <span className="hui-model-name">{label}</span>
+        <span className="hui-model-name">{label}</span>{' '}
         <span className="hui-model-effort-tag">{effortShort(effort)}</span>
         <Icon icon={ChevronDown} size={12} />
       </Button>
