@@ -43,6 +43,26 @@ composer carries the model and the effort.*
 - **Usage meters** for the subscriptions the gateway knows about.
 - **Light / dark / system**, density, reading width and reduced motion, in Settings.
 
+## Why this is not a prompt or a skill
+
+A skill tells the agent what to do. This plugin changes what Hermes *is*: it registers a route the app renders in place
+of its home, reads the gateway's own session events, and drives turns, approvals, attachments and slash commands
+through the SDK. Nothing here is a wrapper around the chat — the thread, the rail, the panel and the composer are
+components of this plugin, and the app's own pages (Settings, Capabilities, Messaging, Cron, Artifacts) stay intact
+behind it.
+
+Three things follow from that, and none of them are reachable from a prompt:
+
+- **Per-bot memory of the model and the effort**, written with the profile and restored on the next turn.
+- **Attachments that actually reach the model** — the page attaches the bytes through `image.attach_bytes`, checks the
+  reply, and carries the returned absolute path into the prompt, which is what the vision tool resolves.
+- **A stable reading of a stored conversation** — a turn earns its place only if it has an answer or a tool it ran, so
+  a resumed thread never paints a column of empty "Thought for a moment" rows.
+
+## Demo
+
+A 90-second recording script, shot by shot, lives in [`docs/DEMO.md`](docs/DEMO.md).
+
 ## Install
 
 From the catalogue:
@@ -115,6 +135,15 @@ folder (`<root>/images`, `<root>/profiles/<profile>/images`) is allowed on its o
 Directories, special files
 and unreadable files are refused the same way; a path that does not exist is `404 {"error": "missing"}`, and a file
 over the cap is `413 {"error": "too_large", "size": …}`. No traceback is ever returned.
+
+## Known limits
+
+- The page takes over the app's home route by reading the hash (`#/` and `#/<session>`), the sanctioned door: it never
+  touches the app's DOM. On a shell that loads plugins late, the first paint can be the native home for a moment
+  before the page takes over; the sidebar entry **Hermes UI** always opens it.
+- The desktop half is a single `plugin.js`; older shells that read plugin sources through the 512 KiB preview path
+  refuse anything larger. Update Hermes Desktop, or use the Webapp.
+- The usage meters read what the gateway exposes; a provider the gateway does not know about shows no meter.
 
 ## Compatibility
 
