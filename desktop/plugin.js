@@ -13711,7 +13711,8 @@ async function ad(e, t = []) {
           filename: u.name
         });
         if (!p || p.attached !== !0 || p.error) throw new Error(E.media.attachFailed(u.name));
-        typeof p.text == "string" && p.text.trim() && s.push(p.text.trim());
+        let m = typeof p.path == "string" && p.path.trim() ? p.path.trim() : "";
+        m ? s.push(`[User attached image: ${m}]`) : typeof p.text == "string" && p.text.trim() && s.push(p.text.trim());
       } else {
         let p = await ia.request("file.attach", { session_id: i, name: u.name, data_url: d });
         if (!p || p.attached === !1 || p.error) throw new Error(E.media.attachFailed(u.name));

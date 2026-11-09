@@ -650,7 +650,12 @@ export async function send(text, attachments = []) {
           filename: file.name
         })
         if (!res || res.attached !== true || res.error) throw new Error(UI.media.attachFailed(file.name))
-        if (typeof res.text === 'string' && res.text.trim()) refs.push(res.text.trim())
+        // The marker names the file by its ABSOLUTE path: the vision tool resolves what the turn writes, and a bare
+        // file name sends it looking in the working directory ("media file not found: 'upload_x.png'"). The gateway's
+        // own text uses the name alone, so it is rebuilt here from `path`.
+        const at = typeof res.path === 'string' && res.path.trim() ? res.path.trim() : ''
+        if (at) refs.push(`[User attached image: ${at}]`)
+        else if (typeof res.text === 'string' && res.text.trim()) refs.push(res.text.trim())
       } else {
         const r = await host.request('file.attach', { session_id: sid, name: file.name, data_url: dataUrl })
         if (!r || r.attached === false || r.error) throw new Error(UI.media.attachFailed(file.name))
