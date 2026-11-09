@@ -169,6 +169,10 @@ export function toTurns(raw) {
       const end = turnEndStep(adapter)
       adapter = end.state
       cur.toolActions.push(...end.actions)
+      // A resumed assistant turn earns its place only if it shows something: its answer, or a tool it ran. A turn
+      // that only carries reasoning (the gateway splits one answer across several assistant rows) would paint a lone
+      // "Thought for a moment" with nothing under it — seven of them in a row is what a reload looked like.
+      if (cur.text.trim() || cur.toolActions.length > 1) turns.push(cur)
     }
     cur = null
     adapter = null
@@ -198,7 +202,6 @@ export function toTurns(raw) {
           thinkStart: 0,
           thinkEnd: 0
         }
-        turns.push(cur)
       }
       const t = textOf(m.content)
       if (t.trim()) cur.text = cur.text ? `${cur.text}\n\n${t}` : t
@@ -230,7 +233,7 @@ export function toTurns(raw) {
     // role tool: folded into its call above
   }
   closeTurn()
-  return { turns: turns.filter(t => t.role === 'user' || t.text || t.reasoning || t.toolActions.length > 1), files: mergeFiles(files) }
+  return { turns, files: mergeFiles(files) }
 }
 
 // ── bots & sessions ──────────────────────────────────────────────────────────

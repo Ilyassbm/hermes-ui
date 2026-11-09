@@ -18,6 +18,8 @@ import { classifyRoute, HUI_PATH, isChatRoute, sessionIdOf, type RouteClass } fr
 import { UI } from './strings'
 
 const STORAGE_KEY = 'replaceNative'
+/** Where the page was, per bot: what a reload reopens instead of the session the *native* app happened to leave behind. */
+const LAST_KEY = 'lastConversation'
 const GUARD_MS = 500
 /** The launch watch: 20 passes, 400ms apart (8 s). Long enough for the app's own router to restore, short enough
  *  that it is over before a person can miss it. */
@@ -25,6 +27,16 @@ const WATCH_MS = 400
 const WATCH_TRIES = 20
 
 type Ctx = any
+
+/** bot name → stored conversation id, as last written by the page. */
+function lastConversations(ctx: Ctx): Record<string, string> {
+  try {
+    const v = ctx?.storage?.get(LAST_KEY, {})
+    return v && typeof v === 'object' ? v : {}
+  } catch {
+    return {}
+  }
+}
 
 let ctxRef: Ctx = null
 let installed = false
@@ -136,7 +148,9 @@ export async function handleRoute(hash: string, { launch = false }: { launch?: b
     const id = sessionIdOf(hash)
     if (!id) return kind
     host.navigate(HUI_PATH)
-    await revealSession(id)
+    // A reload is the app restoring its own last session; the page's own is the one the person actually had open.
+    const remembered = launch ? lastConversations(ctxRef)[store.get().bot || ''] : ''
+    await revealSession(remembered || id)
   }
   return kind
 }
@@ -158,6 +172,20 @@ export function installTakeover(ctx: Ctx): void {
   const run = (launch = false) => {
     void handleRoute(window.location.hash, { launch }).catch(e => console.warn('[hermes-ui] route', e))
   }
+
+  // Remember the conversation on screen, so a reload lands where the person was rather than on whatever the native
+  // session picker last wrote into the address.
+  store.subscribe(() => {
+    const { bot, storedId } = store.get()
+    if (!bot || !storedId) return
+    const last = lastConversations(ctx)
+    if (last[bot] === storedId) return
+    try {
+      ctx?.storage?.set(LAST_KEY, { ...last, [bot]: storedId })
+    } catch {
+      /* no storage: the address stays the only memory */
+    }
+  })
 
   ctx.addEventListener(window, 'hashchange', () => run(false))
   ctx.addEventListener(window, 'popstate', () => run(false))
