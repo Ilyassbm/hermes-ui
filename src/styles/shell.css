@@ -4,6 +4,25 @@
    Three blocks: the 44px header with its conversation tabs and the model trigger; the composer, whose Glaze shell is
    neutralised so the panel and the toolbar read as one surface; the picker dialog, a fifth of the way down. */
 
+/* ---------- Selection ---------------------------------------------------------------- */
+/* The app turns text selection OFF on its <body> (apps/desktop/src/styles.css:819, `user-select: none`), so every page
+   it hosts inherits a cursor that cannot select a word. Our page is content — a reply, a code block, a file path, a
+   transcript — and all of it has to be selectable, copied and quoted. The chrome stays unselectable, which is the one
+   thing the app got right: dragging a tab should not paint it blue. */
+.glaze {
+  -webkit-user-select: text;
+  user-select: text;
+}
+.glaze :is(button, [role='tab'], [role='menuitem'], [role='option'], [data-hui-part='send-button']) {
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* The rail, the header and the composer's toolbar are controls, not prose. */
+.glaze :is(.hui-bot-row, .hui-tile, .hui-conv-row, .hui-hdr, .hui-composer-toolbar, .hui-usage) {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* ---------- The header ---------- */
 
 .glaze .hui-hdr {

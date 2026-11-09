@@ -56963,6 +56963,18 @@ tbody > :is(:where(.glaze, [data-system="glaze"]) .\\[tbody\\>\\&\\]\\:hover\\:b
     transition: none;
   }
 }
+.glaze {
+  -webkit-user-select: text;
+  user-select: text;
+}
+.glaze :is(button, [role='tab'], [role='menuitem'], [role='option'], [data-hui-part='send-button']) {
+  -webkit-user-select: none;
+  user-select: none;
+}
+.glaze :is(.hui-bot-row, .hui-tile, .hui-conv-row, .hui-hdr, .hui-composer-toolbar, .hui-usage) {
+  -webkit-user-select: none;
+  user-select: none;
+}
 .glaze .hui-hdr {
   display: flex;
   align-items: center;
@@ -60333,7 +60345,7 @@ import { Fragment as tve, useEffect as rve, useMemo as nve, useState as cX } fro
 var lX = {
   name: "hermes-ui",
   private: !0,
-  version: "1.3.9",
+  version: "1.3.10",
   type: "module",
   scripts: {
     build: "node scripts/build.mjs",
