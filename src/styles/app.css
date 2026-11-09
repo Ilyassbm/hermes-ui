@@ -12,6 +12,8 @@
    every selector under .glaze. */
 @import "./rail.css";
 @import "./shell.css";
+/* The right panel: the conversation's files, their preview, and the routines folded under them. */
+@import "./aside.css";
 /* The Settings ▸ Plugins page, and the density / motion switches it owns. */
 @import "./settings.css";
 /* The vendored aicss avatar: its identity colours, scoped to .hui-bot. */

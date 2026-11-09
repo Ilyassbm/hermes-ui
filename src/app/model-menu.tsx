@@ -203,7 +203,7 @@ export function ModelMenu() {
           {providers.map(provider => (
             <DropdownMenuGroup key={provider.slug}>
               <DropdownMenuLabel className="hui-model-provider">
-                <ProviderLogo provider={provider.slug} size={12} />
+                <ProviderLogo provider={provider.slug} size={18} />
                 <span>{provider.name}</span>
               </DropdownMenuLabel>
               {/* `topModels`: the current model, then the provider's own order, never more than MODEL_MENU_TOP rows
@@ -211,7 +211,8 @@ export function ModelMenu() {
               <DropdownMenuRadioGroup value={model} onValueChange={next => pick(next, provider.slug)}>
                 {topModels(provider, model).map(next => (
                   <DropdownMenuRadioItem key={`${provider.slug}:${next}`} value={next}>
-                    {modelLabel(next)}
+                    {next === model ? <ProviderLogo provider={provider.slug} size={14} /> : null}
+                    <span>{modelLabel(next)}</span>
                   </DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>
@@ -255,7 +256,8 @@ function AllModels({ provider, model, onPick }: { provider: Provider; model: str
       <DropdownMenuRadioGroup value={model} onValueChange={onPick}>
         {shown.map(next => (
           <DropdownMenuRadioItem key={next} value={next}>
-            {modelLabel(next)}
+            {next === model ? <ProviderLogo provider={provider.slug} size={14} /> : null}
+            <span>{modelLabel(next)}</span>
           </DropdownMenuRadioItem>
         ))}
       </DropdownMenuRadioGroup>

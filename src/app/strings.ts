@@ -10,6 +10,8 @@
 export const UI = {
   /** The bots rail: search, the team fold, the pinned tiles, the app menu. */
   rail: {
+    appName: 'Hermes',
+    newChat: 'New chat',
     newWithBot: 'New conversation with a bot',
     search: 'Search',
     searchLabel: 'Search a bot or a conversation',
@@ -123,9 +125,9 @@ export const UI = {
     empty: 'No results'
   },
 
-  /** The right panel: routines, files, and the copy that goes with them. */
+  /** The right panel: files, their preview, and the routines folded under them. */
   aside: {
-    label: 'Routines and files',
+    label: 'Files and routines',
     routines: 'Routines',
     createRoutine: 'Create a routine',
     routinesLabel: 'The bot’s routines',
@@ -136,9 +138,27 @@ export const UI = {
     noRoutineBody: 'Nothing is scheduled for this bot.',
     newRoutine: 'New routine',
     files: 'Files',
-    filesLabel: 'Files from this conversation',
-    openFile: (path: string) => `Open ${path}`,
-    noFiles: 'Files created or changed in this conversation show up here.',
+    filesLabel: 'Files in this conversation',
+    openFile: (path: string) => `Preview ${path}`,
+    noFiles: 'Files read or written in this conversation show up here.',
+    noMatch: 'No file matches this filter.',
+    filterFiles: 'Filter files',
+    fileCount: (n: number) => `${n} file${n === 1 ? '' : 's'}`,
+    action: { read: 'Read', write: 'Wrote', edit: 'Edited', shell: 'Ran' } as Record<string, string>,
+    preview: 'Preview',
+    back: 'Back to files',
+    copyPath: 'Copy path',
+    openNative: 'Open in the app',
+    closePreview: 'Close the preview',
+    loading: 'Loading…',
+    source: 'Source',
+    rendered: 'Rendered',
+    previewUnavailable: 'Preview not available',
+    binaryBody: 'This file is binary or too large to show here.',
+    missing: 'This file is no longer there.',
+    refused: 'This file is not readable from here.',
+    tooLarge: (size: string) => `Too large to preview (${size}).`,
+    linesShown: (shown: number, total: number) => `First ${shown.toLocaleString('en-US')} of ${total.toLocaleString('en-US')} lines.`,
     pathCopied: 'Path copied',
     copiedTitle: 'Path copied',
     unreadableTitle: 'Path unreadable'

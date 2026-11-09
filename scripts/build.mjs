@@ -25,6 +25,11 @@ const cssOut = resolve(root, 'src/styles/.compiled.css')
 const install = process.argv.includes('--install')
 const watch = process.argv.includes('--watch')
 
+// 0a. The provider marks: the 13 SVGs in src/assets/providers are the source, the committed
+//     src/app/provider-logos.generated.ts is what the bundle imports. A missing or malformed SVG stops the build here.
+const logos = spawnSync(process.execPath, [resolve(root, 'scripts/gen-provider-logos.mjs')], { stdio: 'inherit' })
+if (logos.status !== 0) process.exit(logos.status ?? 1)
+
 // 0. The skill a bot reads is generated from the catalogue before anything is bundled: catalog.ts is the source, the
 //    committed skills/intelligent-ui/SKILL.md is what the plugin registers. A failure here stops the build.
 const gen = spawnSync(process.execPath, [resolve(root, 'scripts/gen-iui-skill.mjs')], { stdio: 'inherit' })

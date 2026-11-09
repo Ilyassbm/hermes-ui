@@ -128,26 +128,10 @@ export function Rail({ ctx }: { ctx: any }) {
       <div className="hui-rail-top">
         <AppMenu ctx={ctx} />
         <div className="hui-rail-actions">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger
-                render={<div role="button" tabIndex={0} className="hui-icon-btn hui-rail-gear" aria-label={UI.rail.settings} data-ui-tooltip="hui-tip-rail-settings" onClick={() => openSettings()} onKeyDown={enter(() => openSettings())} />}
-              >
-                <Icon icon={Settings} size={12} />
-              </TooltipTrigger>
-              <TooltipContent id="hui-tip-rail-settings">{UI.rail.settings}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger
-                render={<div role="button" tabIndex={0} className="hui-icon-btn" aria-label={UI.rail.newWithBot} data-ui-tooltip="hui-tip-rail-new" onClick={() => openPicker('new')} onKeyDown={enter(() => openPicker('new'))} />}
-              >
-                <Icon icon={Add} size={12} />
-              </TooltipTrigger>
-              <TooltipContent id="hui-tip-rail-new" shortcut={capsOf('hermes-ui.newChatWithBot')}>{UI.rail.newWithBot}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Button variant="secondary" size="sm" className="hui-new-chat" aria-label={UI.rail.newChat} title={UI.rail.newWithBot} onClick={() => openPicker('new')}>
+            <Icon icon={Add} size={12} />
+            <span>{UI.rail.newChat}</span>
+          </Button>
         </div>
       </div>
 
@@ -275,6 +259,18 @@ export function Rail({ ctx }: { ctx: any }) {
       </div>
 
       <div className="hui-rail-foot">
+        <div className="hui-rail-foot-actions">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={<div role="button" tabIndex={0} className="hui-icon-btn hui-rail-gear" aria-label={UI.rail.settings} data-ui-tooltip="hui-tip-rail-settings" onClick={() => openSettings()} onKeyDown={enter(() => openSettings())} />}
+              >
+                <Icon icon={Settings} size={12} />
+              </TooltipTrigger>
+              <TooltipContent id="hui-tip-rail-settings">{UI.rail.settings}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <UsageMeters cards={usageCards(usage)} ctx={ctx} />
       </div>
     </aside>
@@ -297,9 +293,9 @@ function AppMenu({ ctx }: { ctx: any }) {
           keypress and the mouseup that followed a mouse click closed it at once (lot 7). */}
       <DropdownMenuTrigger
         openOnHover={false}
-        render={<Button variant="ghost" size="sm" className="hui-rail-app" aria-label={`Agentise, ${UI.rail.appMenu.toLowerCase()}`} />}
+        render={<Button variant="ghost" size="sm" className="hui-rail-app" aria-label={`${UI.rail.appName}, ${UI.rail.appMenu.toLowerCase()}`} />}
       >
-        <span>Agentise</span>
+        <span>{UI.rail.appName}</span>
         <Icon icon={ChevronDown} size={12} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="bottom" size="sm">

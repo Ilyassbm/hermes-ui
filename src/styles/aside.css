@@ -1,0 +1,285 @@
+/* The right panel: the conversation's files with their preview, then the routines folded under them.
+
+   A page surface like the rail — page colour, no card — 320px wide, one 34px row per file. The preview replaces the
+   list in the same column: a 28px action bar, the title and path, then the body (text with its line numbers, a rendered
+   markdown answer with its source, or the image). Shapes and paddings are hand-set here; the outline is the policy's
+   (24px minimum target, 8px between controls, 8px of content inset). */
+
+.glaze .hui-aside {
+  gap: 16px;
+}
+
+/* The section heading: "Files" and its count on one 28px line; the fold and its create button on another. */
+.glaze .hui-aside-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.glaze .hui-aside-count {
+  margin-inline-start: auto;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.glaze .hui-aside-filter {
+  width: 100%;
+}
+
+/* One file row: 34px, 8px of clear inside, 8px between two rows. The name truncates, the folder under it truncates,
+   the age stays at the inline end. */
+.glaze .hui-aside-row {
+  min-height: 34px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  cursor: default;
+  transition: background-color var(--dur-state) var(--ease-out);
+}
+.glaze .hui-aside-row:hover {
+  background: var(--hover);
+}
+.glaze .hui-aside-row:active {
+  background: var(--pressed);
+}
+.glaze .hui-aside-row:focus-visible {
+  outline: 2px solid var(--line-focus);
+  outline-offset: -2px;
+}
+.glaze .hui-aside-row [data-hui-part='item'] {
+  min-height: 34px;
+  padding-block: 0;
+}
+.glaze .hui-aside-row [data-hui-part='item-title'] {
+  font-size: 13px;
+}
+.glaze .hui-aside-row [data-hui-part='item-description'] {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.glaze .hui-aside-age {
+  flex: none;
+  margin-inline-start: 8px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The routines fold: a caption with a chevron, a 28px target, shut by default. */
+.glaze .hui-aside-fold {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 4px;
+  margin-inline-start: -4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  cursor: default;
+  color: var(--text-2);
+  transition: background-color var(--dur-state) var(--ease-out);
+}
+.glaze .hui-aside-fold:hover {
+  background: var(--hover);
+}
+.glaze .hui-aside-fold:focus-visible {
+  outline: 2px solid var(--line-focus);
+  outline-offset: -2px;
+}
+.glaze .hui-aside-fold svg {
+  color: var(--text-3);
+  transition: rotate 200ms var(--ease-out);
+}
+.glaze .hui-aside-fold[aria-expanded='true'] svg {
+  rotate: 90deg;
+}
+.glaze .hui-aside-routines {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 200ms var(--ease-out), opacity 200ms var(--ease-out);
+}
+.glaze .hui-aside-routines > div {
+  min-height: 0;
+  overflow: hidden;
+}
+.glaze .hui-aside-routines[data-open='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .glaze .hui-aside-row,
+  .glaze .hui-aside-fold,
+  .glaze .hui-aside-fold svg,
+  .glaze .hui-aside-routines {
+    transition: none;
+  }
+}
+
+/* ---------- The preview ---------- */
+
+.glaze .hui-prev {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* The bar: back on the left, copy / open / close on the right, all 28px and 8px apart. */
+.glaze .hui-prev-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.glaze .hui-prev-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+.glaze .hui-prev-btn {
+  width: 28px;
+  height: 28px;
+}
+
+.glaze .hui-prev-heading {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+.glaze .hui-prev-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--text-1);
+}
+.glaze .hui-prev-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--text-3);
+}
+.glaze .hui-prev-meta {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.glaze .hui-prev-modes {
+  padding-top: 4px;
+}
+
+/* The text body: a sticky number gutter, the content beside it, one shared scroll. 12px mono, 18px line box so the
+   gutter's numbers stay on their line. */
+.glaze .hui-prev-code {
+  display: flex;
+  max-height: 52vh;
+  overflow: auto;
+  border: 1px solid var(--line-faint);
+  border-radius: 8px;
+  background: var(--shell);
+}
+.glaze .hui-prev-gutter,
+.glaze .hui-prev-text {
+  margin: 0;
+  padding: 8px 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
+  tab-size: 2;
+}
+.glaze .hui-prev-gutter {
+  position: sticky;
+  inset-inline-start: 0;
+  flex: none;
+  min-width: 40px;
+  padding-inline: 8px;
+  border-inline-end: 1px solid var(--line-faint);
+  background: var(--shell);
+  text-align: end;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+.glaze .hui-prev-text {
+  min-width: 0;
+  flex: 1;
+  padding-inline: 8px;
+  color: var(--text-1);
+  white-space: pre;
+}
+
+.glaze .hui-prev-rendered {
+  min-width: 0;
+  font-size: 13px;
+}
+
+/* An image at its real size inside the panel's width; a click zooms it to its pixels and the box scrolls. */
+.glaze .hui-prev-image {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--line-faint);
+  border-radius: 8px;
+  background: var(--shell);
+  cursor: zoom-in;
+  overflow: auto;
+  text-align: start;
+}
+.glaze .hui-prev-image:focus-visible {
+  outline: 2px solid var(--line-focus);
+  outline-offset: -2px;
+}
+.glaze .hui-prev-image img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+.glaze .hui-prev-image.is-zoom {
+  cursor: zoom-out;
+}
+.glaze .hui-prev-image.is-zoom img {
+  max-width: none;
+}
+
+.glaze .hui-prev-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 8px;
+  border: 1px solid var(--line-faint);
+  border-radius: 8px;
+  background: var(--shell);
+}
+.glaze .hui-prev-empty-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+}
+.glaze .hui-prev-note {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-3);
+}

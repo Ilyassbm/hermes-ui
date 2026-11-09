@@ -18,6 +18,7 @@
     "check:iui": "node scripts/check-iui.mjs",
     "check:iui-skill": "node scripts/gen-iui-skill.mjs --check",
     "gen:iui": "node scripts/gen-iui-skill.mjs",
+    "gen:logos": "node scripts/gen-provider-logos.mjs",
     "lint:ui": "node scripts/lint-ui.mjs",
     "check:tools": "node scripts/check-tool-mapping.mjs",
     "check:bots": "/opt/hermes/.venv/bin/python -I scripts/check-bots-api.py",

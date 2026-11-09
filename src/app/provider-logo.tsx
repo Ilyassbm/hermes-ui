@@ -1,22 +1,19 @@
-// A provider's mark, drawn here as a 16px SVG: no icon font, no network, no brand colour — Glaze's ink only, so a
-// logo sits in the theme like every other glyph. The set covers the providers the gateway names today (anthropic,
-// openai, google, deepseek, opencode, xai, mistral, meta, groq) and falls back to a plain disc for anything else.
+// A provider's real mark, drawn from the 13 lobe-icons SVGs in src/assets/providers (MIT, see the LICENSE beside them).
+//
+// `scripts/gen-provider-logos.mjs` turns each file into `provider-logos.generated.ts` before every build: its viewBox,
+// its path data and the brand colour. This component draws that data as one 16px `<svg>` (18px in the model menu),
+// `fill="currentColor"`, so a mark keeps the ink of the row it sits in.
+//
+// A brand colour is applied when it is readable on the page: the near-black marks (OpenAI's knot by convention, xAI,
+// Ollama, opencode) keep `--text-1`, which is the same black in the light theme and the near-white ink in the dark one.
+// The other houses get their chart colour.
 //
 // The `slug` handed in can be a provider id (`opencode_go`), a profile's `provider` field (`claude`), or a model id's
 // prefix; `logoFor` folds the aliases onto one mark.
-import type { ReactElement } from 'react'
+import type { CSSProperties } from 'react'
+import { PROVIDER_LOGOS } from './provider-logos.generated'
 
-export type ProviderSlug =
-  | 'anthropic'
-  | 'openai'
-  | 'google'
-  | 'deepseek'
-  | 'opencode'
-  | 'xai'
-  | 'mistral'
-  | 'meta'
-  | 'groq'
-  | 'generic'
+export type ProviderSlug = keyof typeof PROVIDER_LOGOS | 'generic'
 
 const ALIASES: Record<string, ProviderSlug> = {
   anthropic: 'anthropic',
@@ -24,87 +21,61 @@ const ALIASES: Record<string, ProviderSlug> = {
   openai: 'openai',
   gpt: 'openai',
   chatgpt: 'openai',
-  google: 'google',
-  gemini: 'google',
-  vertex: 'google',
+  google: 'gemini',
+  gemini: 'gemini',
+  vertex: 'gemini',
   deepseek: 'deepseek',
+  xai: 'xai',
+  grok: 'xai',
+  groq: 'groq',
+  mistral: 'mistral',
+  mixtral: 'mistral',
+  codestral: 'mistral',
+  meta: 'meta',
+  llama: 'meta',
+  qwen: 'qwen',
+  tongyi: 'qwen',
+  openrouter: 'openrouter',
+  ollama: 'ollama',
   opencode: 'opencode',
   opencodego: 'opencode',
   'opencode-go': 'opencode',
-  xai: 'xai',
-  grok: 'xai',
-  mistral: 'mistral',
-  mixtral: 'mistral',
-  meta: 'meta',
-  llama: 'meta',
-  groq: 'groq'
+  perplexity: 'perplexity',
+  pplx: 'perplexity',
+  sonar: 'perplexity'
 }
+
+/** Marks whose chart colour is black: `--text-1` keeps them readable in the dark theme. */
+const INK = new Set<ProviderSlug>(['openai', 'xai', 'ollama', 'opencode'])
 
 /** The mark for a provider id, a profile's provider, or a model id's prefix. */
 export function logoFor(provider?: string | null): ProviderSlug {
   const key = String(provider || '')
     .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, '')
+    .trim()
   if (!key) return 'generic'
-  if (ALIASES[key]) return ALIASES[key]
+  const cleaned = key.replace(/[^a-z0-9-]+/g, '')
+  if (ALIASES[cleaned]) return ALIASES[cleaned]
+  if (cleaned in PROVIDER_LOGOS) return cleaned as ProviderSlug
   // `opencode_go` / `deepseek-v4.1-flash`: the first segment names the house.
-  const head = key.split(/[-_.]/)[0]
+  const head = cleaned.split(/[-_.]/)[0]
   return ALIASES[head] || 'generic'
 }
 
-const PATHS: Record<ProviderSlug, ReactElement> = {
-  // The slanted A.
-  anthropic: <path d="M4.1 13.2 7.3 2.8h1.9l3.2 10.4h-1.9l-.7-2.5H6.7l-.7 2.5H4.1Zm3-4.1h2.8L8.5 4.9 7.1 9.1Z" />,
-  // The knot: a rounded hexagon and its centre.
-  openai: (
-    <>
-      <path d="M8 1.7 13.3 4.8v6.4L8 14.3 2.7 11.2V4.8L8 1.7Z" fill="none" stroke="currentColor" strokeWidth="1.25" />
-      <circle cx="8" cy="8" r="1.5" />
-    </>
-  ),
-  // The G: a ring with its bar.
-  google: (
-    <>
-      <path d="M12.8 5.6A5 5 0 1 0 13 9.1H8.4" fill="none" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
-    </>
-  ),
-  // The whale.
-  deepseek: (
-    <>
-      <path d="M1.8 8.6c2.1-2.9 4.5-4.3 7.1-4.3 1.9 0 3.4.7 4.7 2-1.1-.2-2 0-2.8.5 1.7 1 2.5 2.3 2.5 3.9-2.3-1.2-4.4-1.3-6.4-.4-1.9.8-3.6.3-5.1-1.7Z" />
-    </>
-  ),
-  // The prompt: a chevron and a cursor.
-  opencode: (
-    <>
-      <path d="M3 4.6 6.2 8 3 11.4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M8 11.2h5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-    </>
-  ),
-  // The X.
-  xai: (
-    <>
-      <path d="M3.2 3.2 12.8 12.8M12.8 3.2 3.2 12.8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </>
-  ),
-  // The flagged bars.
-  mistral: (
-    <>
-      <rect x="2.6" y="3.6" width="10.8" height="2" rx=".4" />
-      <rect x="2.6" y="7" width="7.6" height="2" rx=".4" />
-      <rect x="2.6" y="10.4" width="4.4" height="2" rx=".4" />
-    </>
-  ),
-  // The loop.
-  meta: (
-    <>
-      <circle cx="5" cy="8" r="3.1" fill="none" stroke="currentColor" strokeWidth="1.3" />
-      <circle cx="11" cy="8" r="3.1" fill="none" stroke="currentColor" strokeWidth="1.3" />
-    </>
-  ),
-  // The bolt.
-  groq: <path d="M9.2 1.8 3.4 8.9h3.4l-.9 5.3 5.8-7.1H8.3l.9-5.3Z" />,
-  generic: (
+type ProviderLogoProps = {
+  /** A provider id, a profile's provider, or a model id. */
+  provider?: string | null
+  /** The mark's height, in pixels (16 by default, 18 in the model menu). */
+  size?: number
+  className?: string
+  title?: string
+  /** Draw Glaze's ink whatever the brand (a disabled or selected control). */
+  mono?: boolean
+}
+
+/** The generic fallback: a disc with a hole, for a provider the set does not name. */
+function GenericMark() {
+  return (
     <>
       <circle cx="8" cy="8" r="5.2" fill="none" stroke="currentColor" strokeWidth="1.3" />
       <circle cx="8" cy="8" r="1.6" />
@@ -112,21 +83,39 @@ const PATHS: Record<ProviderSlug, ReactElement> = {
   )
 }
 
-type ProviderLogoProps = {
-  /** A provider id, a profile's provider, or a model id. */
-  provider?: string | null
-  /** The box, in pixels (16 by default, the size the composer and the menus ask for). */
-  size?: number
-  className?: string
-  title?: string
-}
-
-export function ProviderLogo({ provider, size = 16, className, title }: ProviderLogoProps) {
+export function ProviderLogo({ provider, size = 16, className, title, mono = false }: ProviderLogoProps) {
   const slug = logoFor(provider)
+  const data = slug === 'generic' ? null : PROVIDER_LOGOS[slug]
+  if (!data) {
+    return (
+      <svg
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        role={title ? 'img' : undefined}
+        aria-label={title}
+        aria-hidden={title ? undefined : true}
+        focusable="false"
+        data-hui-part="provider-logo"
+        data-provider="generic"
+        className={['hui-provider-mark', className].filter(Boolean).join(' ')}
+        fill="currentColor"
+      >
+        <GenericMark />
+      </svg>
+    )
+  }
+
+  // A wordmark (Meta is 103×24) keeps its ratio: height is the size the call site asked for, width follows the box.
+  const [minX, minY, boxW, boxH] = data.box.split(/\s+/).map(Number)
+  const width = Number.isFinite(boxW) && Number.isFinite(boxH) && boxH > 0 ? Math.round((size * boxW) / boxH) : size
+  const ink = mono || INK.has(slug) ? 'var(--text-1)' : data.color
+  const style: CSSProperties = { color: ink }
+
   return (
     <svg
-      viewBox="0 0 16 16"
-      width={size}
+      viewBox={Number.isFinite(minX) ? data.box : '0 0 24 24'}
+      width={width}
       height={size}
       role={title ? 'img' : undefined}
       aria-label={title}
@@ -134,10 +123,13 @@ export function ProviderLogo({ provider, size = 16, className, title }: Provider
       focusable="false"
       data-hui-part="provider-logo"
       data-provider={slug}
-      className={className}
+      className={['hui-provider-mark', className].filter(Boolean).join(' ')}
       fill="currentColor"
+      style={style}
     >
-      {PATHS[slug]}
+      {data.paths.map((path, index) => (
+        <path key={`${slug}-${index}`} d={path.d} transform={path.transform} />
+      ))}
     </svg>
   )
 }

@@ -148,6 +148,16 @@
 .glaze .hui-model-provider svg {
   color: var(--text-2);
 }
+/* The real mark's box follows its viewBox (Meta's wordmark is wider than it is tall): 18px tall in the group label,
+   14px beside the model that is currently chosen. */
+.glaze .hui-model-provider .hui-provider-mark {
+  width: auto;
+  height: 18px;
+}
+.glaze .hui-model-menu [data-hui-part='dropdown-menu-radio-item'] .hui-provider-mark {
+  width: auto;
+  height: 14px;
+}
 .glaze .hui-model-menu {
   min-width: 240px;
 }

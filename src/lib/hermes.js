@@ -55,27 +55,86 @@ function parseArgs(raw) {
   }
 }
 
-const FILE_TOOLS = /^(write_file|create_file|patch|edit_file|apply_patch)$/
+const READ_TOOLS = /^(read_file|read|cat|view|read_many_files)$/
+const WRITE_TOOLS = /^(write_file|write|create_file|edit|edit_file|patch|apply_patch|multiedit|str_replace)$/
+const SHELL_TOOLS = /^(shell|bash|sh|zsh|run_command|terminal|process)$/
 
-function filesFromTool(name, args) {
-  if (!FILE_TOOLS.test(String(name || ''))) return []
-  const p = args?.path || args?.file_path || args?.target
-  return typeof p === 'string' && p ? [p] : []
+/** The verb a file row prints: read, wrote, edited, or ran (a shell command naming the path). */
+function fileAction(name) {
+  const tool = String(name || '')
+  if (READ_TOOLS.test(tool)) return 'read'
+  if (WRITE_TOOLS.test(tool)) return /^(edit|patch|apply_patch|multiedit|str_replace)$/.test(tool) ? 'edit' : 'write'
+  if (SHELL_TOOLS.test(tool)) return 'shell'
+  return ''
 }
 
-function filesFromText(text) {
+/** The path a file tool names, in any of the spellings Hermes tools use. */
+function pathOf(args) {
+  if (!args || typeof args !== 'object') return ''
+  for (const key of ['path', 'file_path', 'filePath', 'target', 'file']) {
+    const value = args[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  // apply_patch carries its own little patch format instead of a path field.
+  const patch = typeof args.patch === 'string' ? args.patch : typeof args.input === 'string' ? args.input : ''
+  const hit = /^\*\*\* (?:Update|Add|Delete) File:\s*(.+)$/m.exec(patch)
+  return hit ? hit[1].trim() : ''
+}
+
+/** Paths a shell command names: absolute, ~/…, ./…, or a token with a file extension. Flags and URLs stay out. */
+function pathsInShell(command) {
   const out = []
-  for (const m of String(text || '').matchAll(/MEDIA:\s*(\/[^\s)]+)/g)) out.push(m[1])
+  const re = /(?:^|[\s"'`=])((?:~|\.{1,2})?\/[^\s"'`;&|<>()]+|[\w.-]+\.(?:md|txt|json|jsonl|ya?ml|toml|csv|py|ts|tsx|js|jsx|css|html|sh|png|jpe?g|gif|webp|svg|pdf|log))\b/g
+  for (const match of String(command || '').matchAll(re)) {
+    const token = match[1].replace(/[.,:;]+$/, '')
+    if (!token || token.startsWith('-') || token.includes('://') || token.startsWith('$')) continue
+    out.push(token)
+  }
   return out
 }
 
-function addFiles(paths) {
-  if (!paths.length) return
-  store.set(s => {
-    const seen = new Set(s.files.map(f => f.path))
-    const add = paths.filter(p => !seen.has(p)).map(path => ({ path, at: Date.now() }))
-    return add.length ? { files: [...add, ...s.files] } : null
-  })
+/** The files a tool call touched, as `{ path, action }` rows. */
+function filesFromTool(name, args) {
+  const action = fileAction(name)
+  if (!action) return []
+  if (action === 'shell') {
+    return pathsInShell(args?.command || args?.cmd || '').map(path => ({ path, action }))
+  }
+  const path = pathOf(args)
+  return path ? [{ path, action }] : []
+}
+
+/** `MEDIA:/…` lines: a file the bot produced outside a file tool (an image, an export). */
+function filesFromText(text) {
+  const out = []
+  for (const m of String(text || '').matchAll(/MEDIA:\s*(\/[^\s)]+)/g)) out.push({ path: m[1], action: 'write' })
+  return out
+}
+
+/** Merge file rows by path, keep the latest action, newest first. */
+function mergeFiles(rows) {
+  const map = new Map()
+  for (const row of rows) {
+    const path = typeof row === 'string' ? row : row?.path
+    if (!path) continue
+    const at = typeof row === 'object' && Number.isFinite(row.at) ? row.at : 0
+    const action = typeof row === 'object' && row.action ? row.action : 'edit'
+    const seen = map.get(path)
+    if (!seen || at >= seen.at) map.set(path, { path, at, action })
+  }
+  return [...map.values()].sort((a, b) => b.at - a.at)
+}
+
+function addFiles(rows) {
+  const add = rows.filter(row => (typeof row === 'string' ? row : row?.path))
+  if (!add.length) return
+  const at = Date.now()
+  store.set(s => ({
+    files: mergeFiles([
+      ...add.map(row => (typeof row === 'string' ? { path: row, at, action: 'write' } : { at, ...row })),
+      ...s.files
+    ])
+  }))
 }
 
 /** session.resume messages → display turns (user / assistant, tools folded into the turn). */
@@ -151,15 +210,16 @@ export function toTurns(raw) {
           adapter = done.state
           cur.toolActions.push(...done.actions)
         }
-        files.push(...filesFromTool(name, args))
+        const at = (m.timestamp || 0) * 1000
+        files.push(...filesFromTool(name, args).map(row => ({ ...row, at })))
       }
-      files.push(...filesFromText(t))
+      files.push(...filesFromText(t).map(row => ({ ...row, at: (m.timestamp || 0) * 1000 })))
       continue
     }
     // role tool: folded into its call above
   }
   closeTurn()
-  return { turns: turns.filter(t => t.role === 'user' || t.text || t.reasoning || t.toolActions.length > 1), files: [...new Set(files)] }
+  return { turns: turns.filter(t => t.role === 'user' || t.text || t.reasoning || t.toolActions.length > 1), files: mergeFiles(files) }
 }
 
 // ── bots & sessions ──────────────────────────────────────────────────────────
@@ -303,7 +363,7 @@ export async function openConversation(storedId) {
       sid: res?.session_id || storedId,
       storedId: res?.stored_session_id || storedId,
       messages: turns,
-      files: files.map(path => ({ path, at: 0 })),
+      files: files.map(row => ({ ...row, at: row.at || Date.now() })),
       loading: false,
       live: res?.running ? { phase: 'thinking', verb: '', subagents: 0, startedAt: Date.now(), reasoning: '' } : null
     })
@@ -642,6 +702,8 @@ export function handleEvent(ev) {
       const name = p.tool_name || p.name
       const args = p.args || {}
       stepTools(ev)
+      // A read leaves no produced file behind; its path is known when the call starts, so the panel takes it here.
+      addFiles(filesFromTool(name, args))
       patchDraft(d => ({ ...d, thinkEnd: d.thinkEnd || Date.now() }))
       if (name === 'delegate_task') {
         const n = Array.isArray(args.tasks) ? args.tasks.length : 1

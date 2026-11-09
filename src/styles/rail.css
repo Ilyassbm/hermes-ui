@@ -70,6 +70,20 @@
   margin-inline-start: auto;
 }
 
+/* "New chat": the visible label and the plus, 28px tall, the secondary wash. It takes the room the gear left at the
+   top of the rail (lot 20); the gear moved to the foot. */
+.glaze .hui-new-chat {
+  height: 28px;
+  gap: 6px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+.glaze .hui-new-chat svg {
+  width: 12px;
+  height: 12px;
+  color: var(--text-2);
+}
+
 /* One 28px icon button: the new discussion, the header's tabs, the panel's toggle. */
 .glaze .hui-icon-btn {
   /* A real <button> when it is a menu trigger (lot 7): no UA chrome, the class owns the box. */
@@ -479,9 +493,18 @@
   flex: none;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 8px;
   padding: 8px 12px 10px;
   border-top: 1px solid var(--line-faint);
+}
+
+/* The gear, alone on a 28px line at the inline end, above the two meters (which keep their 34px rows). */
+.glaze .hui-rail-foot-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  height: 28px;
 }
 
 .glaze .hui-usage {

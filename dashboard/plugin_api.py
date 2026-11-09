@@ -14,7 +14,9 @@ profile, and a bad database can never fail the whole request.
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
+import mimetypes
 import os
 import re
 import sqlite3
@@ -23,8 +25,15 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
+
+_TEXT_MAX = 1024 * 1024
+_BLOB_MAX = 8 * 1024 * 1024
+_SECRET_NAMES = (".env", "auth.json")
+_SECRET_SUFFIXES = (".pem", ".key")
+_SECRET_PARTS = (".ssh", "secrets")
 
 _TTL_S = 60.0
 _cache: dict[str, Any] = {"at": 0.0, "body": None}
@@ -290,3 +299,147 @@ async def bots(fresh: int = 0) -> dict:
         body["fetchedAt"] = time.time()
         cache.update(at=now, root=str(root), body=body)
         return body
+
+
+# ── files: the right panel's read-only preview ───────────────────────────────
+#
+# Two reads, no writes: GET /file returns a text file (UTF-8, 1 MiB cap) and GET /blob returns an image as a data URL
+# (8 MiB cap). Both refuse, before they read anything, a path that resolves outside the profile home and `~`, a
+# symlink that lands outside them, and the secret names Hermes keeps in a profile. The error body is always
+# {"error": "refused" | "missing" | "too_large"}; no traceback, no path echo beyond what the caller sent.
+
+def _allowed_roots() -> list[Path]:
+    """The profile home Hermes names, and the user's own home: the two trees the panel may read."""
+    roots: list[Path] = []
+    try:
+        roots.append(_hermes_root().expanduser().resolve())
+    except Exception:
+        pass
+    env = (os.environ.get("HERMES_HOME") or "").strip()
+    if env:
+        try:
+            roots.append(Path(env).expanduser().resolve())
+        except Exception:
+            pass
+    try:
+        roots.append(Path.home().resolve())
+    except Exception:
+        pass
+    out: list[Path] = []
+    for root in roots:
+        if root not in out:
+            out.append(root)
+    return out
+
+
+def _within(child: Path, root: Path) -> bool:
+    try:
+        child.relative_to(root)
+        return True
+    except ValueError:
+        return False
+
+
+def _secret(path: Path) -> bool:
+    """The names the panel never serves, whatever the extension: Hermes credentials and private keys."""
+    name = path.name.lower()
+    if name in _SECRET_NAMES or name.startswith(".env."):
+        return True
+    if name.startswith("id_") or name.endswith(_SECRET_SUFFIXES):
+        return True
+    return any(part.lower() in _SECRET_PARTS for part in path.parts)
+
+
+def _resolve(raw: str) -> Path | None:
+    """`expanduser().resolve()`, then the two containment checks: a `None` means refused."""
+    if not raw or "\x00" in raw:
+        return None
+    try:
+        path = Path(os.path.expanduser(raw))
+        if not path.is_absolute():
+            # Shell tools name paths relative to the profile they run in; that is the base, not the gateway's cwd.
+            path = _hermes_root() / path
+        resolved = path.resolve()
+    except Exception:
+        return None
+    roots = _allowed_roots()
+    if not roots or not any(_within(resolved, root) for root in roots):
+        return None
+    if _secret(resolved):
+        return None
+    return resolved
+
+
+def _refuse(code: str = "refused", status: int = 400, size: int | None = None) -> JSONResponse:
+    body: dict[str, Any] = {"error": code}
+    if size is not None:
+        body["size"] = size
+    return JSONResponse(body, status_code=status)
+
+
+def _file_payload(raw: str) -> dict | JSONResponse:
+    path = _resolve(raw)
+    if path is None:
+        return _refuse("refused", 400)
+    try:
+        if not path.exists():
+            return _refuse("missing", 404)
+        if not path.is_file():
+            return _refuse("refused", 400)
+        stat = path.stat()
+        if stat.st_size > _TEXT_MAX:
+            return _refuse("too_large", 413, int(stat.st_size))
+        data = path.read_bytes()
+    except FileNotFoundError:
+        return _refuse("missing", 404)
+    except (PermissionError, OSError):
+        return _refuse("refused", 400)
+
+    body: dict[str, Any] = {
+        "path": str(path),
+        "size": int(stat.st_size),
+        "mtimeMs": int(stat.st_mtime * 1000),
+        "kind": "binary",
+    }
+    if b"\x00" not in data:
+        try:
+            text = data.decode("utf-8")
+        except UnicodeDecodeError:
+            text = None
+        if text is not None:
+            body["kind"] = "text"
+            body["text"] = text
+    return body
+
+
+def _blob_payload(raw: str) -> dict | JSONResponse:
+    path = _resolve(raw)
+    if path is None:
+        return _refuse("refused", 400)
+    try:
+        if not path.exists():
+            return _refuse("missing", 404)
+        if not path.is_file():
+            return _refuse("refused", 400)
+        stat = path.stat()
+        if stat.st_size > _BLOB_MAX:
+            return _refuse("too_large", 413, int(stat.st_size))
+        data = path.read_bytes()
+    except FileNotFoundError:
+        return _refuse("missing", 404)
+    except (PermissionError, OSError):
+        return _refuse("refused", 400)
+
+    mime = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
+    data_url = f"data:{mime};base64,{base64.b64encode(data).decode('ascii')}"
+    return {"path": str(path), "mime": mime, "dataUrl": data_url}
+
+
+@router.get("/file")
+async def file_preview(path: str = ""):
+    return await asyncio.to_thread(_file_payload, path)
+
+
+@router.get("/blob")
+async def blob_preview(path: str = ""):
+    return await asyncio.to_thread(_blob_payload, path)

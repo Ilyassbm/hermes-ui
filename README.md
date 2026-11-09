@@ -106,6 +106,14 @@ No telemetry. The page talks to your own Hermes gateway and to nothing else.
 leaves the gateway and is never returned to the page. `GET /bots` reads each profile's `state.db` read-only to show
 the last line each bot said.
 
+The right panel's preview is served by two read-only routes, `GET /file?path=…` (UTF-8 text, 1 MiB cap) and
+`GET /blob?path=…` (base64, 8 MiB cap). Both resolve the path with `expanduser().resolve()` and refuse it (HTTP 400,
+`{"error": "refused"}`) when it lands outside the profile home (`HERMES_HOME`, or the profile root Hermes reports) and
+outside `~`, when a symlink leads out of those trees, and for the names Hermes keeps credentials in: `.env` and
+`.env.*`, `auth.json`, `*.pem`, `*.key`, `id_*`, and anything under `.ssh/` or `secrets/`. Directories, special files
+and unreadable files are refused the same way; a path that does not exist is `404 {"error": "missing"}`, and a file
+over the cap is `413 {"error": "too_large", "size": …}`. No traceback is ever returned.
+
 ## Compatibility
 
 Hermes Desktop and the Webapp, `>=0.23`. The page works with any provider and model the profile already has; the
