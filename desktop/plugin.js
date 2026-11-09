@@ -59107,7 +59107,7 @@ import { Fragment as vbe, useEffect as xbe, useMemo as wbe, useState as lJ } fro
 var sJ = {
   name: "hermes-ui",
   private: !0,
-  version: "1.0.0",
+  version: "1.1.0",
   type: "module",
   scripts: {
     build: "node scripts/build.mjs",
