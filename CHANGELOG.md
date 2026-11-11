@@ -3,6 +3,24 @@
 All notable changes to this project are documented here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-11-11
+
+A redesign after the Grok Bot desktop app, built view by view from a static mock-up.
+
+### Changed
+
+- **Rail**: search and new chat as round buttons at the top, the pinned bots as large tiles (the first one starred),
+  the team grouped under the Bots roster's own sections, one "Name · Role" row per bot with its last line; usage,
+  settings and the app menu (a grid button) at the foot.
+- **Header**: the tab strip is gone. The open bot floats as a pill above the thread — avatar, name and role, the open
+  conversation's title — and the pill opens every conversation of the bot, a new one first. New conversation and the
+  panel's toggle are round buttons.
+- **Thread**: the page itself, no sheet. The bot's answers sit in rounded bubbles; reasoning and work stay flat above
+  them; the answering model moved next to the copy button.
+- **Composer**: one rounded row — attach, text, model, send — that grows upward as the text wraps.
+- **Bot panel**: the bot's card (avatar, name, model, skills), then Activity (its conversations, the running one live,
+  and its routines with a switch that really pauses or resumes them through `cron.manage`) and Files.
+
 ## [1.3.12] - 2026-11-11
 
 Everything since 1.0.0, grouped. Each patch release is tagged (`v1.1.0` … `v1.3.12`).

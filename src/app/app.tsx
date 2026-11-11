@@ -23,7 +23,7 @@ import { loadSettings, settings } from './settings-state'
 import { initView, view } from './ui-state'
 import { useMediaQuery } from './use-media'
 
-const RAIL_W = 280
+const RAIL_W = 256
 const ASIDE_W = 320
 
 /** The native session sidebar duplicates the rail: fold it once per app session, and never toggle it back from a

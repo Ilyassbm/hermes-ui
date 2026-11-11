@@ -311,6 +311,9 @@ export async function loadBots() {
     return {
       name: p.name,
       title: String(p.ui_meta?.['hermes-bots']?.title || '').trim(),
+      // The section the Bots roster files the bot under ("Leads", "Content"); empty when it has none.
+      section: String(p.ui_meta?.['hermes-bots']?.sectionName || '').trim(),
+      skills: Number(p.skill_count) || 0,
       display_name: p.display_name || '',
       description: p.description || '',
       model: p.model || '',
@@ -1109,6 +1112,23 @@ export async function loadRoutines() {
     store.set({ routines: mine })
   } catch {
     store.set({ routines: [] })
+  }
+}
+
+/** Pause or resume one routine (`cron.manage` pause / resume), then read the list back: the switch shows what the
+ *  gateway now holds, not what was asked. Answers whether the gateway accepted. */
+export async function toggleRoutine(job) {
+  const { bot } = store.get()
+  const id = job?.id || job?.job_id
+  if (!bot || !id) return false
+  const active = job?.enabled !== false && job?.state !== 'paused'
+  try {
+    const res = await requestReady('cron.manage', { action: active ? 'pause' : 'resume', name: id, profile: bot })
+    return res?.success !== false && !res?.error
+  } catch {
+    return false
+  } finally {
+    await loadRoutines()
   }
 }
 

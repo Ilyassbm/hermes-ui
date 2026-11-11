@@ -136,7 +136,20 @@ export const UI = {
 
   /** The right panel: files, their preview, and the routines folded under them. */
   aside: {
-    label: 'Files and routines',
+    label: 'Bot panel',
+    views: 'Panel view',
+    activity: 'Activity',
+    filesWithCount: (n: number) => `Files · ${n}`,
+    conversations: 'Conversations',
+    noConversation: 'No conversation with this bot yet.',
+    running: 'Running',
+    open: 'Open now',
+    showMore: 'Show more',
+    showLess: 'Show less',
+    skills: (n: number) => `${n} skill${n === 1 ? '' : 's'}`,
+    nextRun: (when: string) => `Next run ${when}`,
+    toggleRoutine: (name: string) => `Run routine ${name}`,
+    toggleFailed: 'The routine did not change',
     routines: 'Routines',
     createRoutine: 'Create a routine',
     routinesLabel: 'The bot’s routines',

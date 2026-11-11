@@ -17,17 +17,19 @@ nothing is mocked.
 ![A release-status card drawn by the bot: a checklist with states, details and a primary button](docs/screenshots/01-intelligent-ui.jpg)
 
 *Intelligent UI. The bot answers with a `<hui-ui>` block and the thread draws it as Glaze components — here a status
-card with a checklist and a button that sends its own follow-up. The right panel lists the files the turn touched.*
+card with a checklist and a button that sends its own follow-up. The bot floats as a pill above the thread; the pill
+opens all of its conversations.*
 
 ![A comparison table with wrapped cells, under the folded reasoning and work rows](docs/screenshots/02-table.jpg)
 
 *A comparison as a table. Reasoning folds into “Thought for …”, the tools into “Worked for 46s”; long cells wrap
 instead of being cut at the edge.*
 
-![A grounded answer with the files it read listed in the right panel](docs/screenshots/03-tools-files.jpg)
+![The bot panel: avatar, model and skills, then its conversations and routines](docs/screenshots/03-tools-files.jpg)
 
-*A turn that reads the project before answering. Each file it read or ran a command on lands in the right panel,
-with the verb and the folder.*
+*The bot panel. The open bot's card — model, skills — then two views: Activity (its conversations, the running one
+marked live, and its routines with a switch that pauses or resumes them) and Files (what the conversation read,
+wrote or ran).*
 
 ![An approval card: the command, why it was flagged, and Always allow / Refuse / Allow](docs/screenshots/04-approval.jpg)
 
@@ -56,8 +58,9 @@ one click; the working line under the thread keeps the clock.*
 
 ## What you get
 
-- **Bots rail** with the pinned bot on top, then one row per bot: its last output and a relative time.
-- **Conversation tabs**: several conversations open at once, one per bot or per thread.
+- **Bots rail** with the pinned bots as tiles, then the team in the roster's own sections: one row per bot, its name,
+  role and last line.
+- **Floating bot pill** above the thread: the open bot and conversation, and every conversation of the bot one click away.
 - **Live activity line** — thinking, working, delegating — that folds into “Worked for 12s” when the turn ends.
 - **Reasoning** folded under the reply as “Thought for 8s”, opened on demand.
 - **Approval cards** for the commands and tools that ask before they run.
@@ -65,7 +68,8 @@ one click; the working line under the thread keeps the clock.*
 - **Rich replies**: tables, code blocks, images.
 - **Slash commands** that execute — `/help`, `/model`, `/new` and the profile's own — from the composer.
 - **Per-bot model and effort** in the composer, with provider logos and the full catalogue behind a submenu.
-- **Right panel** with the bot's routines and the files the conversation touched.
+- **Bot panel**: the bot's card, its conversations, its routines (pause and resume in place) and the files the
+  conversation touched, with a preview.
 - **Usage meters** for the subscriptions the gateway knows about.
 - **Light / dark / system**, density, reading width and reduced motion, in Settings.
 

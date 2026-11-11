@@ -103,7 +103,9 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
           submitKey={submitKey}
           // The toolbar's left side: the model picker, before the paperclip (toolsFirst puts it there in the DOM too).
           tools={<ModelMenu />}
-          toolsFirst
+          // One rounded row, as in the reference: attach, the text, the model, Send. The editor grows upward as the
+          // text wraps while the buttons stay on the bottom line.
+          layout="inline"
           onStop={() => {
             // Stop answers whether the gateway really interrupted: a refusal keeps the live line and says so here.
             setStopNote('')

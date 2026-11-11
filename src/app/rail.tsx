@@ -8,11 +8,10 @@
 // The styles live in src/styles/rail.css, on Glaze's tokens, scoped to .glaze: the shapes the spec pins (280, 44, 62,
 // 72×102) are hand-set, and the lint stays at zero because no rule of it is restyled through a className.
 import { cloneElement, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactElement, type ReactNode } from 'react'
-import { Icon, Add, ChevronDown, ChevronRight, Search, Settings, Time } from '@/components/glaze/icon'
+import { Icon, Add, Search, Settings, SquaresFour, Star, Time } from '@/components/glaze/icon'
 import { WorkingDot, WorkingStatus } from './thread/working'
 import { Badge } from '@/components/glaze/ui/badge'
 import { Button } from '@/components/glaze/ui/button'
-import { Kbd } from '@/components/glaze/ui/kbd'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,14 +22,13 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger
 } from '@/components/glaze/ui/dropdown-menu'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/glaze/ui/tooltip'
 import { newConversation, selectBot, store } from '@/lib/hermes'
 import { botLabel } from '@/lib/labels'
 import { useStore } from '@/lib/store'
 import { toast } from '@/components/glaze/ui/toast'
 import { setReplaceNative } from './native-takeover'
 import { BotAvatar } from './bot-avatar'
-import { botIdentity, botRole, sinceLabel } from './format'
+import { botIdentity, botRole } from './format'
 import { capsOf } from './keys'
 import { openSettings } from './settings-link'
 import { UI } from './strings'
@@ -43,6 +41,7 @@ type Row = {
   label: string
   role: string
   output: string
+  section: string
   active: number | null
   identity: ReturnType<typeof botIdentity>
 }
@@ -60,7 +59,6 @@ export function Rail({ ctx }: { ctx: any }) {
   const { rows } = useBots(ctx)
 
   const [pinned, setPinned] = useState<string[]>(() => read(ctx, 'pinned', DEFAULT_PINNED))
-  const [teamOpen, setTeamOpen] = useState<boolean>(() => read(ctx, 'teamOpen', true))
   const [shade, setShade] = useState({ top: false, bottom: false })
   const listRef = useRef<HTMLDivElement | null>(null)
 
@@ -74,6 +72,7 @@ export function Rail({ ctx }: { ctx: any }) {
         label: botLabel(b),
         role: botRole(b.name, b.description),
         output: row?.last_output || '',
+        section: String((b as any).section || ''),
         active,
         identity: botIdentity(b.name)
       }
@@ -89,17 +88,20 @@ export function Rail({ ctx }: { ctx: any }) {
 
   const pinnedRows = pinned.map(name => ordered.find(row => row.name === name)).filter((row): row is Row => Boolean(row))
   const team = ordered.filter(row => !pinned.includes(row.name))
+  // The team in the roster's own sections, in the order they first appear; bots the roster files nowhere go under
+  // "Team", after the named sections.
+  const sections: { title: string; rows: Row[] }[] = []
+  for (const row of [...team.filter(r => r.section), ...team.filter(r => !r.section)]) {
+    const title = row.section || UI.rail.team
+    let group = sections.find(g => g.title === title)
+    if (!group) sections.push((group = { title, rows: [] }))
+    group.rows.push(row)
+  }
 
   const pin = (name: string, on: boolean) => {
     const next = on ? [...pinned.filter(n => n !== name), name] : pinned.filter(n => n !== name)
     setPinned(next)
     write(ctx, 'pinned', next)
-  }
-
-  const fold = () => {
-    const next = !teamOpen
-    setTeamOpen(next)
-    write(ctx, 'teamOpen', next)
   }
 
   // The fade at an end only while that end hides something, read from the list's own scroll position.
@@ -119,42 +121,29 @@ export function Rail({ ctx }: { ctx: any }) {
       el.removeEventListener('scroll', update)
       observer?.disconnect()
     }
-  }, [pinnedRows.length, team.length, teamOpen])
+  }, [pinnedRows.length, team.length])
 
   const busy = (name: string) => Boolean(live) && name === current
   const waiting = (name: string) => Boolean(approval) && name === current
 
   return (
     <aside className="hui-rail">
+      {/* The top: two round buttons at the inline end, search and a new conversation, as in the reference. The app's
+          own menu moved to the foot, behind the grid button. */}
       <div className="hui-rail-top">
-        <AppMenu ctx={ctx} />
-        <div className="hui-rail-actions">
-          <Button variant="secondary" size="sm" className="hui-new-chat" aria-label={UI.rail.newChat} title={UI.rail.newWithBot} onClick={() => openPicker('new')}>
-            <Icon icon={Add} size={12} />
-            <span>{UI.rail.newChat}</span>
-          </Button>
-        </div>
-      </div>
-
-      <div className="hui-rail-search">
-        <div
-          role="button"
-          tabIndex={0}
-          className="hui-search"
-          // The name is the visible text plus the keys the field draws: "Search Ctrl Alt K". An aria-label that said
-          // something else left the pictured shortcut out of the accessible name (lot 17). The caps are separate
-          // inline-flex boxes, so the space between them and before them is a text node: no pixel of it is painted
-          // (the 8px gap does the spacing), but the element's own text reads "Search Ctrl Alt K" and not
-          // "SearchCtrlAltK", which is what an accessible-name check compares the label to (lot 18).
+        <Button
+          variant="ghost"
+          size="icon-lg"
+          className="hui-round"
           aria-label={`${UI.rail.search} ${capsOf('hermes-ui.search').join(' ')}`}
           title={UI.rail.searchLabel}
           onClick={() => openPicker('search')}
-          onKeyDown={enter(() => openPicker('search'))}
         >
-          <Icon icon={Search} size={14} />
-          <span>{UI.rail.search}</span>{' '}
-          <Kbd keys="mod+alt+k" />
-        </div>
+          <Icon icon={Search} size={16} />
+        </Button>
+        <Button variant="ghost" size="icon-lg" className="hui-round" aria-label={UI.rail.newChat} title={UI.rail.newWithBot} onClick={() => openPicker('new')}>
+          <Icon icon={Add} size={16} />
+        </Button>
       </div>
 
       <div
@@ -170,7 +159,7 @@ export function Rail({ ctx }: { ctx: any }) {
         ) : null}
         {pinnedRows.length ? (
           <div className="hui-pinned" role="listbox" aria-label={UI.rail.pinnedLabel}>
-            {pinnedRows.map(row => (
+            {pinnedRows.map((row, index) => (
               <BotContextMenu key={row.name} row={row} pinned onPin={() => pin(row.name, false)} ctx={ctx}>
                 <div
                   role="option"
@@ -182,107 +171,91 @@ export function Rail({ ctx }: { ctx: any }) {
                   onKeyDown={enter(() => selectBot(row.name))}
                 >
                   <span className="hui-avatar">
-                    <BotAvatar size={56} colors={row.identity.colors} shape={row.identity.shape} label={row.label} />
+                    <BotAvatar size={58} colors={row.identity.colors} shape={row.identity.shape} label={row.label} />
                     {busy(row.name) ? (
                       <span className="hui-work" role="img" aria-label={UI.rail.working}>
                         <WorkingDot />
                       </span>
+                    ) : index === 0 ? (
+                      // The first pin is the house bot: a small star on its corner, nothing to read.
+                      <span className="hui-star" aria-hidden>
+                        <Icon icon={Star} size={8} weight="fill" />
+                      </span>
                     ) : null}
                   </span>
-                  <span className="hui-tile-name">{row.label}</span>{' '}
-                  {row.role ? <span className="hui-role">{row.role}</span> : null}
+                  <span className="hui-tile-name">{row.label}</span>
                 </div>
               </BotContextMenu>
             ))}
           </div>
         ) : null}
 
-        <section className="hui-team" data-open={teamOpen}>
-          <div
-            role="button"
-            tabIndex={0}
-            className="hui-team-head"
-            aria-expanded={teamOpen}
-            aria-controls="hui-team-body"
-            onClick={fold}
-            onKeyDown={enter(fold)}
-          >
-            <span>{UI.rail.team}</span>
-            <Icon icon={ChevronRight} size={12} />
-          </div>
-          <div className="hui-team-body" id="hui-team-body">
-            <div>
-              <div role="listbox" aria-label={UI.rail.teamLabel} data-ui-stack="">
-                {team.map(row => (
-                  <BotContextMenu
-                    key={row.name}
-                    row={row}
-                    pinned={false}
-                    onPin={() => pin(row.name, true)}
-                    ctx={ctx}
-                  >
-                    <div
-                      role="option"
-                      tabIndex={0}
-                      className="hui-bot-row"
-                      aria-selected={row.name === current}
-                      // No aria-label: the row's name is its own content — "Growth, Chief of Staff, 9h, the last
-                      // message" — which is exactly what the eye reads. A label of "Growth, Chief of Staff" left
-                      // the time and the message out of the name, so the visible text was not part of it (lot 18).
-                      onClick={() => selectBot(row.name)}
-                      onKeyDown={enter(() => selectBot(row.name))}
+        {sections.map(group => (
+          <section key={group.title} className="hui-team">
+            <div className="hui-team-head">{group.title}</div>
+            <div role="listbox" aria-label={group.title} data-ui-stack="">
+              {group.rows.map(row => (
+                    <BotContextMenu
+                      key={row.name}
+                      row={row}
+                      pinned={false}
+                      onPin={() => pin(row.name, true)}
+                      ctx={ctx}
                     >
-                      <span className="hui-avatar">
-                        <BotAvatar size={46} colors={row.identity.colors} shape={row.identity.shape} label={row.label} />
-                        {busy(row.name) ? (
-                          <span className="hui-work" role="img" aria-label={UI.rail.working}>
-                            <WorkingDot />
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="hui-row-text">
-                        <span className="hui-row-line">
-                          <span className="hui-row-name">{row.label}</span>
-                          {row.role ? <span className="hui-role">{row.role}</span> : null}
-                          {waiting(row.name) ? (
-                            <Badge variant="warn" size="sm" className="ms-auto">
-                              <Icon icon={Time} size={12} />
-                              {UI.rail.waiting}
-                            </Badge>
-                          ) : sinceLabel(row.active) ? (
-                            <span className="hui-row-time" data-ui-number="">{sinceLabel(row.active)}</span>
+                      <div
+                        role="option"
+                        tabIndex={0}
+                        className="hui-bot-row"
+                        aria-selected={row.name === current}
+                        // No aria-label: the row's name is its own content — "Growth, Chief of Staff, 9h, the last
+                        // message" — which is exactly what the eye reads. A label of "Growth, Chief of Staff" left
+                        // the time and the message out of the name, so the visible text was not part of it (lot 18).
+                        onClick={() => selectBot(row.name)}
+                        onKeyDown={enter(() => selectBot(row.name))}
+                      >
+                        <span className="hui-avatar">
+                          <BotAvatar size={36} colors={row.identity.colors} shape={row.identity.shape} label={row.label} />
+                          {busy(row.name) ? (
+                            <span className="hui-work" role="img" aria-label={UI.rail.working}>
+                              <WorkingDot />
+                            </span>
                           ) : null}
                         </span>
-                        {/* While the turn runs, the last output gives its line to the working clock; it returns after. */}
-                        {busy(row.name) ? (
-                          <WorkingStatus live={live} />
-                        ) : row.output ? (
-                          <span className="hui-row-output" title={row.output}>{row.output}</span>
-                        ) : null}
-                      </span>
-                    </div>
-                  </BotContextMenu>
-                ))}
-              </div>
+                        <span className="hui-row-text">
+                          <span className="hui-row-line">
+                            {/* "Forge · Engineering": the name and the role on one line, the way the reference titles a row. */}
+                            <span className="hui-row-name">{row.role ? `${row.label} · ${row.role}` : row.label}</span>
+                            {waiting(row.name) ? (
+                              <Badge variant="warn" size="sm" className="ms-auto">
+                                <Icon icon={Time} size={12} />
+                                {UI.rail.waiting}
+                              </Badge>
+                            ) : null}
+                          </span>
+                          {/* While the turn runs, the last output gives its line to the working clock; it returns after. */}
+                          {busy(row.name) ? (
+                            <WorkingStatus live={live} />
+                          ) : row.output ? (
+                            <span className="hui-row-output" title={row.output}>{row.output}</span>
+                          ) : null}
+                        </span>
+                      </div>
+                    </BotContextMenu>
+              ))}
             </div>
-          </div>
-        </section>
+          </section>
+        ))}
       </div>
 
       <div className="hui-rail-foot">
-        <div className="hui-rail-foot-actions">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger
-                render={<div role="button" tabIndex={0} className="hui-icon-btn hui-rail-gear" aria-label={UI.rail.settings} data-ui-tooltip="hui-tip-rail-settings" onClick={() => openSettings()} onKeyDown={enter(() => openSettings())} />}
-              >
-                <Icon icon={Settings} size={12} />
-              </TooltipTrigger>
-              <TooltipContent id="hui-tip-rail-settings">{UI.rail.settings}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
         <UsageMeters cards={usageCards(usage)} ctx={ctx} />
+        <div className="hui-rail-foot-actions">
+          <span className="hui-rail-app-name">{UI.rail.appName}</span>
+          <Button variant="ghost" size="icon-lg" className="hui-round" aria-label={UI.rail.settings} title={UI.rail.settings} onClick={() => openSettings()}>
+            <Icon icon={Settings} size={16} />
+          </Button>
+          <AppMenu ctx={ctx} />
+        </div>
       </div>
     </aside>
   )
@@ -304,12 +277,11 @@ function AppMenu({ ctx }: { ctx: any }) {
           keypress and the mouseup that followed a mouse click closed it at once (lot 7). */}
       <DropdownMenuTrigger
         openOnHover={false}
-        render={<Button variant="ghost" size="sm" className="hui-rail-app" aria-label={`${UI.rail.appName}, ${UI.rail.appMenu.toLowerCase()}`} />}
+        render={<Button variant="ghost" size="icon-lg" className="hui-round" aria-label={`${UI.rail.appName}, ${UI.rail.appMenu.toLowerCase()}`} />}
       >
-        <span>{UI.rail.appName}</span>
-        <Icon icon={ChevronDown} size={12} />
+        <Icon icon={SquaresFour} size={16} />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" side="bottom" size="sm">
+      <DropdownMenuContent align="end" side="top" size="sm">
         <DropdownMenuGroup>
           <DropdownMenuLabel>Hermes</DropdownMenuLabel>
           <DropdownMenuItem onClick={() => openSettings()}>

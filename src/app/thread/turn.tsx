@@ -13,7 +13,6 @@ import { replyApproval, store } from '@/lib/hermes'
 import { useStore } from '@/lib/store'
 import { UI } from '../strings'
 import { IUI_TAGS } from '../iui/block'
-import { BotAvatar } from '../bot-avatar'
 import { MessageText } from './media'
 import { Thinking } from './thinking'
 import { emptyCalls, turnReducer, type ToolAction } from './tool-events'
@@ -41,7 +40,7 @@ type TurnProps = {
   identity: { colors: [string, string]; shape: any }
 }
 
-export function AssistantTurn({ message, name, identity }: TurnProps) {
+export function AssistantTurn({ message, name }: TurnProps) {
   const calls = useTurnCalls(message.toolActions || [])
   const approval = useStore(store, s => s.approval)
   const streaming = message.status === 'streaming'
@@ -59,16 +58,8 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
       state={failed ? 'fail' : streaming ? 'live' : 'done'}
       data-turn={message.id}
     >
-      {/* The speaker, quietly: the avatar, the name, and the model that answered. */}
-      <div className="flex min-h-(--control-sm) min-w-0 items-center gap-2">
-        <BotAvatar size={20} colors={identity.colors} shape={identity.shape} label={name} hoverGiggle={false} />
-        <span className="truncate type-label-sm text-text-1">{name}</span>
-        {message.model ? (
-          <span data-hui-part="turn-model" title={message.model} className="truncate type-caption text-text-3">
-            {modelLabel(message.model)}
-          </span>
-        ) : null}
-      </div>
+      {/* No speaker line: in a one-to-one conversation the bot is the pill above the thread, as in the reference.
+          The name stays on the turn for assistive tech (AgentTurn's own label). */}
 
       {/* No "is thinking…" row here: the working line under the thread already says it, with its clock. Two
           statuses for one wait read as two things happening. */}
@@ -118,11 +109,22 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
         />
       ) : null}
 
-      {text ? <MessageText text={text} streaming={streaming} tags={IUI_TAGS} /> : null}
+      {/* The answer sits in a bubble on the page, the reasoning and the work above it stay flat. */}
+      {text ? (
+        <div className="hui-bubble" data-hui-part="bot-bubble">
+          <MessageText text={text} streaming={streaming} tags={IUI_TAGS} />
+        </div>
+      ) : null}
 
       {text && !streaming ? (
         <MessageFooter>
           <CopyButton value={text} label={UI.turn.copyResponse} />
+          {/* The model that answered moved here from the speaker line: quiet, after the copy button. */}
+          {message.model ? (
+            <span data-hui-part="turn-model" title={message.model} className="truncate type-caption text-text-3">
+              {modelLabel(message.model)}
+            </span>
+          ) : null}
         </MessageFooter>
       ) : null}
     </AgentTurn>

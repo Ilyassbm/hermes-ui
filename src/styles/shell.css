@@ -23,83 +23,82 @@
   user-select: none;
 }
 
-/* ---------- The header ---------- */
+/* ---------- The header: a floating pill and two round buttons ---------- */
 
+/* Three columns so the pill stays centred whatever sits at either end; 56px tall, no fill, no rule. */
 .glaze .hui-hdr {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 8px;
-  /* 44px: the same height as the rail's top bar, and enough for a 28px control to keep 8px above and below inside
-     the marked container (lot 17). */
-  flex: 0 0 44px;
-  height: 44px;
-  padding: 0 12px 0 8px;
+  flex: 0 0 56px;
+  height: 56px;
+  padding: 0 12px;
   background: transparent;
   min-width: 0;
+  position: relative;
+  z-index: 2;
 }
-
-/* The tabs are the tablist's children and nothing else (lot 17: a menu trigger inside a tablist is not a tab).
-   3px keeps the tab strip compact; the controls that used to sit here live in .hui-hdr-actions, 8px apart. */
-.glaze .hui-hdr-tabs {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-/* The conversation list and the new conversation: two icon controls, 8px apart. */
-.glaze .hui-hdr-actions {
+.glaze .hui-hdr-start {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: none;
+  min-width: 0;
 }
-.glaze .hui-hdr-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.glaze .hui-tab {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: none;
-  height: 28px;
-  padding: 0 8px 0 6px;
-  border-radius: 8px;
-  font-size: 12px;
-  color: var(--text-2);
-  cursor: default;
-  transition: background-color var(--dur-state) var(--ease-out), color var(--dur-state) var(--ease-out);
-}
-@media (hover: hover) and (pointer: fine) {
-  .glaze .hui-tab:hover {
-    background: var(--hover);
-    color: var(--text-1);
-  }
-}
-.glaze .hui-tab[aria-selected='true'] {
-  background: var(--pressed);
-  color: var(--text-1);
-}
-.glaze .hui-tab:focus-visible {
-  outline: 2px solid var(--line-focus);
-  outline-offset: -2px;
-}
-.glaze .hui-tab-text {
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .glaze .hui-hdr-right {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
-  margin-inline-start: auto;
+  min-width: 0;
+}
+
+/* The pill: the bot's avatar, "Name · Role", the open conversation's title in small print, a chevron. A raised
+   capsule with a soft shadow, the way the reference floats the bot over the thread. */
+.glaze .hui-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(560px, 52vw);
+  height: 36px;
+  padding: 0 12px 0 6px;
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 4%, transparent) inset, 0 4px 18px rgb(0 0 0 / 0.28);
+  font-size: 14px;
+  color: var(--text-1);
+  white-space: nowrap;
+}
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-pill:hover {
+    background: color-mix(in srgb, var(--ink) 12%, var(--page));
+  }
+}
+.glaze .hui-pill:focus-visible {
+  outline: 2px solid var(--line-focus);
+  outline-offset: 2px;
+}
+.glaze .hui-pill > .hui-bot {
+  width: 24px;
+  height: 24px;
   flex: none;
+}
+.glaze .hui-pill-name {
+  flex: none;
+}
+.glaze .hui-pill-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.glaze .hui-pill > svg:last-child {
+  flex: none;
+  color: var(--text-3);
+}
+.glaze .hui-conv-menu [data-current] {
+  background: var(--pressed);
 }
 
 .glaze .hui-model-trigger {
@@ -240,37 +239,56 @@
    paper surface, the editor on top and the toolbar at its foot. The shell and the panel are neutralised here, scoped
    to our composer (`.hui-composer`), so the component itself is untouched and every other user of it keeps its look. */
 .glaze .hui-composer [data-hui-part='prompt-input'] {
-  background: var(--paper);
-  border: 0.5px solid var(--line-faint);
-  border-radius: 12px;
-  padding: 10px;
-  min-height: 96px;
-  /* Height animates between auto values in Chromium 129+, which is what the desktop app runs on. */
-  height: auto;
-  interpolate-size: allow-keywords;
-  /* motion:layout — the box grows with what is typed into it; an auto height cannot be a transform. */
-  transition: height 300ms var(--ease-out);
-}
-.glaze .hui-composer [data-hui-part='prompt-input-panel'] {
   background: transparent;
   border: 0;
-  border-radius: 0;
   padding: 0;
+}
+/* The reference's capsule: one 48px row on the paper wash, a hairline, a 24px radius that stays round while the
+   editor grows to several lines. */
+.glaze .hui-composer [data-hui-part='prompt-input-panel'] {
+  background: var(--paper);
+  border: 0.5px solid var(--line-control);
+  border-radius: 24px;
+  padding: 5px 5px 5px 6px;
   box-shadow: none;
+  /* motion:layout — the capsule grows with what is typed into it; an auto height cannot be a transform. */
+  height: auto;
+  interpolate-size: allow-keywords;
+  transition: height 300ms var(--ease-out), border-color var(--dur-state) var(--ease-out);
 }
 .glaze .hui-composer [data-hui-part='prompt-input-body'] {
   padding: 0;
-}
-.glaze .hui-composer [data-hui-part='prompt-input-toolbar'] {
-  padding-top: 8px;
+  align-items: flex-end;
 }
 .glaze .hui-composer [data-hui-part='prompt-input-editor'] {
-  min-height: 44px;
+  min-height: 24px;
+  max-height: 40vh;
+  overflow-y: auto;
+  padding-block: 6px;
+}
+/* The placeholder sits on the editor's first line, which the 6px of block padding moved down. */
+.glaze .hui-composer [data-hui-part='prompt-input-placeholder'] {
+  top: 6px;
 }
 @media (prefers-reduced-motion: reduce) {
-  .glaze .hui-composer [data-hui-part='prompt-input'] {
+  .glaze .hui-composer [data-hui-part='prompt-input-panel'] {
     transition: none;
   }
+}
+
+/* ---------- The bot's answer: a bubble on the page ---------- */
+
+.glaze .hui-bubble {
+  align-self: flex-start;
+  max-width: 100%;
+  min-width: 0;
+  padding: 11px 14px;
+  border-radius: 16px;
+  background: var(--paper);
+}
+/* A card the bot drew inside its answer keeps its own surface: the bubble's padding is enough frame. */
+.glaze .hui-bubble [data-hui-part='response-tag'] {
+  margin-block: 2px;
 }
 
 /* ---------- The bot picker ---------- */

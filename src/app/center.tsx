@@ -32,9 +32,9 @@ export function Center({ ctx, narrowRail }: CenterProps) {
   const name = botLabel(meta || current)
 
   return (
-    // flex-1 and h-full: the sheet fills the column, so the thread has a height to scroll in and the composer has a
-    // bottom edge to sit on.
-    <main className="relative mb-2 me-2 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-panel bg-paper">
+    // No sheet any more (the reference sets the thread on the page itself, the bot's answers in bubbles): the column
+    // fills, the thread scrolls in it and the composer sits at its foot.
+    <main className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-page">
       <Header ctx={ctx} narrowRail={narrowRail} />
       <Thread bot={current} name={name} input={composer} />
     </main>
