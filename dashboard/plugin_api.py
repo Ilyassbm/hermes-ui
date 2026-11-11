@@ -78,15 +78,27 @@ def _claude() -> dict:
 
 
 def _opencode_key() -> str:
-    key = (os.environ.get("OPENCODE_GO_API_KEY") or "").strip()
-    if key:
-        return key
+    """OPENCODE_GO_API_KEY, resolved through Hermes' own credential scope.
+
+    ``agent.secret_scope`` is the documented route (catalog rule 11): it honours the active
+    profile, so a gateway serving several profiles can never hand this one another's key.
+    The bare ``os.environ`` read is kept only for a process running outside Hermes.
+    """
+    try:
+        from agent.secret_scope import get_secret
+
+        return (get_secret("OPENCODE_GO_API_KEY") or "").strip()
+    except Exception:
+        pass
     try:
         from hermes_cli.config import get_env_value
 
-        return (get_env_value("OPENCODE_GO_API_KEY") or "").strip()
+        value = (get_env_value("OPENCODE_GO_API_KEY") or "").strip()
+        if value:
+            return value
     except Exception:
-        return ""
+        pass
+    return (os.environ.get("OPENCODE_GO_API_KEY") or "").strip()
 
 
 def _opencode() -> dict:
