@@ -167,7 +167,9 @@ export function ModelMenu() {
           show()
         }}
       >
-        <ProviderLogo provider={logoFor(model || meta?.provider)} size={16} className="hui-model-logo" />
+        {/* The mark of the house that serves the model — OpenCode Go, Anthropic — not of the family it runs: a
+            DeepSeek served by OpenCode Go is billed and rate-limited by OpenCode Go. */}
+        <ProviderLogo provider={logoFor(prefs.provider || meta?.provider || model)} size={16} className="hui-model-logo" />
         <span className="hui-model-name">{label}</span>{' '}
         <span className="hui-model-effort-tag">{effortShort(effort)}</span>
         <Icon icon={ChevronDown} size={12} />

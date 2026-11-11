@@ -44,13 +44,14 @@ one click — Always allow, Refuse, or the green Allow; the working line under t
 
 *`/` opens the profile's own commands, with the gateway's description of each.*
 
-![The same card in the light theme](docs/screenshots/07-light.jpg)
+![The same thread in the light theme](docs/screenshots/07-light.jpg)
 
 *Light theme (Settings ▸ Hermes UI ▸ Theme: System, Dark or Light).*
 
-![The usage popover: the 5-hour and weekly windows with their reset times](docs/screenshots/08-usage.jpg)
+![A turn split into the messages it really was: a short note, then the answer](docs/screenshots/08-messages.jpg)
 
-*Usage meters at the foot of the rail; a click opens the windows with their reset time.*
+*Each assistant message keeps its own bubble. An agentic turn that narrates before a tool call and answers after it
+reads as the several messages it was, each with its own folded reasoning — not one run-on block.*
 
 ![The Hermes UI settings page](docs/screenshots/09-settings.jpg)
 

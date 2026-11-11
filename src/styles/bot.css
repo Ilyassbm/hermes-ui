@@ -1,6 +1,6 @@
 /* The aicss bot avatar (src/vendor/aicss/engine.ts drives the SVG). Kept out of the Glaze sheet on purpose: these are
    the vendored avatar's own identity colours, not Glaze roles — the one place where a bot's hue is its identity, as
-   Ilyass specified. Everything else on the page takes its colour from a Glaze token.
+   it was specified. Everything else on the page takes its colour from a token.
 
    Scoped to .hui-bot, and its dark variant to .glaze[data-theme="dark"], so nothing here reaches the native app. */
 .hui-bot {

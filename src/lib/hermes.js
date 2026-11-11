@@ -232,6 +232,10 @@ export function toTurns(raw) {
       continue
     }
     if (m.role === 'assistant') {
+      // A row that carries words is a message of its own. An agentic turn writes several of them — one before each tool
+      // call, then the answer — and merging them printed the whole turn as one run-on block, reasoning included. Rows
+      // that only carry reasoning or tool calls still belong to the turn being built, so the fold keeps its context.
+      if (cur && String(textOf(m.content)).trim() && String(cur.text || '').trim()) closeTurn()
       if (!cur) {
         adapter = emptyToolAdapter(++turnGen)
         cur = {
@@ -387,7 +391,7 @@ function blankConversation() {
 
 /**
  * `host.request` carries the SDK's generic 30 s deadline (`apps/desktop/src/sdk/index.ts:1506`). A session call whose
- * backend is cold legitimately runs longer, and at 30 s it dies with an unclassified timeout — the banner Ilyass saw:
+ * backend is cold legitimately runs longer, and at 30 s it dies with an unclassified timeout — the banner that read:
  * “request timed out after 30s: session.resume”. `requestProfile(route, method, params, timeoutMs, { spawnPriority:
  * 'foreground' })` is the SDK's own door for that case (`sdk/index.ts:1372-1389`): a conversation opened from the rail
  * is an explicit user action, so it takes the pool's reserved interactive slot instead of queuing behind background

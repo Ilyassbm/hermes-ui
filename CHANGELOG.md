@@ -3,6 +3,23 @@
 All notable changes to this project are documented here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2026-11-11
+
+### Fixed
+
+- **One bubble per message.** An agentic turn writes several assistant rows — a note before each tool call, then the
+  answer — and they were merged into one turn, so a whole turn printed as a single run-on block with its reasoning
+  concatenated. Each row that carries words is now its own message, with its own folded reasoning and its own work row.
+- **The model picker shows the provider's mark.** A DeepSeek served by OpenCode Go now carries the OpenCode Go logo in
+  the composer: the house that bills and rate-limits the call, not the family of the model.
+- **Pinned bots are centred** in the rail, and wrap to the next line when there are several.
+
+### Removed
+
+- Nothing in this repository is one person's data any more: the fixed per-profile avatar table is gone (a colour or a
+  shape picked in Hermes' Bots roster wins, otherwise it is hashed), and the screenshots no longer show real
+  subscription usage.
+
 ## [1.5.0] - 2026-11-11
 
 ### Changed

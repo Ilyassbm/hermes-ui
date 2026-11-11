@@ -46,7 +46,7 @@ type Row = {
   identity: ReturnType<typeof botIdentity>
 }
 
-/** The pinned list's first name: Branco runs the house, so its tile is there before anything is pinned. */
+/** The pinned list before anyone pins a bot: the default profile, the one Hermes starts on. */
 const DEFAULT_PINNED = ['default']
 
 export function Rail({ ctx }: { ctx: any }) {

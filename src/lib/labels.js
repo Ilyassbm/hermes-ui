@@ -107,17 +107,6 @@ function hash(s) {
   return h >>> 0
 }
 
-// Known Agentise bots get a fixed, distinct look; everyone else is hashed.
-const FIXED = {
-  default: [0, 'pebble'],
-  dex: [1, 'squircle'],
-  preto: [3, 'flower'],
-  mint: [6, 'blob'],
-  prism: [2, 'circle'],
-  youtubot: [5, 'pebble'],
-  'bot-builder': [4, 'squircle']
-}
-
 /** The look each bot was given in Hermes' own Bots roster (`ui_meta['hermes-bots'].color` / `.shape`), by profile. */
 const CHOSEN = new Map()
 
@@ -137,9 +126,8 @@ const VIVID = HUES.slice(0, -1)
 export function botLook(name) {
   const key = name || 'default'
   const chosen = CHOSEN.get(key)
-  const base = FIXED[key]
-    ? { colors: HUES[FIXED[key][0]], shape: FIXED[key][1] }
-    : (h => ({ colors: VIVID[h % VIVID.length], shape: SHAPES[(h >>> 5) % SHAPES.length] }))(hash(key))
+  const h = hash(key)
+  const base = { colors: VIVID[h % VIVID.length], shape: SHAPES[(h >>> 5) % SHAPES.length] }
   if (!chosen) return base
   return {
     // One picked colour becomes the avatar's two stops: the colour lifted for the light side, deepened for the dark.

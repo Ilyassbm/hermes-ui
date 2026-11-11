@@ -74,7 +74,7 @@ Three nights in a row the routine stops at the same point: the gateway returns a
 
 The fix is one line: set \`--timeout\` to 60 s in \`routines/nightly-report.toml\`.`
 
-const COMMAND = `hermes routine run nightly-report --bot branco --timeout 60
+const COMMAND = `hermes routine run nightly-report --bot atlas --timeout 60
 run_9a41 started · 3 steps
   read routines/nightly-report.toml    ok
   collect the logs          40 s      ok
@@ -91,7 +91,7 @@ const CALLS: ToolCallData[] = [
   },
   {
     id: 'call_shell', tool: 'shell', status: 'completed', seq: 2,
-    input: { command: 'hermes routine logs nightly-report --bot branco --tail 40' },
+    input: { command: 'hermes routine logs nightly-report --bot atlas --tail 40' },
     output: '3 runs · 3 failures · last 2026-11-08 02:10',
     startedAt: NOW - 13_000, endedAt: NOW - 12_200,
   },
@@ -103,7 +103,7 @@ const CALLS: ToolCallData[] = [
   },
   {
     id: 'call_run', tool: 'shell', status: 'running', seq: 4,
-    input: { command: 'hermes routine run nightly-report --bot branco --timeout 60' },
+    input: { command: 'hermes routine run nightly-report --bot atlas --timeout 60' },
     metadata: { output: 'collecting the logs 32 s / 40 s' },
     startedAt: NOW - 4_000,
   },
@@ -242,7 +242,7 @@ export function GlazeDemo() {
           <div className="mx-auto flex w-full max-w-measure flex-col gap-6 px-4 py-5">
             <Message from="user">
               <MessageContent>
-                <MessageHeader>Ilyass<MessageTime>21:12</MessageTime></MessageHeader>
+                <MessageHeader>You<MessageTime>21:12</MessageTime></MessageHeader>
                 <MessageBubble>
                   <MessageBubbleContent>
                     Rerun the nightly-report routine on the Atlas bot and tell me why it failed three nights in a row.

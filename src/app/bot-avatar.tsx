@@ -3,7 +3,7 @@
 // hands it the options on every change.
 //
 // The avatar's colours come from src/lib/labels.js (a fixed table per bot, an assumed exception to Glaze's
-// avatar-no-hue rule: it is the bots' visual identity, as Ilyass wants it). Everything else on the page is tokens.
+// avatar-no-hue rule: it is the bots' visual identity). Everything else on the page is tokens.
 import { useEffect, useId, useRef, type CSSProperties } from 'react'
 import { AI_BOT_SVG, createAiBot, type AiBotActivity, type AiBotEmotion, type AiBotMotion, type AiBotOptions, type AiBotShape } from '@/vendor/aicss/engine'
 

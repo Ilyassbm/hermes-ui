@@ -1,6 +1,6 @@
 // Guards the gate that took `session.resume` down in the app (lot 14): the SDK's `host.request` has a generic 30 s
 // deadline (`apps/desktop/src/sdk/index.ts:1506`, `request: async (method, params, timeoutMs?)`), and a session call
-// whose backend contract is minutes long dies at 30 s with an unclassified timeout — Ilyass saw “request timed out
+// whose backend contract is minutes long dies at 30 s with an unclassified timeout — the banner read “request timed out
 // after 30s: session.resume” over a conversation that would have opened on a second try.
 //
 // The rule, checked statically over src/ (no gateway, no browser):

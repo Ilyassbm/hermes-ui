@@ -1,7 +1,7 @@
 // Guards the rule that took the lot 6 menus down in the app: a `DropdownMenuTrigger` must be a real button, and a
 // clickable container must not also be a trigger.
 //
-// What Dex saw in the Webapp, with real pointer events: the model picker (`.hui-model-trigger`) and the "Agentise"
+// What was seen in the Webapp, with real pointer events: the model picker (`.hui-model-trigger`) and the
 // button opened on focus + Enter but not on a click — or opened and closed at once. Base UI's `Menu.Trigger` takes
 // `nativeButton` (default true): with a `<div role="button">` in `render`, the component warns that it expected a
 // native `<button>`, keyboard activation is skipped, and the document mouseup that follows the click re-closes the

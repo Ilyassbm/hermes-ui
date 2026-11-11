@@ -1,6 +1,6 @@
 // The three specs the skill shows and the demo draws, kept in one place so the two cannot drift.
 //
-// Compact JSON on one line each: what a bot actually writes between <hui-ui> and </hui-ui>. Real Agentise data (bots
+// Compact JSON on one line each: what a bot actually writes between <hui-ui> and </hui-ui>. A team's data (bots
 // Atlas, Scout, Nova, the routines they run), never placeholder text — an example that lies teaches the model to lie.
 export type IuiExample = { id: string; title: string; json: string }
 

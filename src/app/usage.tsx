@@ -1,7 +1,7 @@
 // The foot of the rail: what is left on each subscription, as one compact row per provider that opens its detail.
 //
 // Lot 14: the two cards took half the rail (~350px). Each provider is now a 34px row — its mark, its name, the
-// binding window in tabular figures at the inline end, and a 2px bar under the line — and the detail Ilyass was
+// binding window in tabular figures at the inline end, and a 2px bar under the line — and the detail that was
 // reading (every window, its reset, its percentage, a full-width bar) lives in a popover the row opens. One panel at a
 // time, remembered per provider, collapsed by default: the foot measures 94px when both are shut (2 × 34 + the 8px
 // between the rows + the foot's 8 + 10 of padding) instead of ~350px.

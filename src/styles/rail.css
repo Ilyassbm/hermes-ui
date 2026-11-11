@@ -244,6 +244,8 @@
 .glaze .hui-pinned {
   display: flex;
   flex-wrap: wrap;
+  /* Centred, and it wraps: one pin sits in the middle of the column, several share the line and fall to the next. */
+  justify-content: center;
   gap: 8px;
   padding: 0 2px 12px;
 }

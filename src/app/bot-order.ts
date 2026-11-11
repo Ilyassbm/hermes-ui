@@ -1,11 +1,11 @@
-// Which bot is "the third one": the pinned list first (Branco unless the person unpinned it), then the team, in the
+// Which bot is "the third one": the pinned list first, then the team, in the
 // order the rail draws them. The bot shortcuts and the picker's digit keys both count this way, so pressing 3 and
 // reading the third row never disagree.
 import { selectBot, store } from '@/lib/hermes'
 
 export const DEFAULT_PINNED = ['default']
 
-/** The stored pin list, or Branco alone when storage is empty or unavailable. */
+/** The stored pin list, or the default profile alone when storage is empty or unavailable. */
 export function pinnedNames(ctx: any): string[] {
   try {
     const value = ctx?.storage?.get('pinned', DEFAULT_PINNED)
