@@ -187,7 +187,7 @@ export function toTurns(raw) {
     if (!m || m.role !== 'tool') continue
     const id = m.tool_call_id || m.tool_use_id || m.id
     if (id) {
-      results.set(id, { failed: m.is_error === true || m.status === 'error', text: textOf(m.content) })
+      results.set(id, { failed: m.is_error === true || m.status === 'error', text: textOf(m.content), at: secondsToMs(m.timestamp) })
     }
   }
   let cur = null
@@ -249,9 +249,13 @@ export function toTurns(raw) {
         const args = parseArgs(tc?.function?.arguments || tc?.arguments)
         const id = tc?.id || nid('t')
         // The same two steps a live turn takes: the call starts with its arguments, then its result lands.
+        // Replayed actions carry the rows' own times. Without them the reducer stamps "now" on both ends, and every
+        // reloaded call read "0ms"; with them it reads what the call took, to the second the transcript keeps.
+        const startAt = secondsToMs(m.timestamp)
+        const stamp = (actions, at) => (at === undefined ? actions : actions.map(a => ({ ...a, at })))
         const started = toolEventStep(adapter, { type: 'tool.start', payload: { tool_id: id, tool_name: name, args } })
         adapter = started.state
-        cur.toolActions.push(...started.actions)
+        cur.toolActions.push(...stamp(started.actions, startAt))
         const result = results.get(id)
         if (result) {
           const done = toolEventStep(adapter, {
@@ -259,7 +263,7 @@ export function toTurns(raw) {
             payload: { tool_id: id, tool_name: name, is_error: result.failed, result: result.text }
           })
           adapter = done.state
-          cur.toolActions.push(...done.actions)
+          cur.toolActions.push(...stamp(done.actions, result.at ?? startAt))
         }
         const at = (m.timestamp || 0) * 1000
         files.push(...filesFromTool(name, args).map(row => ({ ...row, at })))
@@ -393,6 +397,8 @@ function isTimeout(e) {
 }
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+/** A transcript row's `timestamp` (seconds, maybe fractional) as epoch ms, or undefined when the row has none. */
+const secondsToMs = t => (typeof t === 'number' && Number.isFinite(t) && t > 0 ? Math.round(t * 1000) : undefined)
 
 // ── gateway wait ─────────────────────────────────────────────────────────────
 

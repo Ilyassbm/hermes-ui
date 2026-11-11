@@ -7,7 +7,7 @@
 //
 // The page is always dark, and its stylesheet is injected in a <style> on mount, scoped to .glaze: the native app's own
 // Tailwind and variables are never touched.
-import { useEffect, type CSSProperties } from 'react'
+import { useEffect, useRef, type CSSProperties } from 'react'
 import { host, useValue } from '@hermes/plugin-sdk'
 import { Toaster } from '@/components/glaze/ui/toast'
 import { GlazePortalProvider } from '@/lib/glaze/portal'
@@ -29,26 +29,39 @@ const ASIDE_W = 320
 /** The native session sidebar duplicates the rail: fold it once per app session, and never toggle it back from a
  *  cleanup (a layout change remounts the route, and a restore-on-unmount would ping-pong forever). */
 let chromeQuieted = false
-function useQuietChrome(ctx: any) {
+/** Wider than this, the space at the page's start edge is the open native sessions rail (≈260px), not a collapsed strip. */
+const NATIVE_RAIL_MIN = 160
+function useQuietChrome(ctx: any, root: { current: HTMLDivElement | null }) {
   useEffect(() => {
     if (chromeQuieted) return undefined
-    chromeQuieted = true
-    const t = setTimeout(() => {
-      try {
-        // The core sessions rail is `chat-sidebar` (apps/desktop store/layout.ts CHAT_SIDEBAR_PANE_ID).
-        const sidebar = host.paneVisibility?.('chat-sidebar')
-        if (sidebar?.get?.()) void ctx.runAction('view.toggleSidebar')
-      } catch {
-        /* older desktop: leave the chrome alone */
+    // The SDK exposes no read of the sessions rail: `chat-sidebar` is a pane *state*, not a layout-tree pane, so
+    // `host.paneVisibility('chat-sidebar')` is always false and the old check never folded anything. What the page can
+    // measure is its own box: when it starts ~260px in, the native rail is open beside it. Ask until the shell's layout
+    // settles (the first frames can be 0), fold once, and never toggle it back.
+    let tries = 0
+    const t = setInterval(() => {
+      tries++
+      const left = root.current?.getBoundingClientRect().left ?? 0
+      if (left >= NATIVE_RAIL_MIN && !chromeQuieted) {
+        chromeQuieted = true
+        try {
+          void ctx.runAction('view.toggleSidebar')
+        } catch {
+          /* older desktop: leave the chrome alone */
+        }
       }
-    }, 300)
-    return () => clearTimeout(t)
-  }, [ctx])
+      // One look per app session either way: a rail the person opens again later is theirs.
+      if (tries >= 12) chromeQuieted = true
+      if (chromeQuieted) clearInterval(t)
+    }, 250)
+    return () => clearInterval(t)
+  }, [ctx, root])
 }
 
 export function App({ ctx }: { ctx: any }) {
   useGlazeStyle()
-  useQuietChrome(ctx)
+  const root = useRef<HTMLDivElement>(null)
+  useQuietChrome(ctx, root)
   const gateway = useValue(host.state.gateway)
   const asideOpen = useStore(view, s => s.asideOpen)
   const railOpen = useStore(view, s => s.railOpen)
@@ -98,6 +111,7 @@ export function App({ ctx }: { ctx: any }) {
 
   return (
     <div
+      ref={root}
       className="glaze absolute inset-0 bg-page text-text-1"
       data-theme={theme}
       data-density={prefs.density}

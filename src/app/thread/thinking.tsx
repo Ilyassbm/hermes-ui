@@ -161,6 +161,10 @@ export function Thinking({ id, text, streaming, duration, labels, className }: T
     toggle()
   }
 
+  // A finished thought with no readable sentence (whitespace, a lone marker) has nothing to open: no row at all,
+  // rather than a "Stopped before thinking" on a turn that was never stopped — which is what a reload painted.
+  if (!streaming && lines.length === 0) return null
+
   const said = streaming
     ? labels.thinking
     : count === 0

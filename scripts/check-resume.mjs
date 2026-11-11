@@ -99,6 +99,26 @@ for (const shape of shapes) {
   results.push({ name: shape.name, turns: messages.length, problems, errorDetail })
 }
 
+// A reloaded tool call carries the transcript's own times: start at its assistant row, end at its tool row. Before
+// 1.3.11 both ends were stamped "now" by the reducer and every replayed call read "0ms".
+{
+  globalThis.__hostRequest = (method) => method === 'session.resume'
+    ? Promise.resolve({ messages: [
+        { role: 'user', content: 'Look', timestamp: 1762000000 },
+        { role: 'assistant', content: '', timestamp: 1762000001, tool_calls: [{ id: 'c1', function: { name: 'vision_analyze', arguments: '{}' } }] },
+        { role: 'tool', tool_call_id: 'c1', content: 'a cat', timestamp: 1762000004.5 },
+        { role: 'assistant', content: 'It is a cat.', timestamp: 1762000005 }
+      ] })
+    : Promise.resolve({})
+  store.set({ bot: 'dex', messages: [], error: '', errorDetail: '' })
+  await openConversation('stored-2')
+  const actions = store.get().messages.flatMap(m => m.toolActions || []).filter(a => a.id === 'c1')
+  const start = actions.find(a => a.type === 'start')?.at
+  const end = actions.find(a => a.type === 'result')?.at
+  const problems = start === 1762000001000 && end === 1762000004500 ? [] : [`start ${start}, end ${end}`]
+  results.push({ name: 'replayed tool call keeps its own duration (3.5 s)', turns: store.get().messages.length, problems, errorDetail: '' })
+}
+
 let failed = 0
 for (const r of results) {
   const ok = r.problems.length === 0
@@ -111,4 +131,4 @@ if (failed) {
   for (const r of results.filter(r => r.problems.length)) console.error(`  ${r.name} — ${r.errorDetail || '(no detail)'}`)
   process.exit(1)
 }
-console.log(`check-resume: OK — ${results.length} payload shape(s), every one reads back`)
+console.log(`check-resume: OK — ${results.length} case(s): every payload shape reads back, replayed calls keep their times`)

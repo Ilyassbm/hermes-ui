@@ -535,6 +535,8 @@ function ToolCall({call, size = 'default', onReply, actions, label, doneLabel, d
   const denied = call.status === 'denied';
   const failed = call.status === 'error';
   const ms = running || pending ? undefined : duration ?? (call.startedAt !== undefined && call.endedAt !== undefined ? Math.max(0, call.endedAt - call.startedAt) : undefined);
+  // A zero is never a measurement: it is two stamps taken in the same tick (a replay without times). Say nothing.
+  const shown = ms !== undefined && ms > 0;
   const base = toolLabel(call, words);
   const text = label === undefined ? base.text : call.status === 'completed' ? (doneLabel ?? pastTense(label)) : label;
   const detail = detailProp ?? base.detail;
@@ -602,10 +604,10 @@ function ToolCall({call, size = 'default', onReply, actions, label, doneLabel, d
   const glyph: StepState = orphaned || call.status === 'cancelled' || denied ? 'stopped' : running || pending ? 'running' : failed ? 'fail' : 'done';
   const end = orphaned ? <span>{word}</span>
     : running || pending ? <span className="sr-only">{word}</span>
-      : failed ? <><span className="text-fail-text">{word}</span>{ms !== undefined && formatDuration(ms)}</>
+      : failed ? <><span className="text-fail-text">{word}</span>{shown && formatDuration(ms)}</>
         : call.status === 'cancelled' ? <span>{word}</span>
           : denied ? null
-            : <><span className="sr-only">{word}</span>{ms !== undefined && formatDuration(ms)}</>;
+            : <><span className="sr-only">{word}</span>{shown && formatDuration(ms)}</>;
 
   const row = <>
     <StepGlyph state={glyph}/>
