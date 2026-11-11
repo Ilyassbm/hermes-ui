@@ -466,6 +466,13 @@ function resolveTag(chunk: string, tags: Record<string, TagRenderer>, open: bool
   if (v === 0 && body.trim()) return {outcome: 'literal', node: <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{body.trim()}</p>, rest: trailing};
   // Still a viable prefix: the placeholder holds through a stall, so the box never flickers. Only the
   // end of the stream discards it.
+  // The tag closed on a body that is only short of its closers (a model that drops the last `}` is common): close it
+  // the way a streaming prefix is closed and draw it, instead of losing the block while the text still points at it.
+  if (at !== -1 && body.trim() && v >= body.trimEnd().length) {
+    try {
+      return {outcome: 'segment', node: renderer.render(JSON.parse(closeJson(body.trimEnd())), attrs), rest: trailing};
+    } catch { /* not repairable: falls through to the discard below */ }
+  }
   if (v >= body.length && at === -1) return open ? {outcome: 'pending', node: hold()} : {outcome: 'discard', node: null};
   // Broken JSON: drop the JSON-like part, keep any prose after it.
   return {outcome: 'discard', node: null, rest: (at === -1 ? body.slice(v) : trailing)};

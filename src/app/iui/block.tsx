@@ -59,7 +59,7 @@ export function IuiBlock({ spec, onSend }: IuiBlockProps) {
 /** The tag as `Response` knows it: a placeholder while it streams, the drawn spec once it closes. */
 export const IUI_TAGS: Record<string, TagRenderer> = {
   'hui-ui': {
-    pending: 'Compose l’interface…',
+    pending: 'Drawing the interface…',
     placeholder: () => <IuiPending />,
     render: data => <IuiBlock spec={data} />
   }

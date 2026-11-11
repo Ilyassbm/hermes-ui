@@ -27,7 +27,7 @@ const entry = join(scratch, 'hui-tool-mapping.entry.ts')
 writeFileSync(
   entry,
   [
-    "export { emptyToolAdapter, emptyCalls, toolEventStep, turnEndStep, turnReducer } from '@/app/thread/tool-events'",
+    "export { emptyToolAdapter, emptyCalls, toolEventStep, turnEndStep, turnReducer, askStep } from '@/app/thread/tool-events'",
     "export { toolCallsReducer } from '@/components/glaze/ai/tool-call'",
     "import '@/app/thread/tools'",
     ''
@@ -54,7 +54,7 @@ await build({
   logLevel: 'warning'
 })
 
-const { emptyToolAdapter, emptyCalls, toolEventStep, turnEndStep, turnReducer, toolCallsReducer } = await import(pathToFileURL(outfile).href)
+const { emptyToolAdapter, emptyCalls, toolEventStep, turnEndStep, turnReducer, toolCallsReducer, askStep } = await import(pathToFileURL(outfile).href)
 
 const { events } = JSON.parse(readFileSync(capture, 'utf8'))
 if (!Array.isArray(events)) {
@@ -93,6 +93,13 @@ if (!calls.length) problems.push('no call was mapped at all')
 if (searched.length !== 1) problems.push(`expected one search_files call, got ${searched.length}`)
 else if (searched[0].status !== 'completed') problems.push(`search_files ended ${searched[0].status}, not completed`)
 if (open.length) problems.push(`${open.length} call(s) still open: ${open.map(c => `${c.tool}/${c.status}`).join(', ')}`)
+
+// An approval found by the poll after a reload creates its own row: it is a command, not an "unknown" tool.
+{
+  const asked = askStep(emptyToolAdapter(1), 'approval-r1', ['rm -rf .cache/build'], 'why', 'terminal')
+  const row = [{ type: 'turn', gen: 1 }, ...asked.actions].reduce((acc, action) => turnReducer(acc, action, toolCallsReducer), emptyCalls()).calls[0]
+  if (!row || row.tool !== 'terminal' || row.status !== 'awaiting-permission') problems.push(`recovered approval row is ${row?.tool}/${row?.status}, not terminal/awaiting-permission`)
+}
 
 if (problems.length) {
   for (const problem of problems) console.error(`check-tool-mapping: ${problem}`)

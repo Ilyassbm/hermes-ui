@@ -94,7 +94,7 @@ type ToolEvent =
   | (Seq & {type: 'input'; raw: string; input?: Record<string, unknown>})
   | (Seq & {type: 'start'; tool?: string; input?: Record<string, unknown>; title?: string})
   | (Seq & {type: 'progress'; metadata?: Record<string, unknown>; title?: string})
-  | (Seq & {type: 'ask'; patterns: string[]; message?: string})
+  | (Seq & {type: 'ask'; patterns: string[]; message?: string; tool?: string})
   | (Seq & {type: 'reply'; reply: ToolReply; feedback?: string})
   | (Seq & {type: 'result'; tool?: string; status?: 'completed' | 'error'; output?: string; error?: string; title?: string; metadata?: Record<string, unknown>})
   /** Stops turn `gen`: its live calls settle to cancelled and its late events drop. */
@@ -595,7 +595,9 @@ function ToolCall({call, size = 'default', onReply, actions, label, doneLabel, d
   }
 
   const rendered = children ?? r.body?.(call, {size, labels}) ?? null;
-  const note = failed && call.error ? <p data-hui-part="tool-call-error" className="type-body-sm text-text-1 [overflow-wrap:anywhere]">{call.error}</p>
+  // An error that is only the head of the output the body already shows is not said twice.
+  const echoed = Boolean(call.error && typeof call.output === 'string' && call.output.trim().startsWith(call.error.trim()));
+  const note = failed && call.error && !(echoed && rendered !== null) ? <p data-hui-part="tool-call-error" className="type-body-sm text-text-1 [overflow-wrap:anywhere]">{call.error}</p>
     : denied && call.reason ? <p data-hui-part="tool-call-reason" className="type-body-sm text-text-2 [overflow-wrap:anywhere]">{call.reason}</p>
       : null;
   const expands = rendered !== null || note !== null;

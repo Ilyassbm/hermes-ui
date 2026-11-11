@@ -62,9 +62,9 @@ const ANSWER = `## Why nightly-report fails
 
 Three nights in a row the routine stops at the same point: the gateway returns a \`504\` after 30 s, while collecting the logs takes 40.
 
-- **Branco** reruns the routine at 02:14 without changing the timeout.
-- **Dex** turned the automatic retry off to avoid the loop.
-- **Preto** keeps the last complete report from 5 November.
+- **Atlas** reruns the routine at 02:14 without changing the timeout.
+- **Scout** turned the automatic retry off to avoid the loop.
+- **Nova** keeps the last complete report from 5 November.
 
 | Run | Start | Duration | Result |
 | - | - | - | - |
@@ -124,10 +124,10 @@ const PLAN = [
 ]
 
 const ROUTINES = [
-  { nom: 'nightly-report', bot: 'Branco', duree: '38 s', statut: 'fail' as const },
-  { nom: 'inbox-triage', bot: 'Dex', duree: '12 s', statut: 'ok' as const },
-  { nom: 'price-watch', bot: 'Preto', duree: '54 s', statut: 'warn' as const },
-  { nom: 'backup-cache', bot: 'Branco', duree: '67 s', statut: 'ok' as const },
+  { nom: 'nightly-report', bot: 'Atlas', duree: '38 s', statut: 'fail' as const },
+  { nom: 'inbox-triage', bot: 'Scout', duree: '12 s', statut: 'ok' as const },
+  { nom: 'price-watch', bot: 'Nova', duree: '54 s', statut: 'warn' as const },
+  { nom: 'backup-cache', bot: 'Atlas', duree: '67 s', statut: 'ok' as const },
 ]
 
 const WEEK = [
@@ -152,7 +152,7 @@ const DEMO_TAGS: Record<string, TagRenderer> = {
 
 const LEADS: Record<string, string> = {
   plan: 'Three steps before the rerun, and the next step offered as two buttons.',
-  comparison: 'Preto costs less, Branco holds the duration: the last five runs, side by side.',
+  comparison: 'Nova costs less, Atlas holds the duration: the last five runs, side by side.',
   form: 'The booking fits in a counter, a choice and a button.'
 }
 
@@ -208,8 +208,8 @@ export function GlazeDemo() {
     <div className="glaze flex h-dvh min-h-0 w-full flex-col bg-page text-text-1" data-theme="dark">
       <GlazePortalProvider>
         <header className="flex items-center gap-2 border-b border-line-faint px-4 py-2">
-          <Avatar type="agent" size="sm" name="Dex"><AvatarFallback /></Avatar>
-          <span className="type-label">Dex</span>
+          <Avatar type="agent" size="sm" name="Scout"><AvatarFallback /></Avatar>
+          <span className="type-label">Scout</span>
           <Badge variant="outline" size="sm">Glaze demo</Badge>
           <span className="type-caption text-text-3">/hui/glaze</span>
           <div className="ms-auto flex items-center gap-1">
@@ -245,13 +245,13 @@ export function GlazeDemo() {
                 <MessageHeader>Ilyass<MessageTime>21:12</MessageTime></MessageHeader>
                 <MessageBubble>
                   <MessageBubbleContent>
-                    Rerun the nightly-report routine on the Branco bot and tell me why it failed three nights in a row.
+                    Rerun the nightly-report routine on the Atlas bot and tell me why it failed three nights in a row.
                   </MessageBubbleContent>
                 </MessageBubble>
               </MessageContent>
             </Message>
 
-            <AgentTurn name="Dex" state="done" time="21:14">
+            <AgentTurn name="Scout" state="done" time="21:14">
               <Reasoning streaming={false} duration={7}>{REASONING}</Reasoning>
               <Activity label="Reading the logs" doneLabel="Logs read" active status="ok" announce={false} />
               <ToolCallList calls={state.calls} onReply={reply} />
@@ -270,7 +270,7 @@ export function GlazeDemo() {
               <Card>
                 <CardHeader>
                   <CardTitle>Fix nightly-report</CardTitle>
-                  <CardDescription>Three steps; the rerun is under way on the Branco bot.</CardDescription>
+                  <CardDescription>Three steps; the rerun is under way on the Atlas bot.</CardDescription>
                 </CardHeader>
                 <CardContent flush>
                   {PLAN.map(row => (
@@ -340,12 +340,12 @@ export function GlazeDemo() {
             </div>
 
             {EXAMPLES.slice(0, 2).map(example => (
-              <AgentTurn key={example.id} name="Dex" state="done" time="21:20">
+              <AgentTurn key={example.id} name="Scout" state="done" time="21:20">
                 <Response tags={DEMO_TAGS}>{`${LEADS[example.id]}\n\n<hui-ui>${example.json}</hui-ui>`}</Response>
               </AgentTurn>
             ))}
 
-            <AgentTurn name="Dex" state="live" time="21:24">
+            <AgentTurn name="Scout" state="live" time="21:24">
               <StreamedSpec text={`${LEADS.form}\n\n<hui-ui>${EXAMPLES[2].json}</hui-ui>`} />
             </AgentTurn>
           </div>
@@ -355,7 +355,7 @@ export function GlazeDemo() {
           <div className="mx-auto flex w-full max-w-measure flex-col gap-2">
             <PromptInput
               draftKey="hermes-ui-glaze-demo"
-              placeholder="Ask Dex to rerun a routine"
+              placeholder="Ask Scout to rerun a routine"
               status="ready"
               generation="run_9a41"
               onAttach={() => console.log('[glaze-demo] attachment')}

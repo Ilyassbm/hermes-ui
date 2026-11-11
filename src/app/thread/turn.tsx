@@ -4,7 +4,6 @@
 // optional. The turn owns its own tool-call list: the store appends the actions (`tool-events`), this component replays
 // them through Glaze's reducer, so a finished call folds away without a state machine of its own.
 import { useEffect, useReducer, useRef } from 'react'
-import { Activity } from '@/components/glaze/ai/activity'
 import { AgentTurn, MessageFooter } from '@/components/glaze/ai/message'
 import { ToolCallList, toolCallsReducer, type ToolCallData } from '@/components/glaze/ai/tool-call'
 import { Button } from '@/components/glaze/ui/button'
@@ -12,7 +11,6 @@ import { CopyButton } from '@/components/glaze/ui/copy-button'
 import { humanDuration, modelLabel } from '@/lib/labels'
 import { replyApproval, store } from '@/lib/hermes'
 import { useStore } from '@/lib/store'
-import { settings } from '../settings-state'
 import { UI } from '../strings'
 import { IUI_TAGS } from '../iui/block'
 import { BotAvatar } from '../bot-avatar'
@@ -46,15 +44,12 @@ type TurnProps = {
 export function AssistantTurn({ message, name, identity }: TurnProps) {
   const calls = useTurnCalls(message.toolActions || [])
   const approval = useStore(store, s => s.approval)
-  // Settings ▸ Chat: the activity line can be turned off; the reasoning, the calls and the answer stay.
-  const activity = useStore(settings, s => s.activity)
   const streaming = message.status === 'streaming'
   const failed = message.status === 'failed'
   const reasoning = typeof message.reasoning === 'string' ? message.reasoning : ''
   const text = typeof message.text === 'string' ? message.text : ''
   // Before the first token: a bot that has started but said nothing yet. As soon as reasoning, a call or a word lands,
   // the turn says what it is doing itself, so the line goes.
-  const waiting = streaming && !text && !reasoning && calls.length === 0
   const thinking = message.thinkStart && message.thinkEnd ? Math.max(0, (message.thinkEnd - message.thinkStart) / 1000) : undefined
 
   return (
@@ -75,7 +70,8 @@ export function AssistantTurn({ message, name, identity }: TurnProps) {
         ) : null}
       </div>
 
-      {waiting && activity ? <Activity waiting announce={false} label={UI.turn.thinking(name)} className="py-1" /> : null}
+      {/* No "is thinking…" row here: the working line under the thread already says it, with its clock. Two
+          statuses for one wait read as two things happening. */}
 
       {reasoning ? (
         <Thinking

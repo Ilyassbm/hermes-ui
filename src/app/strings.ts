@@ -106,7 +106,7 @@ export const UI = {
     sendKeyModEnter: '⌘ Enter',
     sendKeyHint: '⌘ Enter keeps Enter for a new line. Ctrl Enter on Windows and Linux.',
     activity: 'Activity line',
-    activityHint: 'Show what the bot is doing above its reply while it works.',
+    activityHint: 'Show what the bot is doing, and for how long, under the conversation while it works.',
     shortcuts: 'Shortcuts',
     shortcutsHint: 'The plugin’s own bindings, with the combo the app really dispatches.',
     changeKeybindings: 'Change in keybindings',
@@ -256,6 +256,7 @@ export const UI = {
 
   /** The thread: suggestions, the empty state, the errors. */
   thread: {
+    you: 'You',
     suggestions: ['What are you working on?', 'What did you ship today?', 'Suggest the next step'],
     conversationWith: (name: string) => `Conversation with ${name}`,
     connecting: 'Connecting to Hermes…',
@@ -438,6 +439,11 @@ export const UI = {
     resetInDays: (n: number) => `in ${n} d`,
     resetInHours: (h: number, m: string) => `in ${h} h ${m}`,
     resetInMinutes: (m: number) => `in ${m} min`
+  },
+
+  /** The approval card's second line: why Hermes stopped to ask. */
+  approval: {
+    why: (reason: string) => (reason.trim() ? `Hermes flagged it: ${reason.trim().replace(/[.\s]+$/, '')}.` : 'Hermes asks before running this command.')
   },
 
   /** The intelligent-UI renderers: status words, the chart fallback, the copy toasts. */

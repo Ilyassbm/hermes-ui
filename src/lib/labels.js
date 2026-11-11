@@ -66,15 +66,17 @@ export function workingTime(ms) {
   return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`
 }
 
-// The default profile is Branco (Chief of Staff) in Ilyass's setup, as in the OS chat mode.
-const LABELS = { default: 'Branco' }
 
 export function botLabel(bot) {
   if (!bot) return 'Hermes'
   const name = typeof bot === 'string' ? bot : bot.name
+  // The name the person gave the bot, in the order the app itself reads it: the Bots roster title
+  // (`ui_meta['hermes-bots'].title`), then the profile's display name, then the profile name made readable.
+  const title = typeof bot === 'object' ? String(bot.title || '').trim() : ''
+  if (title) return title
   const display = typeof bot === 'object' ? (bot.display_name || '').trim() : ''
   if (display) return display
-  return LABELS[name] || cap(String(name || 'hermes').replace(/[-_]+/g, ' '))
+  return cap(String(name || 'hermes').replace(/[-_]+/g, ' '))
 }
 
 // Stable per-bot identity: hue + aicss avatar shape, from the profile name.

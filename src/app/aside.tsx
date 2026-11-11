@@ -63,9 +63,11 @@ const TEXT_EXT = new Set(['md', 'markdown', 'txt', 'log'])
 
 const extOf = (path: string) => String(path || '').split('.').pop()?.toLowerCase() || ''
 const nameOf = (path: string) => String(path || '').split('/').pop() || path
+/** The folder a row sits in, or nothing for a bare relative name: "CHANGELOG.md" is not in "/". */
 const folderOf = (path: string) => {
-  const parts = String(path || '').split('/')
+  const parts = String(path || '').replace(/^\.\//, '').split('/')
   parts.pop()
+  if (!parts.length) return ''
   return parts.join('/') || '/'
 }
 const isImage = (path: string) => IMAGE_EXT.has(extOf(path))
@@ -319,8 +321,7 @@ export function Aside({ ctx }: { ctx: any }) {
                           <span>{nameOf(file.path)}</span>
                         </ItemTitle>
                         <ItemDescription>
-                          {UI.aside.action[file.action || ''] ? `${UI.aside.action[file.action || '']} · ` : ''}
-                          {folderOf(file.path)}
+                          {[UI.aside.action[file.action || ''], folderOf(file.path)].filter(Boolean).join(' · ')}
                         </ItemDescription>
                       </ItemContent>
                       <span className="hui-aside-age">{sinceLabel(file.at)}</span>

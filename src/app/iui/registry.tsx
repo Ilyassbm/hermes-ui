@@ -143,7 +143,12 @@ export const { registry, handlers } = defineRegistry(catalog, {
       </DataList>
     )),
 
-    Table: view(({ props }) => (
+    Table: view(({ props }) => {
+      // Short values stay on one line, as a data table should. A table that carries sentences (a comparison) wraps its
+      // text columns instead, top-aligned, so the last column is read, not cut at the panel's edge.
+      const prose = props.rows.some((row: any) => props.columns.some((column: any) => column.align !== 'end' && String(row[column.key] ?? '').length > 36))
+      const wrap = prose ? 'whitespace-normal [overflow-wrap:anywhere] align-top py-2 h-auto min-w-28' : undefined
+      return (
       <Table title={props.title} count={props.rows.length}>
         <TableHeader>
           <TableRow>
@@ -160,7 +165,7 @@ export const { registry, handlers } = defineRegistry(catalog, {
               {props.columns.map((column: any) => {
                 const value = row[column.key]
                 return (
-                  <TableCell key={column.key} numeric={column.align === 'end'}>
+                  <TableCell key={column.key} numeric={column.align === 'end'} className={column.align === 'end' ? undefined : wrap}>
                     {value === null || value === undefined ? '—' : String(value)}
                   </TableCell>
                 )
@@ -169,7 +174,8 @@ export const { registry, handlers } = defineRegistry(catalog, {
           ))}
         </TableBody>
       </Table>
-    )),
+      )
+    }),
 
     Chart: view(({ props }) => (
       <Chart

@@ -11,20 +11,46 @@ the bots rail, the conversation, the right panel — and leaves the rest of the 
 
 ## Screenshots
 
-![The chat page: the bots rail with the pinned bot, the conversation and the right panel](docs/screenshots/01-chat.jpg)
+Every screenshot is a real conversation in the Webapp, answered live by DeepSeek V4.1 Flash through the gateway —
+nothing is mocked.
 
-*The chat page. The rail lists the pinned bot, then the team with the last line each bot said and how long ago; the
-composer carries the model and the effort.*
+![A release-status card drawn by the bot: a checklist with states, details and a primary button](docs/screenshots/01-intelligent-ui.jpg)
 
-![The model menu: effort on top, then the models of one provider](docs/screenshots/02-model.jpg)
+*Intelligent UI. The bot answers with a `<hui-ui>` block and the thread draws it as Glaze components — here a status
+card with a checklist and a button that sends its own follow-up. The right panel lists the files the turn touched.*
 
-*The model menu, opened from the composer. Low / Medium / High effort at the top, then the provider and its models.*
+![A comparison table with wrapped cells, under the folded reasoning and work rows](docs/screenshots/02-table.jpg)
 
-![The usage meters at the foot of the rail](docs/screenshots/03-usage.jpg)
+*A comparison as a table. Reasoning folds into “Thought for …”, the tools into “Worked for 46s”; long cells wrap
+instead of being cut at the edge.*
 
-*Usage meters at the foot of the rail: one compact row per provider, with the binding window and its percentage.*
+![A grounded answer with the files it read listed in the right panel](docs/screenshots/03-tools-files.jpg)
 
-![The Hermes UI settings page](docs/screenshots/04-settings.jpg)
+*A turn that reads the project before answering. Each file it read or ran a command on lands in the right panel,
+with the verb and the folder.*
+
+![An approval card: the command, why it was flagged, and Always allow / Refuse / Allow](docs/screenshots/04-approval.jpg)
+
+*Approvals inline. The reasoning streams above, the card says why Hermes stopped (“recursive delete”) and answers in
+one click; the working line under the thread keeps the clock.*
+
+![The model menu: effort on top, then the provider's models](docs/screenshots/05-model.jpg)
+
+*The model menu, opened from the composer: Low / Medium / High effort, then each provider with its logo.*
+
+![The slash command list with a description under each command](docs/screenshots/06-slash.jpg)
+
+*`/` opens the profile's own commands, with the gateway's description of each.*
+
+![The same card in the light theme](docs/screenshots/07-light.jpg)
+
+*Light theme (Settings ▸ Hermes UI ▸ Theme: System, Dark or Light).*
+
+![The usage popover: the 5-hour and weekly windows with their reset times](docs/screenshots/08-usage.jpg)
+
+*Usage meters at the foot of the rail; a click opens the windows with their reset time.*
+
+![The Hermes UI settings page](docs/screenshots/09-settings.jpg)
 
 *Settings ▸ Plugins ▸ Hermes UI: appearance, the chat defaults for the open bot, and the plugin's shortcuts.*
 

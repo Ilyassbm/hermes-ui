@@ -57,13 +57,17 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
           const items = Array.isArray(res?.items) ? res.items : []
           setCommands(
             items
-              .map((item: any) => ({
-                id: String(item?.text || ''),
-                label: String(item?.text || '')
-                  .trim()
-                  .replace(/^\//, ''),
-                description: String(item?.display || item?.meta || '').replace(/\s+/g, ' ').trim()
-              }))
+              .map((item: any) => {
+                const text = String(item?.text || '').trim()
+                const label = text.replace(/^\//, '')
+                const tidy = (v: unknown) => String(v || '').replace(/\s+/g, ' ').trim()
+                // `display` is often the command again ("/new" under "/new"): a hint that repeats the label says nothing,
+                // so the gateway's `meta` is used instead, and no second line at all when neither adds a word.
+                const echo = (v: string) => !v || v === text || v === label || v === `/${label}`
+                const display = tidy(item?.display)
+                const meta = tidy(item?.meta)
+                return { id: text, label, description: !echo(display) ? display : !echo(meta) ? meta : '' }
+              })
               .filter((item: CommandItem) => Boolean(item.label))
           )
         })

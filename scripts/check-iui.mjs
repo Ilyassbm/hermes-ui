@@ -105,6 +105,42 @@ check('chaîne de 5000 caractères coupée à 4000', longText.spec?.elements.r.p
 check('JSON cassé : rien', sanitizeSpec('{"root":').spec === null)
 check('spec sans root : rien', sanitizeSpec({ elements: {} }).spec === null)
 
+// 7. A closed tag whose body is short of its last `}` still draws (a real DeepSeek reply lost its table this way).
+{
+  const out = join(scratch, `iui-response-${process.pid}.mjs`)
+  await build({
+    stdin: {
+      contents: [
+        "import { createElement } from 'react'",
+        "import { renderToStaticMarkup } from 'react-dom/server'",
+        "import { Response } from '@/components/glaze/ai/response'",
+        "export const render = (text, tags) => renderToStaticMarkup(createElement(Response, { tags }, text))"
+      ].join('\n'),
+      resolveDir: root,
+      sourcefile: 'check-iui-response.tsx',
+      loader: 'tsx'
+    },
+    outfile: out,
+    bundle: true,
+    // The packages stay node's to load (react-dom/server is CommonJS); only the repo's own source is bundled.
+    packages: 'external',
+    format: 'esm',
+    platform: 'node',
+    jsx: 'automatic',
+    alias: { '@': resolve(root, 'src') },
+    loader: { '.css': 'empty' },
+    define: { 'process.env.NODE_ENV': '"production"' },
+    logLevel: 'error'
+  })
+  const { render } = await import(pathToFileURL(out).href)
+  const tags = { 'hui-ui': { pending: 'Drawing', render: data => `DRAWN:${data?.elements?.r?.props?.title ?? '?'}` } }
+  const short = 'Here it is.\n\n<hui-ui>{"root":"r","elements":{"r":{"type":"Table","props":{"title":"WAL vs rollback"}}}</hui-ui>\n\nDone.'
+  const html = render(short, tags)
+  check('closed tag short of one } still draws', html.includes('DRAWN:WAL vs rollback') && html.includes('Done.'), html.slice(0, 160))
+  const whole = render('<hui-ui>{"root":"r","elements":{"r":{"type":"Table","props":{"title":"Whole"}}}}</hui-ui>', tags)
+  check('a whole tag still draws once', (whole.match(/DRAWN:Whole/g) || []).length === 1, whole.slice(0, 120))
+}
+
 const failed = results.filter(result => !result.ok).length
 console.log(`\ncheck-iui : ${results.length - failed}/${results.length} vérifications passées`)
 if (failed) process.exit(1)

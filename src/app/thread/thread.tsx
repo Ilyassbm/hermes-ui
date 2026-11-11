@@ -17,6 +17,7 @@ import { botIdentity } from '../format'
 import { BotAvatar } from '../bot-avatar'
 import { Composer } from './composer'
 import { UI } from '../strings'
+import { settings } from '../settings-state'
 import { MediaGroup, SentAttachments, splitMedia } from './media'
 import { AssistantTurn } from './turn'
 import { WorkingLine } from './working'
@@ -33,6 +34,7 @@ export function Thread({ bot, name, input }: ThreadProps) {
   const messages = useStore(store, s => s.messages)
   const live = useStore(store, s => s.live)
   const worked = useStore(store, s => s.worked)
+  const activity = useStore(settings, s => s.activity)
   const sid = useStore(store, s => s.sid)
   const ready = useStore(store, s => s.ready)
   const error = useStore(store, s => s.error)
@@ -79,7 +81,7 @@ export function Thread({ bot, name, input }: ThreadProps) {
                     <Message key={m.id} from="user">
                       <MessageContent>
                         <MessageHeader>
-                          Ilyass
+                          {UI.thread.you}
                           <MessageTime>{hourOf(m.at)}</MessageTime>
                         </MessageHeader>
                         {m.attachments?.length ? <UserAttachments files={m.attachments} /> : null}
@@ -107,7 +109,8 @@ export function Thread({ bot, name, input }: ThreadProps) {
 
             {/* The turn is still working: one line under the last message, never inside its bubble. It folds into
                 "Worked for 12s" once Stop ended the turn, and leaves on the next prompt. */}
-            {live || worked ? <WorkingLine live={live} worked={worked} name={name} /> : null}
+            {/* Settings ▸ Chat ▸ activity line: off hides this one status; the reasoning, the calls and the answer stay. */}
+            {(live || worked) && activity ? <WorkingLine live={live} worked={worked} name={name} /> : null}
 
             {error ? (
               <ConversationError

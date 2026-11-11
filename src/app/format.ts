@@ -2,19 +2,8 @@
 import { botLabel, botLook } from '@/lib/labels'
 import { UI } from './strings'
 
-/** The role a bot plays in Ilyass's setup. `description` from the profile is the fallback, then nothing. */
-const ROLES: Record<string, string> = {
-  default: 'Chief of Staff',
-  dex: 'CTO',
-  preto: 'Head of SEO',
-  mint: 'Head of Growth',
-  prism: 'Head of Content',
-  youtubot: 'Head of YouTube',
-  'bot-builder': 'Bot Builder'
-}
-
-export function botRole(name?: string, description?: string): string {
-  if (name && ROLES[name]) return ROLES[name]
+/** The role a bot plays is what its profile says about it (`description`), or nothing. */
+export function botRole(_name?: string, description?: string): string {
   return (description || '').trim()
 }
 

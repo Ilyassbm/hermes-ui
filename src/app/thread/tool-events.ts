@@ -119,10 +119,12 @@ export function toolEventStep(state: ToolAdapterState, ev: { type?: string; payl
 }
 
 /** A permission card for the call that is waiting on the person. */
-export function askStep(state: ToolAdapterState, id: string, patterns: string[], message?: string): Step {
+export function askStep(state: ToolAdapterState, id: string, patterns: string[], message?: string, tool?: string): Step {
   const seq = state.seq + 1
-  const next: ToolAdapterState = { ...state, seq, calls: track(state.calls, id, 'unknown', 'awaiting-permission') }
-  return { state: next, actions: [{ type: 'ask', seq, id, patterns, message, gen: next.gen }] }
+  const next: ToolAdapterState = { ...state, seq, calls: track(state.calls, id, tool || 'unknown', 'awaiting-permission') }
+  // `tool` names a row the ask has to create itself (an approval found by the poll after a reload, with no call event
+  // before it): without it the card read "Allow unknown?". A row that already exists keeps its own tool.
+  return { state: next, actions: [{ type: 'ask', seq, id, patterns, message, gen: next.gen, ...(tool ? { tool } : {}) }] }
 }
 
 /** The person's answer, on its way back to the gateway. */

@@ -106,6 +106,10 @@ function pathsInShell(command) {
   for (const match of String(command || '').matchAll(re)) {
     const token = match[1].replace(/[.,:;]+$/, '')
     if (!token || token.startsWith('-') || token.includes('://') || token.startsWith('$')) continue
+    // A file, not a folder: `cd /work/app`, `ls ./node_modules` or `du -sh .cache/build` name places, and listed as
+    // files they read as junk ("node_modules · Ran · ."). The last segment must carry an extension after a name, so a
+    // dot-folder such as `.cache` stays out too.
+    if (!/[^./]\.[A-Za-z0-9]{1,8}$/.test(token.split('/').pop() || '')) continue
     out.push(token)
   }
   return out
@@ -116,7 +120,10 @@ function filesFromTool(name, args) {
   const action = fileAction(name)
   if (!action) return []
   if (action === 'shell') {
-    return pathsInShell(args?.command || args?.cmd || '').map(path => ({ path, action }))
+    // A relative path is resolved against the command's own workdir when the call names one, so the row opens.
+    const dir = String(args?.workdir || args?.cwd || '').replace(/\/+$/, '')
+    const absolute = path => (dir.startsWith('/') && !path.startsWith('/') && !path.startsWith('~') ? `${dir}/${path.replace(/^\.\//, '')}` : path)
+    return [...new Set(pathsInShell(args?.command || args?.cmd || '').map(absolute))].map(path => ({ path, action }))
   }
   const path = pathOf(args)
   return path ? [{ path, action }] : []
@@ -303,6 +310,7 @@ export async function loadBots() {
     const route = routes.find(r => r.profile === p.name) || null
     return {
       name: p.name,
+      title: String(p.ui_meta?.['hermes-bots']?.title || '').trim(),
       display_name: p.display_name || '',
       description: p.description || '',
       model: p.model || '',
@@ -871,7 +879,9 @@ function askApproval(a) {
   patchDraft(d => {
     const from = d.adapter || emptyToolAdapter(d.gen || 0)
     const id = approvalTarget(d) || `approval-${requestId}`
-    const { state, actions } = askStep(from, id, command ? [command] : [], "Allow runs this command without asking again.")
+    // Under the question, why it is asked: the gateway's own reason ("recursive delete") when it gives one. The buttons
+    // say what each answer does; this line never describes one of them.
+    const { state, actions } = askStep(from, id, command ? [command] : [], UI.approval.why(a.description || ''), command ? 'terminal' : undefined)
     return { ...d, adapter: state, toolActions: [...d.toolActions, ...actions] }
   })
 }
