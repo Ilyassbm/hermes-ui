@@ -34,7 +34,7 @@ wrote or ran).*
 ![An approval card: the command, why it was flagged, and Always allow / Refuse / Allow](docs/screenshots/04-approval.jpg)
 
 *Approvals inline. The reasoning streams above, the card says why Hermes stopped (“recursive delete”) and answers in
-one click; the working line under the thread keeps the clock.*
+one click — Always allow, Refuse, or the green Allow; the working line under the thread keeps the clock.*
 
 ![The model menu: effort on top, then the provider's models](docs/screenshots/05-model.jpg)
 
@@ -72,6 +72,14 @@ one click; the working line under the thread keeps the clock.*
   conversation touched, with a preview.
 - **Usage meters** for the subscriptions the gateway knows about.
 - **Light / dark / system**, density, reading width and reduced motion, in Settings.
+
+## Design
+
+The page has its own visual language (`src/styles/theme.css`), laid over the vendored component library: the
+platform's UI font at a 15px reading size, neutral surfaces with one clear step between the page, the rail and
+anything raised, solid controls (no glass, no gradients), real elevation for what floats — menus, the bot pill — and
+none for what sits in the page. Light and dark are both first-class. A bot's colour and shape come from Hermes' own
+Bots roster when you picked one there.
 
 ## Why this is not a prompt or a skill
 

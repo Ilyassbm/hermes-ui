@@ -26,6 +26,8 @@
 @import "./motion.css";
 /* The vendored aicss avatar: its identity colours, scoped to .hui-bot. */
 @import "./bot.css";
+/* Hermes UI's own visual language, last: the library keeps its structure, this decides the look. */
+@import "./theme.css";
 
 /* Everything the Glaze surface renders, our own markup included. Glaze's styles.css scans its own folders; this
    covers src/ so a class used in src/app or src/ui/glaze-demo is generated too. */

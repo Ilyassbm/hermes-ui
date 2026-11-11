@@ -6,6 +6,7 @@ import { askStep, emptyToolAdapter, replyStep, toolEventStep, turnEndStep } from
 import { UI } from '../app/strings'
 import { view } from '../app/ui-state'
 import { createStore } from './store'
+import { setChosenLooks } from './labels'
 
 export const store = createStore({
   ready: false,
@@ -314,6 +315,8 @@ export async function loadBots() {
       // The section the Bots roster files the bot under ("Leads", "Content"); empty when it has none.
       section: String(p.ui_meta?.['hermes-bots']?.sectionName || '').trim(),
       skills: Number(p.skill_count) || 0,
+      color: String(p.ui_meta?.['hermes-bots']?.color || ''),
+      shape: String(p.ui_meta?.['hermes-bots']?.shape || ''),
       display_name: p.display_name || '',
       description: p.description || '',
       model: p.model || '',
@@ -322,6 +325,7 @@ export async function loadBots() {
       route
     }
   })
+  setChosenLooks(bots)
   store.set({ bots, connecting: false })
   return bots
 }

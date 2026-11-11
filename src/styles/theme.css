@@ -1,0 +1,376 @@
+/* Hermes UI's own visual language, laid over the vendored component library.
+
+   The components keep their structure and behaviour; what they look like is decided here, last in the cascade:
+   - the platform's UI font (SF Pro on a Mac), a 15px reading size, no letter-spacing games;
+   - neutral greys with a clear step between the page, the rail and anything raised (bubbles, cards, menus);
+   - solid controls: no glass, no sheen, no gradient rims, no blur — a primary is the ink, a confirm is green;
+   - real elevation for what floats (menus, popovers, dialogs, the bot pill), and none for what sits in the page;
+   - rounder corners, roomier rows.
+   Everything is scoped to .glaze: nothing here reaches the host app. */
+
+.glaze {
+  /* == Type == */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  --mono-scale: 0.9;
+  --weight-medium: 500;
+  --type-title: 600 26px/1.2 var(--font-sans);
+  --type-heading: 600 19px/1.3 var(--font-sans);
+  --type-heading-sm: 600 15px/1.35 var(--font-sans);
+  --type-body: 400 15px/1.55 var(--font-sans);
+  --type-body-sm: 400 14px/1.5 var(--font-sans);
+  --type-label: 500 14px/1.3 var(--font-sans);
+  --type-label-sm: 500 13px/1.3 var(--font-sans);
+  --type-label-lg: 500 15px/1.3 var(--font-sans);
+  --type-caption: 400 12.5px/1.35 var(--font-sans);
+  --type-code: 400 calc(15px * var(--mono-scale))/1.55 var(--font-mono);
+  --type-code-sm: 400 calc(14px * var(--mono-scale))/1.5 var(--font-mono);
+  --type-code-xs: 400 calc(12.5px * var(--mono-scale))/1.35 var(--font-mono);
+  --type-code-block: 400 13px/21px var(--font-mono);
+  --tracking-heading: -0.012em;
+  --tracking-body: 0em;
+  --tracking-label: 0em;
+
+  /* == Shape == */
+  --radius-shell: 16px;
+  --radius-panel: 16px;
+  --radius-overlay: 14px;
+  --radius-tag: 8px;
+  --control-sm: 28px;
+  --control: 34px;
+  --control-lg: 38px;
+  --row: 40px;
+  --menu-row: 34px;
+  --menu-row-sm: 30px;
+  --icon-sm: 13px;
+  --icon: 15px;
+  --icon-lg: 17px;
+  --shell-inset: 0px;
+  --focus-width: 2px;
+  --focus-offset: 2px;
+
+  /* == Motion: the house curve, a touch snappier == */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --scale-press: 0.97;
+  --scale-press-flat: 0.98;
+  --scale-press-glass: 0.97;
+
+  /* == Light colours == */
+  --page: #f5f5f7;
+  --rail: #eeeef0;
+  --paper: #ffffff;
+  --shell: #ffffff;
+  --field: #ececee;
+  --code-surface: #f4f4f6;
+  --ink: #1d1d1f;
+  --hover: rgb(0 0 0 / 0.045);
+  --hover-row: rgb(0 0 0 / 0.035);
+  --pressed: rgb(0 0 0 / 0.08);
+  --scrim: rgb(0 0 0 / 0.28);
+  --text-1: #1d1d1f;
+  --text-2: rgb(29 29 31 / 0.62);
+  --text-3: rgb(29 29 31 / 0.5);
+  --text-disabled: rgb(29 29 31 / 0.3);
+  --text-inverse: #ffffff;
+  --line-faint: rgb(0 0 0 / 0.06);
+  --line: rgb(0 0 0 / 0.09);
+  --line-control: rgb(0 0 0 / 0.12);
+  --line-focus: rgb(0 0 0 / 0.28);
+  --line-strong: rgb(0 0 0 / 0.4);
+  --focus: rgb(0 113 227 / 0.7);
+  --ok: #28b45a;
+  --ok-text: #1a7f3f;
+  --ok-tint: #e5f6eb;
+  --warn: #e8930c;
+  --warn-text: #8f5b00;
+  --warn-tint: #fdf2dc;
+  --fail: #e5484d;
+  --fail-text: #b42328;
+  --fail-tint: #fdebec;
+  --raised-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.08);
+  --float-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.08), 0 12px 36px rgb(0 0 0 / 0.14), 0 2px 6px rgb(0 0 0 / 0.06);
+  --thumb: #ffffff;
+  --thumb-text: #1d1d1f;
+  --glaze-sm-text: var(--thumb-text);
+  --user-bubble: #e9e9ec;
+  --switch-on: #34c759;
+  --switch-off: rgb(0 0 0 / 0.12);
+  --switch-knob: #ffffff;
+  --scrollbar-thumb: rgb(0 0 0 / 0.18);
+
+  /* The primary key: the ink itself, solid. Confirm is a true green, destructive a true red. */
+  --primary-bg: #1d1d1f;
+  --primary-text: #ffffff;
+  --confirm-bg: #28b45a;
+  --confirm-text: #ffffff;
+  --danger-bg: #e5484d;
+  --danger-text: #ffffff;
+  --flat-bg: rgb(0 0 0 / 0.05);
+  --flat-ring: transparent;
+  --flat-text: #1d1d1f;
+  --flat-hover: rgb(0 0 0 / 0.08);
+
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.glaze[data-theme='dark'],
+[data-theme='dark'] .glaze {
+  --page: #111112;
+  --rail: #161618;
+  --paper: #1f1f22;
+  --shell: #1f1f22;
+  --field: #2a2a2e;
+  --code-surface: #18181b;
+  --ink: #f5f5f7;
+  --ink-80: #f5f5f7;
+  --hover: rgb(255 255 255 / 0.055);
+  --hover-row: rgb(255 255 255 / 0.04);
+  --pressed: rgb(255 255 255 / 0.09);
+  --scrim: rgb(0 0 0 / 0.6);
+  --text-1: #f5f5f7;
+  --text-2: rgb(235 235 245 / 0.62);
+  --text-3: rgb(235 235 245 / 0.5);
+  --text-disabled: rgb(235 235 245 / 0.3);
+  --text-inverse: #111112;
+  --line-faint: rgb(255 255 255 / 0.06);
+  --line: rgb(255 255 255 / 0.09);
+  --line-control: rgb(255 255 255 / 0.12);
+  --line-focus: rgb(255 255 255 / 0.28);
+  --line-strong: rgb(255 255 255 / 0.4);
+  --focus: rgb(100 170 255 / 0.75);
+  --ok: #30d158;
+  --ok-text: #5fe08a;
+  --ok-tint: rgb(48 209 88 / 0.14);
+  --warn: #ffb340;
+  --warn-text: #ffc66e;
+  --warn-tint: rgb(255 179 64 / 0.14);
+  --fail: #ff6961;
+  --fail-text: #ff8c85;
+  --fail-tint: rgb(255 105 97 / 0.14);
+  --raised-shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 8px 24px rgb(0 0 0 / 0.35);
+  --float-shadow: 0 0 0 0.5px rgb(255 255 255 / 0.08), 0 16px 40px rgb(0 0 0 / 0.55), 0 2px 8px rgb(0 0 0 / 0.35);
+  --thumb: #545458;
+  --thumb-text: #ffffff;
+  --glaze-sm-text: var(--thumb-text);
+  --user-bubble: #19191b;
+  --switch-on: #30d158;
+  --switch-off: rgb(255 255 255 / 0.16);
+  --switch-knob: #ffffff;
+  --scrollbar-thumb: rgb(255 255 255 / 0.16);
+
+  --primary-bg: #f5f5f7;
+  --primary-text: #111112;
+  --confirm-bg: #30d158;
+  --confirm-text: #062b12;
+  --danger-bg: #ff6961;
+  --danger-text: #2b0807;
+  --flat-bg: rgb(255 255 255 / 0.07);
+  --flat-ring: transparent;
+  --flat-text: #f5f5f7;
+  --flat-hover: rgb(255 255 255 / 0.11);
+}
+
+/* ---------- Controls: solid, no glass ---------- */
+
+.glaze .glass {
+  --glass-blur: 0px;
+  background-image: none;
+  background-color: var(--primary-bg);
+  color: var(--primary-text);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transition-property: scale, background-color, opacity;
+  transition-duration: var(--dur-press);
+}
+.glaze .glass::before,
+.glaze .glass::after {
+  display: none;
+}
+.glaze .glass.glass-green {
+  background-color: var(--confirm-bg);
+  color: var(--confirm-text);
+}
+.glaze .glass.glass-coral {
+  background-color: var(--danger-bg);
+  color: var(--danger-text);
+}
+.glaze .glass.glass-paper {
+  background-color: var(--flat-bg);
+  color: var(--flat-text);
+}
+@media (hover: hover) and (pointer: fine) {
+  .glaze .glass:hover:not(:disabled, [data-disabled], [aria-busy='true']) {
+    background-image: linear-gradient(rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.1));
+  }
+  .glaze[data-theme='dark'] .glass:hover:not(:disabled, [data-disabled], [aria-busy='true']) {
+    background-image: linear-gradient(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.08));
+  }
+}
+.glaze .glass:is(:disabled, [data-disabled], [aria-disabled='true']):not([aria-busy='true']) {
+  background-color: var(--field);
+  color: var(--text-disabled);
+}
+
+/* The secondary: a soft wash, no ring. */
+.glaze .flat {
+  box-shadow: none;
+  background-color: var(--flat-bg);
+}
+@media (hover: hover) and (pointer: fine) {
+  .glaze .flat:hover:not(:disabled, [data-disabled], [aria-busy='true']) {
+    background-image: none;
+    background-color: var(--flat-hover);
+  }
+}
+
+/* Small glaze (checkbox tick, radio, segmented thumb, slider): a flat raised chip. */
+.glaze .glaze-sm {
+  background-image: none;
+  background-color: var(--thumb);
+  color: var(--thumb-text);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.18), 0 0 0 0.5px rgb(0 0 0 / 0.06);
+}
+/* The switch is the one place on-state is a colour: green, the knob white. */
+.glaze [data-hui-part='switch'] {
+  background-color: var(--switch-off);
+  border-color: transparent;
+}
+.glaze [data-hui-part='switch'][data-checked] {
+  background-image: none;
+  background-color: var(--switch-on);
+  box-shadow: none;
+}
+.glaze [data-hui-part='switch-thumb'] {
+  background-color: var(--switch-knob);
+  border-color: transparent;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+}
+.glaze [data-hui-part='switch'][data-checked] [data-hui-part='switch-thumb'] {
+  background-color: var(--switch-knob);
+}
+/* The segmented control: a sunken track with the raised thumb. */
+.glaze [data-hui-part='segmented-control'] {
+  background-color: var(--field);
+  box-shadow: none;
+  border-color: transparent;
+}
+
+/* Fields: a soft fill, the line only on focus. */
+.glaze .field {
+  background-color: var(--field);
+  border-color: transparent;
+}
+.glaze .field:is(:focus-within, [data-force-focus], [data-force-focus-visible]) {
+  border-color: var(--line-focus);
+  background-color: var(--paper);
+}
+
+/* ---------- Surfaces ---------- */
+
+/* A card: one raised surface. The library draws it as a grey frame holding a white panel 3px in; here the frame and
+   the panel are the same surface, so it reads as a single card with a hairline. */
+.glaze .shell {
+  background-color: var(--paper);
+  border-color: var(--line-faint);
+}
+.glaze .shell > .panel,
+.glaze .shell .panel {
+  border-color: transparent;
+  background-color: transparent;
+}
+.glaze .panel {
+  border-color: var(--line-faint);
+}
+
+/* What floats gets a real shadow: menus, popovers, selects, dialogs, the command list, tooltips. */
+.glaze .overlay,
+.glaze [data-hui-part='dropdown-menu-content'],
+.glaze [data-hui-part='popover-content'],
+.glaze [data-hui-part='dialog-content'],
+.glaze [data-hui-part='select-content'] {
+  border-color: transparent;
+  box-shadow: var(--float-shadow);
+  border-radius: var(--radius-overlay);
+}
+.glaze [data-hui-part='tooltip-content'] {
+  box-shadow: var(--float-shadow);
+  border-radius: 8px;
+}
+/* Menu rows: rounder, a step taller. */
+.glaze [data-hui-part='dropdown-menu-item'],
+.glaze [data-hui-part='dropdown-menu-radio-item'],
+.glaze [data-hui-part='dropdown-menu-checkbox-item'] {
+  border-radius: 8px;
+}
+
+/* Code blocks and inline code: a quiet well, never a boxed outline. */
+.glaze .code-surface {
+  border-color: transparent;
+  background-color: var(--code-surface);
+}
+.glaze :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: 6px;
+  background-color: var(--hover);
+  font-size: 0.9em;
+}
+
+/* ---------- The page's own pieces, on the new surfaces ---------- */
+
+.glaze .hui-rail {
+  --rail-ground: var(--rail);
+}
+.glaze .hui-bubble {
+  background: var(--paper);
+  border-radius: 18px;
+  padding: 12px 16px;
+}
+.glaze .hui-pill {
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(16px);
+  backdrop-filter: saturate(1.4) blur(16px);
+  box-shadow: var(--float-shadow);
+}
+.glaze .hui-round {
+  background: var(--flat-bg);
+}
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-round:hover {
+    background: var(--flat-hover);
+  }
+}
+.glaze .hui-composer [data-hui-part='prompt-input-panel'] {
+  background: var(--paper);
+  border-color: var(--line-faint);
+  border-radius: 26px;
+  box-shadow: var(--raised-shadow);
+}
+.glaze .hui-aside {
+  background: var(--rail);
+}
+.glaze .hui-aside-card {
+  background: var(--paper);
+  border-color: transparent;
+}
+.glaze .hui-bot-row[aria-selected='true'],
+.glaze .hui-tile[aria-selected='true'] {
+  background: var(--pressed);
+}
+
+/* The person's own message keeps the look it had: a quieter surface than the bot's bubble, with a hairline — set
+   apart by tone, not by a colour. Only its corners follow the rounder shape. */
+.glaze [data-hui-part='message-bubble'] > [data-hui-part='message-bubble-content'] {
+  background-color: var(--user-bubble);
+  border-color: var(--line-faint);
+  border-radius: 18px;
+  padding: 10px 14px;
+}
+
+/* A thin scrollbar that only shows on the thumb. */
+.glaze * {
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}

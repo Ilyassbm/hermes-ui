@@ -118,11 +118,34 @@ const FIXED = {
   'bot-builder': [4, 'squircle']
 }
 
+/** The look each bot was given in Hermes' own Bots roster (`ui_meta['hermes-bots'].color` / `.shape`), by profile. */
+const CHOSEN = new Map()
+
+/** Called with the roster: a colour or a shape the person picked in Hermes wins over everything below. */
+export function setChosenLooks(bots) {
+  CHOSEN.clear()
+  for (const b of bots || []) {
+    const color = typeof b?.color === 'string' && b.color.trim() ? b.color.trim() : ''
+    const shape = SHAPES.includes(b?.shape) ? b.shape : ''
+    if (color || shape) CHOSEN.set(b.name, { color, shape })
+  }
+}
+
+/** The vivid hues only: slate is a fallback colour, and two unknown bots hashed onto it read as the same bot. */
+const VIVID = HUES.slice(0, -1)
+
 export function botLook(name) {
   const key = name || 'default'
-  if (FIXED[key]) return { colors: HUES[FIXED[key][0]], shape: FIXED[key][1] }
-  const h = hash(key)
-  return { colors: HUES[h % HUES.length], shape: SHAPES[(h >>> 5) % SHAPES.length] }
+  const chosen = CHOSEN.get(key)
+  const base = FIXED[key]
+    ? { colors: HUES[FIXED[key][0]], shape: FIXED[key][1] }
+    : (h => ({ colors: VIVID[h % VIVID.length], shape: SHAPES[(h >>> 5) % SHAPES.length] }))(hash(key))
+  if (!chosen) return base
+  return {
+    // One picked colour becomes the avatar's two stops: the colour lifted for the light side, deepened for the dark.
+    colors: chosen.color ? [`color-mix(in srgb, ${chosen.color} 78%, white)`, `color-mix(in srgb, ${chosen.color} 82%, black)`] : base.colors,
+    shape: chosen.shape || base.shape
+  }
 }
 
 export function shortModel(model) {

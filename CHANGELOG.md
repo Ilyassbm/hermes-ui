@@ -3,6 +3,17 @@
 All notable changes to this project are documented here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-11-11
+
+### Changed
+
+- **A visual language of its own** (`src/styles/theme.css`), replacing the component library's look: the platform's
+  UI font (SF Pro on a Mac) at 15px, neutral greys with a clear step between page, rail and raised surfaces, solid
+  controls instead of glass, a true green confirm and red destructive, soft elevation for menus, popovers, dialogs and
+  the bot pill, rounder cards and roomier rows, a green on-switch, a raised segmented thumb. Light and dark both.
+- Your own messages keep a quieter surface than the bot's bubble, with a hairline.
+- Avatars use the colour and shape picked in Hermes' Bots roster; unknown bots no longer fall onto the same grey.
+
 ## [1.4.0] - 2026-11-11
 
 A redesign after the Grok Bot desktop app, built view by view from a static mock-up.
