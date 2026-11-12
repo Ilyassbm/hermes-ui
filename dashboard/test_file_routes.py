@@ -1,39 +1,55 @@
 #!/usr/bin/env python3
-"""The read-only file routes, on this box's real paths: one allowed path, the profile's images, and the refusals.
+"""The read-only file routes and the usage key, against a throwaway Hermes home.
 
-    HERMES_HOME=/opt/data /opt/hermes/.venv/bin/python -I dashboard/test_file_routes.py
+    /path/to/hermes/.venv/bin/python -I dashboard/test_file_routes.py
 
-The two paths the lot had to prove are here: `MEDIA:/opt/data/profiles/dex/workspace/eng/delivery/SUBMIT.md` through
-`/file`, and an upload in `/opt/data/profiles/dex/images` through `/blob`. The refusals are the ones the routes promise
-(followed by the block's quiet card): outside the tree, a secret name, a missing file, over the 1 MiB text cap.
+``HERMES_HOME`` and ``HOME`` point at a temporary tree built here, so the tests never read the
+machine's real profiles and need nothing but a Hermes checkout on ``sys.path`` (``HERMES_ROOT``,
+default ``/opt/hermes``). No gateway, no HTTP: the route functions are called directly, the same
+ones FastAPI serves.
 
-No gateway, no HTTP, no write: the route functions are called directly, the same ones FastAPI serves. `HERMES_HOME` is
-forced rather than defaulted, because the shell running this may export the live home.
+One test per class of refusal the routes promise: outside the allowed trees, what Hermes' own
+``agent.file_safety.get_read_block_error`` refuses, each managed control file, the ``google_*``
+token files, any ``mcp-tokens`` or ``pairing`` path component, cloud credentials under the user's
+home, and private keys.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
+HERMES_ROOT = Path(os.environ.get("HERMES_ROOT", "/opt/hermes"))
+if HERMES_ROOT.is_dir():
+    sys.path.insert(1, str(HERMES_ROOT))
 
-# `-I` drops the script's own directory from sys.path (the insert above), and the root is pinned: the spec's case is
-# HERMES_HOME=/opt/data, where every profile and every workspace of this box lives.
-os.environ["HERMES_HOME"] = "/opt/data"
+_TMP = tempfile.TemporaryDirectory(prefix="hermes-ui-test-")
+USER_HOME = Path(_TMP.name) / "home"
+ROOT = USER_HOME / ".hermes"
+os.environ["HOME"] = str(USER_HOME)
+os.environ["HERMES_HOME"] = str(ROOT)
+os.environ.pop("OPENCODE_GO_API_KEY", None)
 
+from dashboard import plugin_api  # noqa: E402
 from dashboard.plugin_api import _allowed_roots, _blob_payload, _file_payload, _resolve  # noqa: E402
 
-SUBMIT = Path("/opt/data/profiles/dex/workspace/eng/delivery/SUBMIT.md")
-IMAGES = Path("/opt/data/profiles/dex/images")
 TEXT_MAX = 1024 * 1024
+PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
+
+
+def write(path: Path, data: bytes | str = "x") -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data.encode() if isinstance(data, str) else data)
+    return path
 
 
 def body_of(result) -> dict:
-    """The JSON body of a refusal, or the payload itself when the route answered."""
     if isinstance(result, dict):
         return result
     return json.loads(bytes(result.body).decode("utf-8"))
@@ -43,52 +59,162 @@ def status_of(result) -> int:
     return getattr(result, "status_code", 200)
 
 
-class FileRoutes(unittest.TestCase):
-    def test_allowed_text_file(self) -> None:
-        """THE allowed path: a MEDIA: file under the workspace, read as UTF-8 text."""
-        self.assertTrue(SUBMIT.is_file(), f"{SUBMIT} is missing")
-        payload = body_of(_file_payload(str(SUBMIT)))
-        self.assertEqual(payload["kind"], "text")
-        self.assertEqual(payload["size"], SUBMIT.stat().st_size)
-        self.assertTrue(payload["text"].lstrip().startswith("#"), "SUBMIT.md should open on its title")
+def _has_core(module: str) -> bool:
+    try:
+        __import__(module)
+    except Exception:
+        return False
+    return True
 
-    def test_allowed_profile_image(self) -> None:
-        """THE profile's images folder: an upload resolves and comes back as a data URL."""
-        self.assertIn(IMAGES.resolve(), _allowed_roots())
-        shots = sorted(p for p in IMAGES.glob("upload_*.png") if p.is_file())
-        if not shots:
-            self.skipTest(f"no uploaded image in {IMAGES}")
-        payload = body_of(_blob_payload(str(shots[0])))
+
+NOTE = write(ROOT / "profiles" / "alpha" / "workspace" / "NOTE.md", "# A note\n\nhello\n")
+SHOT = write(ROOT / "profiles" / "alpha" / "images" / "upload_1.png", PNG)
+BIG = write(ROOT / "profiles" / "alpha" / "workspace" / "big.txt", "a" * (TEXT_MAX + 1))
+write(ROOT / "profiles" / "alpha" / "config.yaml", "model: {}\n")
+
+
+class Allowed(unittest.TestCase):
+    def test_a_text_file_in_a_profile_workspace(self) -> None:
+        payload = body_of(_file_payload(str(NOTE)))
+        self.assertEqual(payload["kind"], "text")
+        self.assertTrue(payload["text"].startswith("# A note"))
+
+    def test_a_profile_upload_comes_back_as_a_data_url(self) -> None:
+        self.assertIn(SHOT.parent.resolve(), _allowed_roots())
+        payload = body_of(_blob_payload(str(SHOT)))
         self.assertEqual(payload["mime"], "image/png")
         self.assertTrue(payload["dataUrl"].startswith("data:image/png;base64,"))
 
-    def test_refused_outside_the_tree(self) -> None:
-        """THE refused path: /etc is not a root, so the route refuses before reading anything."""
-        self.assertIsNone(_resolve("/etc/passwd"))
-        for outside in ("/etc/passwd", "/root/.bashrc"):
-            result = _file_payload(outside)
-            self.assertEqual(status_of(result), 400, outside)
-            self.assertEqual(body_of(result), {"error": "refused"}, outside)
-
-    def test_refused_secret(self) -> None:
-        """A secret name is refused even inside the profile home."""
-        for secret in ("/opt/data/.env", "/opt/data/profiles/dex/.env", "/opt/data/profiles/dex/auth.json", "/opt/data/.ssh/id_ed25519"):
-            self.assertIsNone(_resolve(secret), secret)
-
-    def test_missing_file(self) -> None:
-        """A path that resolves but is not there is `missing`, never an exception."""
-        result = _file_payload(str(IMAGES / "does-not-exist.png"))
-        self.assertEqual(status_of(result), 404)
-        self.assertEqual(body_of(result), {"error": "missing"})
+    def test_missing_is_404_never_an_exception(self) -> None:
+        result = _file_payload(str(NOTE.parent / "nope.md"))
+        self.assertEqual((status_of(result), body_of(result)), (404, {"error": "missing"}))
 
     def test_too_large_carries_its_size(self) -> None:
-        """Over the 1 MiB text cap, the refusal names the size the card prints."""
-        big = sorted(p for p in IMAGES.glob("upload_*.png") if p.is_file() and p.stat().st_size > TEXT_MAX)
-        if not big:
-            self.skipTest(f"no image over {TEXT_MAX} bytes in {IMAGES}")
-        result = _file_payload(str(big[0]))
+        result = _file_payload(str(BIG))
         self.assertEqual(status_of(result), 413)
-        self.assertEqual(body_of(result), {"error": "too_large", "size": big[0].stat().st_size})
+        self.assertEqual(body_of(result), {"error": "too_large", "size": BIG.stat().st_size})
+
+
+class Refused(unittest.TestCase):
+    def assertRefused(self, *paths: Path | str) -> None:
+        for path in paths:
+            real = Path(os.path.expanduser(str(path)))
+            if not real.exists():
+                write(real)
+            self.assertIsNone(_resolve(str(path)), str(path))
+            result = _file_payload(str(path))
+            self.assertEqual((status_of(result), body_of(result)), (400, {"error": "refused"}), str(path))
+
+    def test_outside_the_allowed_trees(self) -> None:
+        self.assertIsNone(_resolve("/etc/passwd"))
+        self.assertEqual(body_of(_file_payload("/etc/passwd")), {"error": "refused"})
+
+    @unittest.skipUnless(_has_core("agent.file_safety"), "needs agent.file_safety from a Hermes checkout")
+    def test_everything_core_refuses(self) -> None:
+        # Paths only get_read_block_error knows about: no name in the plugin's own list matches them.
+        self.assertRefused(ROOT / "vault" / "store.bin", ROOT / "browser-profile" / "Cookies",
+                           ROOT / "skills" / ".hub" / "index.json")
+
+    def test_dot_env_and_auth_json(self) -> None:
+        self.assertRefused(ROOT / ".env", ROOT / "profiles" / "alpha" / ".env",
+                           ROOT / ".env.local", ROOT / "auth.json")
+
+    def test_config_yaml(self) -> None:
+        self.assertRefused(ROOT / "config.yaml", ROOT / "profiles" / "alpha" / "config.yaml")
+
+    def test_credentials_and_git_credentials(self) -> None:
+        self.assertRefused(ROOT / "credentials", USER_HOME / ".git-credentials")
+
+    def test_webhook_subscriptions(self) -> None:
+        self.assertRefused(ROOT / "webhook_subscriptions.json",
+                           ROOT / "profiles" / "alpha" / "webhook_subscriptions.json")
+
+    def test_auth_lock(self) -> None:
+        self.assertRefused(ROOT / "auth.lock")
+
+    def test_anthropic_oauth(self) -> None:
+        self.assertRefused(ROOT / ".anthropic_oauth.json")
+
+    def test_google_token_files(self) -> None:
+        self.assertRefused(ROOT / "google_token.json", ROOT / "auth" / "google_oauth.json",
+                           ROOT / "profiles" / "alpha" / "google_client_secret.json")
+
+    def test_any_mcp_tokens_component(self) -> None:
+        self.assertRefused(ROOT / "mcp-tokens" / "github.json",
+                           ROOT / "profiles" / "alpha" / "mcp-tokens" / "notes.txt")
+
+    def test_any_pairing_component(self) -> None:
+        self.assertRefused(ROOT / "pairing" / "telegram.json",
+                           ROOT / "profiles" / "alpha" / "pairing" / "code.txt")
+
+    def test_cloud_credentials_named_by_a_model_reply(self) -> None:
+        # MEDIA:~/.aws/credentials — the user's home is an allowed tree, the file is not.
+        self.assertRefused(USER_HOME / ".aws" / "credentials", "~/.aws/credentials")
+
+    def test_private_keys(self) -> None:
+        self.assertRefused(USER_HOME / ".ssh" / "id_ed25519", ROOT / "profiles" / "alpha" / "server.pem")
+
+
+class UsageKey(unittest.TestCase):
+    """OPENCODE_GO_API_KEY only through agent.secret_scope, under the calling profile."""
+
+    def setUp(self) -> None:
+        plugin_api._cache.clear()
+        os.environ.pop("OPENCODE_GO_API_KEY", None)
+
+    def test_the_process_environment_is_never_read(self) -> None:
+        os.environ["OPENCODE_GO_API_KEY"] = "from-the-process"
+        try:
+            for name in ("../..", "nobody", "alpha"):
+                self.assertNotIn("from-the-process", json.dumps(plugin_api._opencode(name)), name)
+        finally:
+            os.environ.pop("OPENCODE_GO_API_KEY", None)
+
+    def test_an_unknown_or_hostile_profile_reads_nothing(self) -> None:
+        for name in ("../..", "nobody", ".deleted", "a/b"):
+            self.assertEqual(plugin_api._opencode(name)["error"], "not_connected", name)
+
+    @unittest.skipUnless(_has_core("agent.secret_scope"), "needs agent.secret_scope from a Hermes checkout")
+    def test_the_calling_profile_key_is_used_and_no_other(self) -> None:
+        write(ROOT / "profiles" / "beta" / "config.yaml", "model: {}\n")
+        write(ROOT / "profiles" / "beta" / ".env", "OPENCODE_GO_API_KEY=beta-key\n")
+        seen: list[str] = []
+
+        class Response:
+            status_code = 401
+
+            def json(self):
+                return {}
+
+        def fake_get(url, headers=None, timeout=None):
+            seen.append(headers["Authorization"])
+            return Response()
+
+        import httpx
+
+        original = httpx.get
+        httpx.get = fake_get
+        try:
+            plugin_api._opencode("beta")
+            alpha = plugin_api._opencode("alpha")
+        finally:
+            httpx.get = original
+        self.assertEqual(seen, ["Bearer beta-key"])
+        self.assertEqual(alpha["error"], "not_connected")
+
+    def test_usage_is_cached_per_profile(self) -> None:
+        calls: list[str] = []
+        original_claude, original_opencode = plugin_api._claude, plugin_api._opencode
+        plugin_api._claude = lambda: {"id": "claude", "windows": []}
+        plugin_api._opencode = lambda profile="": calls.append(profile) or {"id": "opencode_go", "windows": []}
+        try:
+            asyncio.run(plugin_api.usage(profile="alpha"))
+            asyncio.run(plugin_api.usage(profile="beta"))
+            cached = asyncio.run(plugin_api.usage(profile="alpha"))
+        finally:
+            plugin_api._claude, plugin_api._opencode = original_claude, original_opencode
+        self.assertEqual(calls, ["alpha", "beta"])
+        self.assertTrue(cached.get("cached"))
 
 
 if __name__ == "__main__":

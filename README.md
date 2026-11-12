@@ -157,15 +157,23 @@ escaped `.glaze`.
 No telemetry. The page talks to your own Hermes gateway and to nothing else.
 
 `GET /api/plugins/hermes-ui/usage` reads your Anthropic subscription usage through Hermes's own reader and, **only if
-`OPENCODE_GO_API_KEY` is set in the gateway environment**, calls `https://opencode.ai/zen/go/v1/usage`. The key never
-leaves the gateway and is never returned to the page. `GET /bots` reads each profile's `state.db` read-only to show
+the calling profile has `OPENCODE_GO_API_KEY`**, calls `https://opencode.ai/zen/go/v1/usage`. The key is read only
+through `agent.secret_scope.get_secret`, under that profile's scope (`?profile=`, which every desktop `ctx.rest` call
+carries); there is no `os.environ` or `.env` fallback, so a gateway serving several profiles never lends one profile's
+key to another, and a missing or unscoped key reads as "not connected". The key never leaves the gateway and is never
+returned to the page. `GET /bots` reads each profile's `state.db` read-only to show
 the last line each bot said.
 
 The right panel's preview, and the thread's media blocks, are served by two read-only routes, `GET /file?path=…` (UTF-8 text, 1 MiB cap) and
 `GET /blob?path=…` (base64, 8 MiB cap). Both resolve the path with `expanduser().resolve()` and refuse it (HTTP 400,
 `{"error": "refused"}`) when it lands outside the profile home (`HERMES_HOME`, or the profile root Hermes reports) and
-outside `~`, when a symlink leads out of those trees, and for the names Hermes keeps credentials in: `.env` and
-`.env.*`, `auth.json`, `*.pem`, `*.key`, `id_*`, and anything under `.ssh/` or `secrets/`. Each profile's images
+outside `~`, when a symlink leads out of those trees, for everything Hermes itself refuses to read
+(`agent.file_safety.get_read_block_error`: credential stores, `vault/`, `browser-profile/`, the skills hub cache…), and
+for the files Hermes manages or keeps credentials in, wherever they sit: `.env` and `.env.*`, `auth.json`, `auth.lock`,
+`config.yaml`, `credentials`, `.git-credentials`, `webhook_subscriptions.json`, `.anthropic_oauth.json`, `google_*`,
+`.netrc`, `.pgpass`, `.npmrc`, `.pypirc`, `*.pem`, `*.key`, `id_*`, and anything under a `.ssh/`, `.aws/`, `.gnupg/`,
+`secrets/`, `mcp-tokens/` or `pairing/` component. A model reply that names `MEDIA:~/.aws/credentials` is refused like
+any other path. `dashboard/test_file_routes.py` covers each class on a throwaway home. Each profile's images
 folder (`<root>/images`, `<root>/profiles/<profile>/images`) is allowed on its own, and nothing else of that profile is.
 Directories, special files
 and unreadable files are refused the same way; a path that does not exist is `404 {"error": "missing"}`, and a file

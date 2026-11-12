@@ -2,7 +2,9 @@
 
 GET /api/plugins/hermes-ui/usage
   Claude  -> Hermes' own Anthropic OAuth usage reader (agent.account_usage), no credential handled here.
-  OpenCode Go -> https://opencode.ai/zen/go/v1/usage with OPENCODE_GO_API_KEY from the gateway env.
+  OpenCode Go -> https://opencode.ai/zen/go/v1/usage with OPENCODE_GO_API_KEY, read only through
+                 agent.secret_scope under the calling profile (``?profile=``, sent by every desktop
+                 ``ctx.rest`` call). A missing or unscoped key reads as not connected.
 
 GET /api/plugins/hermes-ui/bots
   One row per Hermes profile (`default` plus every `<root>/profiles/<name>/` holding a config.yaml): the last open
@@ -15,6 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import json
 import mimetypes
 import os
@@ -22,7 +25,7 @@ import re
 import sqlite3
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
@@ -31,12 +34,18 @@ router = APIRouter()
 
 _TEXT_MAX = 1024 * 1024
 _BLOB_MAX = 8 * 1024 * 1024
-_SECRET_NAMES = (".env", "auth.json")
+# Core's own read denylist (agent.file_safety.get_read_block_error) runs first; these are the
+# managed files and directories it does not cover by name, refused wherever they sit.
+_SECRET_NAMES = (
+    ".env", "auth.json", "auth.lock", "config.yaml", "credentials", ".git-credentials",
+    "webhook_subscriptions.json", ".anthropic_oauth.json", ".netrc", ".pgpass", ".npmrc", ".pypirc",
+)
+_SECRET_PREFIXES = ("google_",)  # google_token.json, google_oauth.json, google_client_secret.json…
 _SECRET_SUFFIXES = (".pem", ".key")
-_SECRET_PARTS = (".ssh", "secrets")
+_SECRET_PARTS = (".ssh", "secrets", "mcp-tokens", "pairing", ".aws", ".gnupg")
 
 _TTL_S = 60.0
-_cache: dict[str, Any] = {"at": 0.0, "body": None}
+_cache: dict[str, dict[str, Any]] = {}  # per profile: {"at", "body"}
 _lock = asyncio.Lock()
 
 
@@ -77,33 +86,62 @@ def _claude() -> dict:
     return out
 
 
-def _opencode_key() -> str:
-    """OPENCODE_GO_API_KEY, resolved through Hermes' own credential scope.
+def _profile_home(profile: str) -> Path | None:
+    """The calling profile's home, or None. The name comes from the query string, so it is
+    matched against the profiles directory instead of joined: ``..``, a slash or a deleted
+    profile resolve to nothing."""
+    root = _hermes_root()
+    raw = (profile or "").strip()
+    if not raw or raw == "default":
+        return root
+    if raw.startswith(".") or "/" in raw or "\\" in raw:
+        return None
+    candidate = root / "profiles" / raw
+    if not candidate.is_dir() or (root / "profiles" / ".deleted" / raw).exists():
+        return None
+    return candidate
 
-    ``agent.secret_scope`` is the documented route (catalog rule 11): it honours the active
-    profile, so a gateway serving several profiles can never hand this one another's key.
-    The bare ``os.environ`` read is kept only for a process running outside Hermes.
+
+@contextlib.contextmanager
+def _profile_scope(profile: str) -> Iterator[bool]:
+    """Install the calling profile's credential scope for one request; yields False when
+    there is no such profile or no scope can be built (the caller then reads nothing)."""
+    home = _profile_home(profile)
+    if home is None:
+        yield False
+        return
+    try:
+        from agent.secret_scope import build_profile_secret_scope, reset_secret_scope, set_secret_scope
+
+        token = set_secret_scope(build_profile_secret_scope(home), profile_home=str(home))
+    except Exception:
+        yield False
+        return
+    try:
+        yield True
+    finally:
+        reset_secret_scope(token)
+
+
+def _opencode_key() -> str:
+    """OPENCODE_GO_API_KEY through ``agent.secret_scope.get_secret`` only (catalog rule 11).
+
+    No ``get_env_value`` and no ``os.environ`` fallback: on a gateway serving several
+    profiles either can return another profile's key. A missing key, an unscoped read
+    (``UnscopedSecretError``) or any scope failure all mean "not connected".
     """
     try:
         from agent.secret_scope import get_secret
 
         return (get_secret("OPENCODE_GO_API_KEY") or "").strip()
     except Exception:
-        pass
-    try:
-        from hermes_cli.config import get_env_value
-
-        value = (get_env_value("OPENCODE_GO_API_KEY") or "").strip()
-        if value:
-            return value
-    except Exception:
-        pass
-    return (os.environ.get("OPENCODE_GO_API_KEY") or "").strip()
+        return ""
 
 
-def _opencode() -> dict:
+def _opencode(profile: str = "") -> dict:
     out: dict = {"id": "opencode_go", "label": "OpenCode Go", "windows": []}
-    key = _opencode_key()
+    with _profile_scope(profile) as scoped:
+        key = _opencode_key() if scoped else ""
     if not key:
         out["error"] = "not_connected"
         return out
@@ -147,14 +185,17 @@ def _opencode() -> dict:
 
 
 @router.get("/usage")
-async def usage(fresh: int = 0) -> dict:
+async def usage(fresh: int = 0, profile: str = "") -> dict:
+    key = (profile or "").strip() or "default"
     async with _lock:
         now = time.monotonic()
-        if not fresh and _cache["body"] is not None and now - _cache["at"] < _TTL_S:
-            return {**_cache["body"], "cached": True}
-        claude, opencode = await asyncio.gather(asyncio.to_thread(_claude), asyncio.to_thread(_opencode))
+        entry = _cache.get(key)
+        if not fresh and entry and now - entry["at"] < _TTL_S:
+            return {**entry["body"], "cached": True}
+        claude, opencode = await asyncio.gather(
+            asyncio.to_thread(_claude), asyncio.to_thread(_opencode, profile))
         body = {"providers": [claude, opencode], "fetchedAt": time.time()}
-        _cache.update(at=now, body=body)
+        _cache[key] = {"at": now, "body": body}
         return body
 
 
@@ -379,10 +420,25 @@ def _within(child: Path, root: Path) -> bool:
         return False
 
 
+def _core_refuses(path: Path) -> bool:
+    """What Hermes itself refuses to read (credential stores, mcp-tokens/, vault/, .env…)."""
+    try:
+        from agent.file_safety import get_read_block_error
+    except Exception:
+        return False  # outside Hermes; the names below still apply
+    try:
+        return bool(get_read_block_error(str(path)))
+    except Exception:
+        return True  # a check that cannot answer is a refusal
+
+
 def _secret(path: Path) -> bool:
-    """The names the panel never serves, whatever the extension: Hermes credentials and private keys."""
+    """The names the panel never serves, whatever the extension: Hermes credentials, its managed
+    control files and private keys."""
     name = path.name.lower()
     if name in _SECRET_NAMES or name.startswith(".env."):
+        return True
+    if name.startswith(_SECRET_PREFIXES):
         return True
     if name.startswith("id_") or name.endswith(_SECRET_SUFFIXES):
         return True
@@ -404,7 +460,7 @@ def _resolve(raw: str) -> Path | None:
     roots = _allowed_roots()
     if not roots or not any(_within(resolved, root) for root in roots):
         return None
-    if _secret(resolved):
+    if _secret(resolved) or _core_refuses(resolved):
         return None
     return resolved
 

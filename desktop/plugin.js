@@ -60693,7 +60693,7 @@ import { Fragment as Vve, useEffect as Hve, useMemo as Bve, useState as KJ } fro
 var qJ = {
   name: "hermes-ui",
   private: !0,
-  version: "1.5.1",
+  version: "1.5.2",
   type: "module",
   scripts: {
     build: "node scripts/build.mjs",

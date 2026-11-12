@@ -3,6 +3,27 @@
 All notable changes to this project are documented here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.2] - 2026-11-12
+
+### Security
+
+- **The OpenCode Go key is read only through `agent.secret_scope`.** `GET /usage` installs the calling profile's
+  scope (`?profile=`, carried by every desktop `ctx.rest` call, matched against the profiles directory) and reads
+  `OPENCODE_GO_API_KEY` with `get_secret`. The `get_env_value` and `os.environ` fallbacks are gone, and an
+  `UnscopedSecretError` is no longer swallowed into them: on a gateway serving several profiles they could pick up
+  another profile's key. A missing or unscoped key reads as "not connected". The usage cache is per profile.
+- **The file preview routes refuse everything core refuses.** `_resolve` returns nothing when
+  `agent.file_safety.get_read_block_error` has a reason, and the plugin's own list now carries core's managed files:
+  `config.yaml`, `credentials`, `.git-credentials`, `webhook_subscriptions.json`, `auth.lock`,
+  `.anthropic_oauth.json`, the `google_*` token files, and any `mcp-tokens`, `pairing`, `.aws` or `.gnupg` path
+  component. A reply naming `MEDIA:~/.aws/credentials` no longer makes the page fetch it.
+
+### Tests
+
+- `dashboard/test_file_routes.py` runs on a throwaway `HERMES_HOME`/`HOME` instead of this machine's paths: one test
+  per refusal class, plus the usage key (no process-env read, hostile profile names, the calling profile's key and no
+  other, per-profile cache). 21 tests; 14 of them fail on 1.5.1.
+
 ## [1.5.1] - 2026-11-11
 
 ### Fixed
