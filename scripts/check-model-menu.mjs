@@ -12,6 +12,11 @@
 //   - the search at the top of the menu names a model outright, every provider at once, and its rows apply through
 //     that same `chooseModel` — one implementation of "choose a model", not two.
 //
+// 1.6.1 moves the whole path onto `config.set`: a model is `{key:'model', value:'<id> --provider <slug>',
+// session_id, confirm_expensive_model:true}`, an effort `{key:'reasoning', value:'<level>', session_id}`. `slash.exec`
+// has a strict schema and refused `confirm_expensive_model` outright, so every click since 1.5.3 was rejected before the
+// switch — this file now fails if a model is ever sent back through `slash.exec`.
+//
 //   node scripts/check-model-menu.mjs
 //
 // Exits 1 with one line per problem (`path:line:col: what and why`), 0 otherwise. Run by `npm run build`.
@@ -374,10 +379,13 @@ try {
 const { applyModel, bindContext, chooseModel, prefsFor, store, chosenModel, foldSearch, searchModels, ModelHits, React, renderToStaticMarkup } = runtime
 
 const calls = []
-let slashAnswer = () => ({ success: true })
+/** Every RPC method this run sent, never reset: `slash.exec` must not appear for a model or an effort. */
+const methods = []
+let configAnswer = () => ({ value: '' })
 globalThis.__hostRequest = (method, params) => {
   calls.push({ method, params })
-  if (method === 'slash.exec') return Promise.resolve(slashAnswer(params))
+  methods.push(method)
+  if (method === 'config.set') return Promise.resolve(configAnswer(params))
   return Promise.resolve({})
 }
 
@@ -400,7 +408,10 @@ const PROVIDERS = [
 
 const results = []
 const check = (name, ok, detail = '') => results.push({ name, ok, detail })
-const lastSlash = () => [...calls].reverse().find(call => call.method === 'slash.exec')?.params || {}
+const configCalls = () => calls.filter(call => call.method === 'config.set')
+const lastConfig = () => [...configCalls()].reverse()[0]?.params || {}
+const modelValues = () => configCalls().filter(call => call.params.key === 'model').map(call => call.params.value)
+const keysOf = params => Object.keys(params).sort().join(',')
 
 /* ---- the search ---- */
 
@@ -430,113 +441,179 @@ check('aucun résultat dit « No model »', empty.includes('No model'), empty.sl
 
 /* ---- the click, first level, then the submenu, then the search's Enter ---- */
 
-store.set({ bot: 'dex', sid: 'session-1' })
+store.set({ bot: 'dex', sid: 'session-1', notice: null })
 memory.set('prefs', {})
 
 calls.length = 0
-slashAnswer = () => ({ success: true })
+configAnswer = params => ({ key: params.key, value: params.value, confirm_required: false, warning: '' })
 const firstLevel = await chooseModel('dex', 'claude-sonnet-5', 'opencode-go')
-check('un clic au premier niveau applique le modèle à la session', lastSlash().command === '/model claude-sonnet-5 --provider opencode-go', JSON.stringify(lastSlash()))
-check('la commande emporte la confirmation du modèle cher', lastSlash().confirm_expensive_model === true, String(lastSlash().confirm_expensive_model))
+const first = lastConfig()
 check(
-  'la préférence et le déclencheur suivent le succès',
-  firstLevel === true && prefsFor('dex').model === 'claude-sonnet-5' && chosenModel(prefsFor('dex'), { model: 'profile-default' }) === 'claude-sonnet-5',
-  JSON.stringify(prefsFor('dex'))
+  '(a) un clic émet config.set {key:"model", value:"<id> --provider <slug>", session_id, confirm_expensive_model:true}',
+  first.key === 'model' && first.value === 'claude-sonnet-5 --provider opencode-go' && first.session_id === 'session-1' && first.confirm_expensive_model === true,
+  JSON.stringify(first)
+)
+check(
+  '(a) le payload du modèle ne porte aucune clé en plus',
+  keysOf(first) === 'confirm_expensive_model,key,session_id,value',
+  keysOf(first)
+)
+check(
+  '(a) un modèle n’est plus jamais envoyé par slash.exec',
+  !methods.includes('slash.exec') && configCalls().length === 1,
+  `${calls.length} call(s): ${calls.map(call => call.method).join(', ')}`
+)
+check(
+  '(b) confirm_required:false + value → succès, préférence écrite, aucune notice',
+  firstLevel === true && prefsFor('dex').model === 'claude-sonnet-5' && chosenModel(prefsFor('dex'), { model: 'profile-default' }) === 'claude-sonnet-5' && !store.get().notice,
+  `${JSON.stringify(prefsFor('dex'))} notice=${JSON.stringify(store.get().notice)}`
 )
 
 calls.length = 0
 const submenu = await chooseModel('dex', 'claude-haiku-4-5', 'anthropic')
-check('un clic dans le sous-menu passe par le même chemin', submenu === true && lastSlash().command === '/model claude-haiku-4-5 --provider anthropic', JSON.stringify(lastSlash()))
+check('un clic dans le sous-menu passe par le même chemin', submenu === true && lastConfig().value === 'claude-haiku-4-5 --provider anthropic', JSON.stringify(lastConfig()))
 
 calls.length = 0
 const fromSearch = await chooseModel('dex', hits[0].model, hits[0].provider.slug)
 check(
   'Entrée sur un résultat applique le modèle surligné',
-  fromSearch === true && lastSlash().command === `/model ${hits[0].model} --provider ${hits[0].provider.slug}`,
-  JSON.stringify(lastSlash())
+  fromSearch === true && lastConfig().value === `${hits[0].model} --provider ${hits[0].provider.slug}`,
+  JSON.stringify(lastConfig())
 )
 
-/* ---- the refusal: back to the old model, and said ---- */
+/* ---- (c) the refusal: back to the old model, and said ---- */
 
 const before = { ...prefsFor('dex') }
 store.set({ notice: null })
 calls.length = 0
-slashAnswer = () => ({ success: false, error: 'unknown provider' })
-const refused = await chooseModel('dex', 'deepseek-v4', 'opencode-go')
-check('un refus du gateway n’applique rien', refused === false, String(refused))
+// The click already sent `confirm_expensive_model: true`: a gateway that still asks is refusing, not accepting.
+configAnswer = () => ({ confirm_required: true, confirm_message: 'claude-opus-5-5 is an expensive model: confirm the switch' })
+const refused = await chooseModel('dex', 'claude-opus-5-5', 'anthropic')
+check('(c) confirm_required:true n’est jamais un succès silencieux', refused === false, String(refused))
 check(
-  'le déclencheur revient à l’ancienne valeur',
+  '(c) le déclencheur revient à l’ancienne valeur',
   prefsFor('dex').model === before.model && prefsFor('dex').provider === before.provider && chosenModel(prefsFor('dex'), { model: '' }) === before.model,
   `${JSON.stringify(prefsFor('dex'))} vs ${JSON.stringify(before)}`
 )
+const confirmTold = store.get().notice?.text || ''
+check(
+  '(c) la notice porte le confirm_message du gateway',
+  confirmTold.includes('claude-opus-5-5 is an expensive model: confirm the switch'),
+  JSON.stringify(confirmTold || null)
+)
+check('(c) la notice garde la copie traduite en tête', /^Couldn't switch to /.test(confirmTold), JSON.stringify(confirmTold.slice(0, 60)))
+
+/* ---- a plain refusal: the gateway's error, back to the old model ---- */
+
+store.set({ notice: null })
+calls.length = 0
+configAnswer = () => ({ error: 'unknown provider' })
+const plainly = await chooseModel('dex', 'deepseek-v4', 'opencode-go')
+check('un refus du gateway n’applique rien', plainly === false && prefsFor('dex').model === before.model, String(plainly))
 check('le refus est dit, dans la copie traduite', /Couldn't switch to Deepseek v4/.test(store.get().notice?.text || ''), JSON.stringify(store.get().notice?.text || null))
 
 /* ---- a thrown RPC reads as a refusal too ---- */
 
-slashAnswer = () => {
+configAnswer = () => {
   throw new Error('gateway said no')
 }
 const thrown = await chooseModel('dex', 'claude-haiku-4-5', 'anthropic')
-check('une erreur du RPC ne change pas la préférence', thrown === false && prefsFor('dex').model === before.model, JSON.stringify(prefsFor('dex')))
+check(
+  'une erreur du RPC ne change pas la préférence',
+  thrown === false && prefsFor('dex').model === before.model && (store.get().notice?.text || '').includes('gateway said no'),
+  `${JSON.stringify(prefsFor('dex'))} notice=${JSON.stringify(store.get().notice?.text || null)}`
+)
 
 /* ---- no session: the preference is all there is ---- */
 
-slashAnswer = () => ({ success: true })
+configAnswer = params => ({ key: params.key, value: params.value })
 store.set({ sid: null })
 calls.length = 0
 const fresh = await chooseModel('dex', 'gpt-6', 'opencode-go')
-check('sans session, la préférence est écrite sans appel', fresh === true && prefsFor('dex').model === 'gpt-6' && !calls.some(call => call.method === 'slash.exec'), `${calls.length} call(s)`)
+check('sans session, la préférence est écrite sans appel', fresh === true && prefsFor('dex').model === 'gpt-6' && !calls.some(call => call.method === 'config.set'), `${calls.length} call(s)`)
 
 /* ---- one application per change: the next prompt does not re-send it ---- */
 
 store.set({ sid: 'session-1' })
 calls.length = 0
 const again = await applyModel('session-1', { model: 'gpt-6', provider: 'opencode-go' })
-check('applyModel ne renvoie pas une commande déjà appliquée', again.ok === true && !calls.some(call => call.method === 'slash.exec'), `${calls.length} call(s)`)
+check('applyModel ne renvoie pas une commande déjà appliquée', again.ok === true && !calls.some(call => call.method === 'config.set'), `${calls.length} call(s)`)
 
-/* ---- 1.5.4, A2: the slug the menu read is not the slug /model wants ---- */
+/* ---- 1.5.4, A2: the slug the menu read is not the slug --provider wants ---- */
 
 // The gateway resolves the provider from the model id. So a refusal that named a provider is tried once more without
 // `--provider` before the picker gives up — that refusal is what a person saw on Step 3.7 Flash:free.
 store.set({ notice: null })
 memory.set('prefs', {})
 calls.length = 0
-slashAnswer = params => (/--provider /.test(params.command) ? { success: false, error: 'provider "opencode-go" is not authenticated' } : { success: true })
+configAnswer = params =>
+  /--provider /.test(params.value)
+    ? { error: 'provider "opencode-go" is not authenticated' }
+    : { key: params.key, value: params.value, confirm_required: false }
 const retried = await chooseModel('dex', 'stepfun/step-3.7-flash:free', 'opencode-go')
-const commands = calls.filter(call => call.method === 'slash.exec').map(call => call.params.command)
 check(
-  'un refus nommant un provider se retente sans --provider',
-  retried === true && commands.join(' then ') === '/model stepfun/step-3.7-flash:free --provider opencode-go then /model stepfun/step-3.7-flash:free',
-  commands.join(' then ') || 'aucune commande'
+  '(d) un refus nommant un provider se retente sans --provider',
+  retried === true &&
+    modelValues().join(' then ') === 'stepfun/step-3.7-flash:free --provider opencode-go then stepfun/step-3.7-flash:free',
+  modelValues().join(' then ') || 'aucune valeur'
 )
 check(
-  'la seconde tentative passe : la préférence est écrite, rien n’est dit',
+  '(d) la seconde tentative passe : la préférence est écrite, rien n’est dit',
   prefsFor('dex').model === 'stepfun/step-3.7-flash:free' && prefsFor('dex').provider === 'opencode-go' && !store.get().notice,
   `${JSON.stringify(prefsFor('dex'))} notice=${JSON.stringify(store.get().notice)}`
 )
 
-/* ---- and when both fail: the gateway's own words, and the old model ---- */
+/* ---- (e) and when both fail: the last attempt's words, and the old model ---- */
 
 const kept = { ...prefsFor('dex') }
 store.set({ notice: null })
 calls.length = 0
-slashAnswer = () => ({ success: false, error: 'model not found: stepfun/ghost-1' })
+configAnswer = () => ({ error: 'model not found: stepfun/ghost-1' })
 const twice = await chooseModel('dex', 'stepfun/ghost-1', 'opencode-go')
-const both = calls.filter(call => call.method === 'slash.exec').map(call => call.params.command)
-check('deux refus : rien n’est appliqué', twice === false && prefsFor('dex').model === kept.model && prefsFor('dex').provider === kept.provider, JSON.stringify(prefsFor('dex')))
+check('(e) deux refus : rien n’est appliqué', twice === false && prefsFor('dex').model === kept.model && prefsFor('dex').provider === kept.provider, JSON.stringify(prefsFor('dex')))
 check(
-  'deux refus : deux essais, le second sans --provider',
-  both.join(' then ') === '/model stepfun/ghost-1 --provider opencode-go then /model stepfun/ghost-1',
-  both.join(' then ') || 'aucune commande'
+  '(e) deux refus : deux essais, le second sans --provider',
+  modelValues().join(' then ') === 'stepfun/ghost-1 --provider opencode-go then stepfun/ghost-1',
+  modelValues().join(' then ') || 'aucune valeur'
 )
 const told = store.get().notice?.text || ''
 check(
-  'la notice dit la raison du gateway',
+  '(e) la notice dit la raison du dernier essai',
   told.includes('model not found: stepfun/ghost-1'),
   JSON.stringify(told || null)
 )
 check('la notice garde la copie traduite en tête', /^Couldn't switch to /.test(told), JSON.stringify(told.slice(0, 60)))
 check('la notice ne montre pas de JSON brut', !/[{}]/.test(told), JSON.stringify(told))
+
+/* ---- (f) the effort: its own key on config.set, no model confirmation ---- */
+
+store.set({ bot: 'dex', sid: 'session-effort', notice: null })
+calls.length = 0
+configAnswer = params => ({ key: params.key, value: params.value })
+const effortRes = await applyModel('session-effort', { model: '', provider: '', effort: 'high' }, { force: true })
+const effortCall = lastConfig()
+check(
+  '(f) l’effort passe par config.set {key:"reasoning", value:"high"}',
+  effortRes.ok === true && effortCall.key === 'reasoning' && effortCall.value === 'high' && effortCall.session_id === 'session-effort',
+  JSON.stringify(effortCall)
+)
+check('(f) l’effort ne porte aucune clé en plus', keysOf(effortCall) === 'key,session_id,value', keysOf(effortCall))
+
+/* ---- a warning on a success is a success, said ---- */
+
+store.set({ bot: 'dex', sid: 'session-warn', notice: null })
+calls.length = 0
+configAnswer = params => ({ key: params.key, value: params.value, warning: 'nousresearch is serving a degraded route for this model' })
+const warned = await applyModel('session-warn', { model: 'claude-opus-5-5', provider: 'nousresearch' }, { force: true })
+check(
+  'un warning sur un succès ne bloque rien, et la notice le dit',
+  warned.ok === true && /degraded route/.test(store.get().notice?.text || ''),
+  `ok=${String(warned.ok)} notice=${JSON.stringify(store.get().notice?.text || null)}`
+)
+
+/* ---- the whole run: no model or effort went out as a slash command ---- */
+
+check('aucun slash.exec de tout le run', !methods.includes('slash.exec'), `${methods.length} call(s): ${[...new Set(methods)].join(', ')}`)
 
 /* ---- A2, the menu side: a provider with no key offers nothing ---- */
 
