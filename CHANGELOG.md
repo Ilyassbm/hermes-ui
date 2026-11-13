@@ -3,6 +3,27 @@
 All notable changes to this project are documented here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.4] - 2026-11-13
+
+### Fixed
+
+- **A link of a response opens in the browser, not in the app.** `[site](https://…)` in an answer looked dead: the
+  desktop app's router is a hash router, so following the `<a href>` left the app or did nothing. Every http(s) and
+  mailto link now leaves through the host's OS door, `ctx.os.openExternal(url)`, with `window.open(url, '_blank',
+  'noopener,noreferrer')` for the Webapp and an older SDK; the click is taken from the page (`preventDefault` +
+  `stopPropagation`, so a link inside a message is not a press on the message) and the element stays a real `<a
+  href>`. `javascript:`, `file:`, `data:` and a relative path render as their label — only what the OS door can open
+  is offered as a link. New gate: `scripts/check-links.mjs`, run by the build.
+- **A refused model switch now says why, and is tried without `--provider`.** The picker used to flatten the
+  gateway's answer into "it didn't work": the refusal's own words are now in the notice, after the translated line.
+  The slug the menu reads in `model.options` is not always the one `/model --provider` expects (the gateway's provider
+  is "nous" where the catalogue says "nousresearch"; a custom provider has no slug there), so a refusal that named a
+  provider is tried once more as `/model <id>` alone — the gateway resolves the provider from the id — and only a
+  second refusal reverts the preference.
+- **A provider without a key no longer offers models.** `authenticated: false` was quietly dropped from the picker;
+  the group now stays, named, with "Key missing" and every row disabled, and its models are neither in the search's
+  flat list nor in the settings page's default-model list.
+
 ## [1.5.3] - 2026-11-13
 
 ### Changed

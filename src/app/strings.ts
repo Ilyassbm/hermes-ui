@@ -79,6 +79,8 @@ export const UI = {
     searchPlaceholder: 'Type a model name',
     searchLabel: 'Search the models of every provider',
     searchResults: 'Models found',
+    /** A provider the profile has no key for: its rows are there, disabled, and this is why. */
+    needsKey: 'Key missing',
     /** The picker's own refusal: the gateway did not take the model, so the conversation kept the one it ran. */
     applyFailed: (model: string) => `Couldn't switch to ${model} — the conversation kept its model.`
   },

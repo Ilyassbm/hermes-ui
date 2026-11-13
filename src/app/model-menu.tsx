@@ -31,7 +31,7 @@ import { SegmentedControl, SegmentedControlItem } from '@/components/glaze/ui/se
 import { chooseModel, prefsFor, savePrefs, store } from '@/lib/hermes'
 import { modelLabel } from '@/lib/labels'
 import { useStore } from '@/lib/store'
-import { chosenModel, EFFORTS, effortLabel, foldSearch, loadCatalog, MODEL_MENU_TOP, searchModels, topModels, type ModelHit, type Provider } from './models'
+import { chosenModel, EFFORTS, effortLabel, foldSearch, loadCatalog, MODEL_MENU_TOP, providerReady, searchModels, topModels, type ModelHit, type Provider } from './models'
 import { ProviderLogo, logoFor } from './provider-logo'
 import { UI } from './strings'
 import { view } from './ui-state'
@@ -287,34 +287,40 @@ export function ModelMenu() {
               <DropdownMenuLabel>{UI.model.unavailable}</DropdownMenuLabel>
             </DropdownMenuGroup>
           ) : null}
-          {query.trim() ? null : providers.map(provider => (
-            <DropdownMenuGroup key={provider.slug}>
-              <DropdownMenuLabel className="hui-model-provider">
-                <ProviderLogo provider={provider.slug} size={18} />
-                <span>{provider.name}</span>
-              </DropdownMenuLabel>
-              {/* `topModels`: the current model, then the provider's own order, never more than MODEL_MENU_TOP rows
-                  (the first render has to stay light enough for the click that opened it). */}
-              <DropdownMenuRadioGroup value={model} onValueChange={next => pick(next, provider.slug)}>
-                {topModels(provider, model).map(next => (
-                  <DropdownMenuRadioItem key={`${provider.slug}:${next}`} value={next}>
-                    {next === model ? <ProviderLogo provider={provider.slug} size={14} /> : null}
-                    <span>{modelLabel(next)}</span>
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-              {provider.models.length > MODEL_MENU_TOP ? (
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>{UI.model.allModels(provider.name)}</DropdownMenuSubTrigger>
-                  {/* `AllModels` mounts with the submenu, so the rest of the catalogue is listed — and filtered —
-                      only once this level opens. */}
-                  <DropdownMenuSubContent size="sm" className="hui-model-sub">
-                    <AllModels provider={provider} model={model} onPick={next => pick(next, provider.slug)} />
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              ) : null}
-            </DropdownMenuGroup>
-          ))}
+          {query.trim() ? null : providers.map(provider => {
+            // A provider the profile has no key for: its group stays (the person knows they use it) and says why, and
+            // none of its rows is clickable — a row that cannot apply is the same lie as a trigger that never moves.
+            const ready = providerReady(provider)
+            return (
+              <DropdownMenuGroup key={provider.slug}>
+                <DropdownMenuLabel className="hui-model-provider">
+                  <ProviderLogo provider={provider.slug} size={18} />
+                  <span>{provider.name}</span>
+                  {ready ? null : <span className="hui-model-provider-key">{UI.model.needsKey}</span>}
+                </DropdownMenuLabel>
+                {/* `topModels`: the current model, then the provider's own order, never more than MODEL_MENU_TOP rows
+                    (the first render has to stay light enough for the click that opened it). */}
+                <DropdownMenuRadioGroup value={model} onValueChange={next => ready && pick(next, provider.slug)}>
+                  {topModels(provider, model).map(next => (
+                    <DropdownMenuRadioItem key={`${provider.slug}:${next}`} value={next} disabled={!providerReady(provider)}>
+                      {next === model ? <ProviderLogo provider={provider.slug} size={14} /> : null}
+                      <span>{modelLabel(next)}</span>
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+                {ready && provider.models.length > MODEL_MENU_TOP ? (
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>{UI.model.allModels(provider.name)}</DropdownMenuSubTrigger>
+                    {/* `AllModels` mounts with the submenu, so the rest of the catalogue is listed — and filtered —
+                        only once this level opens. */}
+                    <DropdownMenuSubContent size="sm" className="hui-model-sub">
+                      <AllModels provider={provider} model={model} onPick={next => pick(next, provider.slug)} />
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                ) : null}
+              </DropdownMenuGroup>
+            )
+          })}
         </DropdownMenuContent>
       </DropdownMenu>
     </>
