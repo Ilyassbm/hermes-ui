@@ -17,14 +17,38 @@
 //
 // Exits 1 with one line per failed point, 0 otherwise.
 import { build } from 'esbuild'
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
 const scratch = process.env.HUI_SCRATCH || join(root, 'cache', 'composition')
-const CHROME = process.env.HUI_CHROME || '/opt/hermes/tools/chromium-1208/chrome-linux64/chrome'
+
+/**
+ * The Chromium to measure with. `HUI_CHROME` first, then the box's copy, then whatever Playwright itself resolved —
+ * and `null` when none of them is on disk, which is the case on a CI runner that never downloaded a browser. The
+ * source half above already ran by then; only the measurement half is skipped, and it says so instead of pretending.
+ */
+async function launchBrowser() {
+  const candidates = [process.env.HUI_CHROME, '/opt/hermes/tools/chromium-1208/chrome-linux64/chrome', chromium.executablePath()]
+  for (const candidate of candidates) {
+    if (!candidate) continue
+    try {
+      if (!existsSync(candidate)) continue
+      return await chromium.launch({ executablePath: candidate })
+    } catch {
+      /* that one cannot start: try the next */
+    }
+  }
+  return null
+}
+
+const browser = await launchBrowser()
+if (!browser) {
+  console.log('dom half skipped — no Chromium on this machine (set HUI_CHROME=/path/to/chrome to measure the page).')
+}
+
 
 let failed = 0
 const ok = (label, detail) => console.log(`ok   ${label}${detail ? ` — ${detail}` : ''}`)
@@ -279,7 +303,6 @@ writeFileSync(
 )
 writeFileSync(join(scratch, 'page.css'), read('src/styles/.compiled.css'))
 
-const browser = await chromium.launch({ executablePath: CHROME })
 const pageFor = async (viewport, colorScheme) => {
   const page = await browser.newPage({ viewport, colorScheme })
   await page.goto(`file://${html}`)
@@ -299,7 +322,7 @@ const expectNear = (value, want, what, tolerance = 1) => {
   return `${what} ${Math.round(value * 10) / 10}`
 }
 
-try {
+if (browser) try {
   for (const scheme of ['dark', 'light']) {
     const page = await pageFor({ width: 1440, height: 900 }, scheme)
     const at = `1440×900 ${scheme}`
