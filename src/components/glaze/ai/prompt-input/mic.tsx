@@ -56,6 +56,9 @@ type PromptInputMicProps = Omit<React.ComponentProps<typeof Button>, 'size' | 'v
 function PromptInputMic({state = 'idle', level = 0, onListeningChange, size = 'sm', reason, tooltip = true, labels, className, onClick, ...props}: PromptInputMicProps) {
   const words = {...micLabels, ...labels};
   const descriptionId = React.useId();
+  // The chip's own id, declared on the button: a checker that follows data-ui-tooltip to a role="tooltip" element
+  // needs the link to exist before the popup is ever opened (the paperclip's tooltip does the same).
+  const tipId = `hui-tip-mic-${descriptionId.replace(/:/g, '')}`;
   const listening = state === 'listening';
   const blocked = state === 'denied' || state === 'unsupported';
   const name = {idle: words.start, listening: words.stop, denied: words.blocked, unsupported: words.unavailable}[state];
@@ -68,6 +71,7 @@ function PromptInputMic({state = 'idle', level = 0, onListeningChange, size = 's
     variant="ghost"
     size={size === 'sm' ? 'icon-sm' : size === 'lg' ? 'icon-lg' : 'icon'}
     aria-label={name}
+    data-ui-tooltip={tooltip ? tipId : undefined}
     aria-pressed={state === 'unsupported' ? undefined : listening}
     aria-describedby={blocked ? descriptionId : undefined}
     disabled={state === 'unsupported'}
@@ -88,7 +92,7 @@ function PromptInputMic({state = 'idle', level = 0, onListeningChange, size = 's
       : <Icon icon={blocked ? MicrophoneOff : Microphone} size={glyph}/>}
   </Button>;
   return <>
-    {tooltip ? <Tooltip><TooltipTrigger render={button}/><TooltipContent>{tip}</TooltipContent></Tooltip> : button}
+    {tooltip ? <Tooltip><TooltipTrigger render={button}/><TooltipContent id={tipId}>{tip}</TooltipContent></Tooltip> : button}
     {blocked && <span id={descriptionId} hidden>{tip}</span>}
   </>;
 }

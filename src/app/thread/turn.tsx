@@ -8,7 +8,7 @@ import { AgentTurn, MessageFooter } from '@/components/glaze/ai/message'
 import { ToolCallList, toolCallsReducer, type ToolCallData } from '@/components/glaze/ai/tool-call'
 import { Button } from '@/components/glaze/ui/button'
 import { CopyButton } from '@/components/glaze/ui/copy-button'
-import { humanDuration, modelLabel } from '@/lib/labels'
+import { humanDuration } from '@/lib/labels'
 import { replyApproval, store } from '@/lib/hermes'
 import { useStore } from '@/lib/store'
 import { UI } from '../strings'
@@ -119,12 +119,6 @@ export function AssistantTurn({ message, name }: TurnProps) {
       {text && !streaming ? (
         <MessageFooter>
           <CopyButton value={text} label={UI.turn.copyResponse} />
-          {/* The model that answered moved here from the speaker line: quiet, after the copy button. */}
-          {message.model ? (
-            <span data-hui-part="turn-model" title={message.model} className="truncate type-caption text-text-3">
-              {modelLabel(message.model)}
-            </span>
-          ) : null}
         </MessageFooter>
       ) : null}
     </AgentTurn>

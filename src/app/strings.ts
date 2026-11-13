@@ -148,6 +148,8 @@ export const UI = {
     views: 'Panel view',
     activity: 'Activity',
     filesWithCount: (n: number) => `Files · ${n}`,
+    /** The panel's one line under the tabs: who can see this bot's work. */
+    private: 'Private, visible only to you',
     conversations: 'Conversations',
     noConversation: 'No conversation with this bot yet.',
     running: 'Running',

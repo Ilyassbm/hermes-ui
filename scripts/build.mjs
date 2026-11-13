@@ -130,6 +130,13 @@ if (nativeSkin.errors.length) {
 }
 console.log(`skin: ${NATIVE_SKIN_FILE} (${nativeSkin.bytes} bytes, ${nativeSkin.rules} rules, none targeting .glaze)`)
 
+// 3c. The composition gate (1.6.2, lot 8): the page must stay the reference's page — the pinned tiles, the pill of the
+//     bot alone, no model under a reply, the panel's 288 cards of 36px rows, the 44 composer with the mic while empty and
+//     the ink send key with text, and the 64/60 top with the thread fading under the veil. Static assertions plus the
+//     rendered page, measured with the box's Chromium (HUI_CHROME for another one).
+const composition = spawnSync(process.execPath, [resolve(root, 'scripts/check-ui-composition.mjs')], { stdio: 'inherit' })
+if (composition.status !== 0) process.exit(composition.status ?? 1)
+
 const options = {
   entryPoints: ['src/plugin.jsx'],
   outfile: 'desktop/plugin.js',
