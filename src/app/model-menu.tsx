@@ -206,10 +206,12 @@ export function ModelMenu() {
         }}
       >
         {/* The mark of the house that serves the model — OpenCode Go, Anthropic — not of the family it runs: a
-            DeepSeek served by OpenCode Go is billed and rate-limited by OpenCode Go. */}
+            DeepSeek served by OpenCode Go is billed and rate-limited by OpenCode Go. The composer draws the trigger
+            as the reference's small print (the name and the effort, 13px); the mark stays in the DOM for the narrow
+            composer, where the name would not fit and the mark is the only thing left to press (shell.css). */}
         <ProviderLogo provider={logoFor(prefs.provider || meta?.provider || model)} size={16} className="hui-model-logo" />
-        <span className="hui-model-name">{label}</span>{' '}
-        <span className="hui-model-effort-tag">{effortShort(effort)}</span>
+        <span className="hui-model-name">{label}</span>
+        <span className="hui-model-effort-tag">{`· ${effortShort(effort)}`}</span>
         <Icon icon={ChevronDown} size={12} />
       </Button>
       <DropdownMenu open={open} onOpenChange={changeOpen}>

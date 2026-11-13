@@ -55,9 +55,9 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
   )
 
   return (
-    // The reference's header: no bar, no tabs. The bot floats as a pill in the middle — its avatar, "Name · Role" and,
-    // once a conversation is open, its title in small print — and the pill opens every conversation of the bot. The
-    // new conversation and the panel's toggle are round buttons at the end.
+    // The reference's header: no bar, no tabs. The bot floats as a pill in the middle — its avatar, its name and the
+    // chevron that opens every conversation of the bot, and nothing else (lot 8: the open conversation's title left the
+    // pill). The new conversation and the panel's toggle are round buttons at the end.
     <div className="hui-hdr" data-ui-container="" data-ui-actions="">
       {/* The veil over the thread: the page's own top colour, opaque at the top, clear by 60px. A real element rather
           than a ::before, so nothing generated sits between a control's words and the surface they are read on. */}
@@ -89,11 +89,17 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
       <DropdownMenu>
         <DropdownMenuTrigger
           openOnHover={false}
-          render={<Button variant="ghost" className="hui-pill" title={open?.title || UI.header.allConversations} />}
+          render={
+            <Button
+              variant="ghost"
+              className="hui-pill"
+              title={open?.title || UI.header.allConversations}
+              aria-label={role ? `${name}, ${role}` : name}
+            />
+          }
         >
           <BotAvatar size={22} colors={identity.colors} shape={identity.shape} label={name} hoverGiggle={false} />
-          <span className="hui-pill-name">{role ? `${name} · ${role}` : name}</span>
-          {open?.title ? <span className="hui-pill-title">{open.title}</span> : null}
+          <span className="hui-pill-name">{name}</span>
           {live ? <WorkingDot className="hui-tab-dot" /> : null}
           <Icon icon={ChevronDown} size={12} />
         </DropdownMenuTrigger>

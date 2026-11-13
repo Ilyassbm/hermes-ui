@@ -2,7 +2,7 @@
   "name": "hermes-ui",
   "label": "Hermes UI",
   "description": "Backend of the Hermes UI chat page (bots' last output, file previews).",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "tab": {
     "hidden": true
   },

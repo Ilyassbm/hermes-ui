@@ -36,7 +36,7 @@ import { Switch } from '@/components/glaze/ui/switch'
 import { toast } from '@/components/glaze/ui/toast'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/glaze/ui/tooltip'
 import { loadRoutines, openConversation, openPreview, rest, store, toggleRoutine } from '@/lib/hermes'
-import { botLabel, modelLabel } from '@/lib/labels'
+import { botLabel } from '@/lib/labels'
 import { useStore } from '@/lib/store'
 import { BotAvatar } from './bot-avatar'
 import { botIdentity, botRole, sinceLabel } from './format'
@@ -61,6 +61,9 @@ type Preview = {
 
 /** The text preview's ceiling, in lines: the spec's 4 000, and the backend's 1 MiB read behind it. */
 const MAX_LINES = 4000
+
+/** The files card's first screen: six 36px rows, then "Show more" (the reference's card). */
+const FILE_ROWS = 6
 
 const IMAGE_EXT = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'])
 const TABLE_EXT = new Set(['csv', 'tsv'])
@@ -172,8 +175,6 @@ export function Aside({ ctx }: { ctx: any }) {
   const role = botRole(bot || undefined, meta?.description)
   const identity = botIdentity(bot || 'default')
   const sessions = (bot && sessionsByBot[bot]) || []
-  // What the bot runs on, in one line: its model and how many skills it carries.
-  const facts = [meta?.model ? modelLabel(meta.model) : '', meta?.skills ? UI.aside.skills(meta.skills) : ''].filter(Boolean).join(' · ')
   const [tab, setTab] = useState<'activity' | 'files'>(() => read(ctx, 'asideTab', 'activity'))
   const pickTab = (next: 'activity' | 'files') => {
     setTab(next)
@@ -184,6 +185,7 @@ export function Aside({ ctx }: { ctx: any }) {
     }
   }
   const [allConvs, setAllConvs] = useState(false)
+  const [allFiles, setAllFiles] = useState(false)
   const [busyJob, setBusyJob] = useState('')
 
   const [copied, setCopied] = useState('')
@@ -208,6 +210,8 @@ export function Aside({ ctx }: { ctx: any }) {
   const shown = needle
     ? ordered.filter(file => `${nameOf(file.path)} ${file.path}`.toLowerCase().includes(needle))
     : ordered
+  // The card shows the conversation's first six files; "Show more" opens the rest, as the reference's card does.
+  const listed = allFiles ? shown : shown.slice(0, FILE_ROWS)
 
   const open = (id: string) => {
     try {
@@ -308,7 +312,7 @@ export function Aside({ ctx }: { ctx: any }) {
         shown.length ? (
           <div className="hui-aside-card">
             <ItemGroup variant="plain" role="group" aria-label={UI.aside.filesLabel}>
-              {shown.map(file => (
+              {listed.map(file => (
                 <AsideRow key={file.path} label={UI.aside.openFile(file.path)} onClick={() => openPreview(file.path)}>
                   <ItemMedia variant="icon">
                     <Icon icon={iconFor(file.path)} size={16} />
@@ -325,6 +329,11 @@ export function Aside({ ctx }: { ctx: any }) {
                 </AsideRow>
               ))}
             </ItemGroup>
+            {shown.length > FILE_ROWS ? (
+              <Button variant="ghost" size="sm" className="hui-aside-more" onClick={() => setAllFiles(v => !v)}>
+                {allFiles ? UI.aside.showLess : UI.aside.showMore}
+              </Button>
+            ) : null}
           </div>
         ) : (
           <p className="px-1 py-2 type-caption text-text-3">{UI.aside.noMatch}</p>
@@ -351,8 +360,8 @@ export function Aside({ ctx }: { ctx: any }) {
         />
       ) : (
         <>
-          {/* The reference's bot card: settings and close on the top line, then the avatar, the name, what it runs
-              on, and the two views of what it does. */}
+          {/* The reference's bot card: settings and close on the top line, then the avatar, the name, the two views of
+              what it does, and one line saying who can see it. */}
           <div className="hui-aside-top">
             <TooltipProvider>
               <Tooltip>
@@ -398,13 +407,14 @@ export function Aside({ ctx }: { ctx: any }) {
           <div className="hui-aside-profile">
             <BotAvatar size={59} colors={identity.colors} shape={identity.shape} label={name} />
             <h2 className="hui-aside-name">{role ? `${name} · ${role}` : name}</h2>
-            {facts ? <p className="hui-aside-facts">{facts}</p> : null}
             <SegmentedControl size="sm" value={tab} onValueChange={(value: any) => pickTab(value)} aria-label={UI.aside.views}>
               <SegmentedControlItem value="activity">{UI.aside.activity}</SegmentedControlItem>
               <SegmentedControlItem value="files">
                 {ordered.length ? UI.aside.filesWithCount(ordered.length) : UI.aside.files}
               </SegmentedControlItem>
             </SegmentedControl>
+            {/* One line under the tabs: who can see this bot (spec §4, lot 8). */}
+            <p className="hui-aside-sub">{UI.aside.private}</p>
           </div>
 
           {tab === 'files' ? (

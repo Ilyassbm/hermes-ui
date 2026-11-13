@@ -3,6 +3,38 @@
 All notable changes to this project are documented here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.2] - 2026-11-13
+
+The page, drawn as the validated reference (`mock-grok-direction.html`, 1440×900). Lot 7 had the tokens and the layout
+right; six elements of the old composition were still on screen. This release closes them, and a new gate keeps them
+closed.
+
+### Changed
+
+- **The pinned bots are the reference's tiles**: 95 × 90, a 55 avatar centred over a 13px name, radius 10, 8 between
+  two tiles, `--tile-selected` for the one in use, the row centred and wrapping. The rail has drawn tiles since 1.6.0;
+  what this release adds is the proof — the page the gate renders now pins two bots, so the tiles exist to be measured,
+  and a pin that names no bot of the roster still closes the row away (the list moves up).
+- **The header pill carries the bot alone**: avatar 22, the name at 14.5/500, the chevron. The open conversation's title
+  left the pill (~110 wide, as the reference); the panel lists the conversation, as before.
+- **Nothing rides under a reply**: the model's name under each bubble is gone. The model is still named in the
+  composer and — where it belongs — in the model menu.
+- **The panel follows the reference**: avatar 59 at 70.5 under its edge, the name, the two 26px pills, then one line
+  under them — "Private, visible only to you" — instead of "model · N skills". Conversations and routines are the
+  reference's 288-wide cards with 36px rows, and the files card keeps its 36px rows and gains the "Show more" the card
+  has.
+- **The composer is the reference's**: the model is small print (13px, the muted ink) instead of a control in a box, and
+  the row's last key is the microphone while the field is empty — the ink send key takes its place with the first word
+  (and stays Stop while a turn runs). Voice input is the browser's own dictation (Web Speech API); where the runtime
+  has none, the mic says so in its tooltip instead of pretending.
+- The thread keeps its 64px step under the 60px veil: the bubbles scroll under the fade, which the gate proves by
+  sampling the pixel behind it.
+
+### Added
+
+- `scripts/check-ui-composition.mjs` (`npm run check:composition`), run by `npm run build`: static assertions on the six
+  points plus the rendered page at 1440×900 and 390×844 in both colour schemes, measured with the box's Chromium.
+
 ## [1.6.1] - 2026-11-13
 
 ### Fixed

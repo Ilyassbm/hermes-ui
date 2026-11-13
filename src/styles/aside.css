@@ -322,9 +322,9 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  /* The avatar is 59 and starts 22.5 under the top row (12 of panel padding + 36 of buttons = 48, so 70.5 from the
-     panel's top edge). */
-  padding: 22.5px 0 8px;
+  /* The avatar is 59 and its top lands 70.5 under the panel's edge: the panel's own 12 of padding, the 36 of buttons,
+     the column's 16 of gap and 6.5 more (spec §4). */
+  padding: 6.5px 0 0;
   flex: none;
 }
 .glaze .hui-aside-profile > .hui-bot {
@@ -339,8 +339,10 @@
   color: var(--text-1);
   text-align: center;
 }
-.glaze .hui-aside-facts {
-  margin-top: -4px;
+/* The one line under the tabs: 13px, the muted ink, 12 under the pills ("Privé, visible par vous seul" in the mock;
+   the catalog is English, so the product's own words are used). */
+.glaze .hui-aside-sub {
+  margin-top: 2px;
   font-size: 13px;
   line-height: 18px;
   color: var(--text-2);
