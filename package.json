@@ -1,7 +1,7 @@
 {
   "name": "hermes-ui",
   "private": true,
-  "version": "1.5.2",
+  "version": "1.5.3",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
@@ -17,6 +17,7 @@
     "check:bundle": "node scripts/check-bundle.mjs",
     "check:copy": "node scripts/check-copy.mjs",
     "check:iui": "node scripts/check-iui.mjs",
+    "check:clarify": "node scripts/check-clarify.mjs",
     "check:motion": "node scripts/check-motion.mjs",
     "check:resume": "node scripts/check-resume.mjs",
     "check:iui-skill": "node scripts/gen-iui-skill.mjs --check",

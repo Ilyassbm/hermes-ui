@@ -74,7 +74,13 @@ export const UI = {
     allModels: (name: string) => `All ${name} models…`,
     filterModels: (name: string) => `Filter ${name} models`,
     unavailable: 'Models unavailable',
-    noModel: 'No model'
+    noModel: 'No model',
+    /** The search at the top of the picker: a model named outright, from any provider. */
+    searchPlaceholder: 'Type a model name',
+    searchLabel: 'Search the models of every provider',
+    searchResults: 'Models found',
+    /** The picker's own refusal: the gateway did not take the model, so the conversation kept the one it ran. */
+    applyFailed: (model: string) => `Couldn't switch to ${model} — the conversation kept its model.`
   },
 
   /** The settings page registered in Settings ▸ Plugins. */
@@ -116,7 +122,7 @@ export const UI = {
     license: 'License',
     licenseName: 'MIT',
     network: 'Network',
-    networkBody: 'The workspace talks to your Hermes gateway only — sessions, models, approvals — and to its own /usage endpoint. No analytics, no third-party requests.',
+    networkBody: 'The workspace talks to your Hermes gateway only — sessions, models, approvals — and to its own /bots endpoint. No analytics, no third-party requests.',
     openRepository: 'Open the repository'
   },
 
@@ -196,27 +202,6 @@ export const UI = {
     zoomOut: 'Zoom out',
     /** A send whose file the gateway refused: said in the thread, the message kept for a retry. */
     attachFailed: (name: string) => `Couldn't attach ${name}`
-  },
-
-  /** The subscription meters at the foot of the rail: one compact row each, and the panel a row opens. */
-  usage: {
-    title: (provider: string, plan: string) => `Usage limits · ${provider}${plan ? ` · ${plan}` : ''}`,
-    fiveHour: '5-hour limit',
-    weekly: 'Weekly · all models',
-    monthly: 'Monthly',
-    resetsAt: (time: string) => `Resets at ${time}`,
-    resetsOn: (day: string, time: string) => `Resets ${day} ${time}`,
-    /** The compact row's window: 5h when there is one, else the window that is closest to its limit. */
-    short: { session: '5h', week: 'Wk', month: 'Mo' },
-    /** The two providers the foot draws, when the gateway sends no label of its own. */
-    providerNames: { claude: 'Claude', opencode_go: 'OpenCode Go' } as Record<string, string>,
-    compact: (window: string, percent: number) => `${window} · ${percent} %`,
-    expand: (provider: string) => `Show the usage limits of ${provider}`,
-    collapse: (provider: string) => `Hide the usage limits of ${provider}`,
-    noReset: 'No reset date',
-    /** The foot's refresh control, right of the two meters. */
-    refresh: 'Refresh usage',
-    refreshFailed: "Couldn't refresh usage"
   },
 
   /** The composer, and every state Glaze's PromptInput can print. */
@@ -457,6 +442,23 @@ export const UI = {
   /** The approval card's second line: why Hermes stopped to ask. */
   approval: {
     why: (reason: string) => (reason.trim() ? `Hermes flagged it: ${reason.trim().replace(/[.\s]+$/, '')}.` : 'Hermes asks before running this command.')
+  },
+
+  /** The question the bot asks mid-turn: its choices, the free answer, its countdown. */
+  clarify: {
+    label: 'The bot asks a question',
+    skip: 'Skip',
+    send: 'Send',
+    other: 'Or type an answer',
+    /** The countdown, in the corner of the card. */
+    remaining: (seconds: number) => `${seconds}s left`,
+    expired: 'The question timed out',
+    /** The answer did not reach the gateway: the card stays, unlocked, so it can be sent again. */
+    failed: "Couldn't send the answer",
+    answered: 'Answer sent',
+    /** What was answered, once it went: the card waits for the gateway's own settled event. */
+    youSaid: (answer: string) => `You answered: ${answer}`,
+    choose: (choice: string) => `Answer: ${choice}`
   },
 
   /** The intelligent-UI renderers: status words, the chart fallback, the copy toasts. */

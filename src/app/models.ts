@@ -3,6 +3,7 @@
 // `model.options` answers `{providers:[{slug, name, models[]}]}`; a provider with no models is dropped, so the menu
 // never shows an empty group. The request is memoised: opening the picker twice asks the gateway once.
 import { host } from '@hermes/plugin-sdk'
+import { modelLabel } from '../lib/labels'
 
 export type Provider = {
   slug: string
@@ -29,6 +30,45 @@ export function topModels(provider: Provider, current: string): string[] {
   const head = provider.models.slice(0, MODEL_MENU_TOP)
   if (!current || head.includes(current) || !provider.models.includes(current)) return head
   return [current, ...provider.models.slice(0, MODEL_MENU_TOP - 1)]
+}
+
+/**
+ * The model the picker's trigger names, and the model a click would really replace: the bot's stored preference
+ * first, then the profile's own default. `chooseModel` writes the preference only once the session took the choice,
+ * so this value moves on success and stays put on a refusal.
+ */
+export function chosenModel(prefs?: { model?: string } | null, meta?: { model?: string } | null): string {
+  return prefs?.model || meta?.model || ''
+}
+
+/** One model the flat search lists, with the provider that serves it. */
+export type ModelHit = { provider: Provider; model: string }
+
+/** Case and accents folded away: "Créer", "creer" and "CREER" are the same search. */
+export function foldSearch(value: unknown): string {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+/**
+ * What a typed search shows: one flat list, every provider at once. A model matches on its own label, and a provider
+ * name matches everything it serves (typing "anthropic" lists Anthropic's models). An empty query answers no hits at
+ * all — the menu then keeps its groups, which is the catalogue as it was.
+ */
+export function searchModels(providers: Provider[], query: string): ModelHit[] {
+  const needle = foldSearch(query)
+  if (!needle) return []
+  const hits: ModelHit[] = []
+  for (const provider of providers) {
+    const wholeProvider = foldSearch(provider.name).includes(needle) || foldSearch(provider.slug).includes(needle)
+    for (const model of provider.models) {
+      if (wholeProvider || foldSearch(modelLabel(model)).includes(needle)) hits.push({ provider, model })
+    }
+  }
+  return hits
 }
 
 /** The reasoning efforts the header offers, low to high. */

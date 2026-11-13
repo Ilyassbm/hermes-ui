@@ -20,6 +20,7 @@ import { UI } from '../strings'
 import { settings } from '../settings-state'
 import { MediaGroup, SentAttachments, splitMedia } from './media'
 import { AssistantTurn } from './turn'
+import { ClarifyCard } from './clarify'
 import { WorkingLine } from './working'
 
 const SUGGESTIONS = UI.thread.suggestions
@@ -106,6 +107,10 @@ export function Thread({ bot, name, input }: ThreadProps) {
                 </ChipGroup>
               </div>
             )}
+
+            {/* The bot's question, in the thread it was asked in: the approval card's family, with the choices the
+                gateway offered. It goes when `clarify.settled` lands, never on the click alone. */}
+            <ClarifyCard />
 
             {/* The turn is still working: one line under the last message, never inside its bubble. It folds into
                 "Worked for 12s" once Stop ended the turn, and leaves on the next prompt. */}

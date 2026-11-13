@@ -1,4 +1,5 @@
-// Test double for `@hermes/plugin-sdk`, used only by the checks in this folder (scripts/check-resume.mjs).
+// Test double for `@hermes/plugin-sdk`, used only by the checks in this folder (scripts/check-resume.mjs,
+// scripts/check-takeover.mjs).
 //
 // The page reaches the gateway through one door: `host.request`. This stub hands every call to a handler the check
 // installs on `globalThis.__hostRequest`, so a check can replay a real payload shape without a gateway, a browser or a
@@ -13,5 +14,16 @@ export const host = {
   },
   navigate() {},
   addEventListener() {},
-  onDispose() {}
+  onDispose() {},
+  profileRoutes() {
+    return Promise.resolve(globalThis.__hermesRoutes || [])
+  },
+  /** The roster's persisted sessions: the takeover's sweep reads this, so the check hands it `globalThis.__hermesSessions`. */
+  listPersistedSessions(route, options) {
+    if (typeof globalThis.__hermesSessions === 'function') return globalThis.__hermesSessions(route, options)
+    return Promise.resolve({ sessions: [] })
+  },
+  ensureAgent() {
+    return Promise.resolve()
+  }
 }

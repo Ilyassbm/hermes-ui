@@ -7,7 +7,7 @@ import {overlayEndsNow, overlayMotion, overlaySurface} from '@/lib/glaze/overlay
 import {cn, mergeClass} from '@/lib/glaze/utils';
 
 // Glaze's popover, on Base UI's Popover: a panel anchored to a control, for detail a row has no room to print in
-// place — the rail's usage meters open one per provider. Not a dialog: no scrim, no focus trap, the page stays live,
+// place — a menu that keeps its anchor's place on the page. Not a dialog: no scrim, no focus trap, the page stays live,
 // and Escape or a press outside closes it.
 //
 // It is the overlay recipe (paper, the 1px --line ring, --radius-overlay, no shadow) with 12px of padding; content is

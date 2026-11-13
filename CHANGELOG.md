@@ -3,6 +3,35 @@
 All notable changes to this project are documented here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.3] - 2026-11-13
+
+### Changed
+
+- **The AI-account usage meters are gone.** The foot of the rail no longer shows a subscription's windows, and the
+  plugin no longer asks for them: `src/app/usage.tsx`, its rows and popover, the `GET /usage` backend route, the
+  per-profile cache and the `OPENCODE_GO_API_KEY` read all left with it. The rail's foot is the workspace's own line
+  again.
+- **A model click really switches the conversation.** The picker used to store a preference and wait for the next
+  prompt to run `/model … --provider …`; the trigger named the new model in the meantime, and a refusal said nothing.
+  The choice is applied at the click, through the one `applyModel` both paths use, the trigger only moves when the
+  session took it, and a refusal reverts and says so.
+- **The model picker has a search field.** Typing at the top of the menu replaces the provider groups with one flat
+  list of every provider's models — the mark, the name, the provider's slug — with `↓` / `↑` and `Enter` to choose.
+  The submenu's own filter stays, now folded on case and accents like the search.
+- **A model chosen in the submenu is no longer swallowed.** The submenu is portalled, so its press reached Base UI as
+  an outside press and closed the whole menu before the row's click landed.
+
+### Fixed
+
+- **The bot's question now exists in the thread.** A `clarify.request` used to leave only a tool row; the plugin now
+  draws the question with the choices the gateway offered, a free field when there are none (and for `multi_select`),
+  the countdown `timeout_s` asks for, and answers with exactly `{session_id, execution_generation, prompt_id,
+  answer}`. One send per prompt, the card locks while it is out, and `clarify.settled` removes it — also when the
+  question was asked in a conversation that was not on screen.
+- **"Conversation not found" is the answer to a click, not to a launch.** The app restoring its own route at startup
+  no longer paints the error: the page asks the open profile's gateway before concluding, never announces a miss,
+  lands on its home, and does not re-ask about the same id pass after pass.
+
 ## [1.5.2] - 2026-11-12
 
 ### Security

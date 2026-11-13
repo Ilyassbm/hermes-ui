@@ -20,9 +20,9 @@
 @import "./thinking.css";
 /* Lot 22: the thread's media blocks — an image's thumbnail and dialog, another file's card. */
 @import "./media.css";
-/* Lot 23: the visible sign of work — the activity line, its clock, the rail's and tab's dot, the usage refresh. */
+/* Lot 23: the visible sign of work — the activity line, its clock, the rail's and tab's dot. */
 @import "./working.css";
-/* Lot 27: the motion pass — message entrance, tab entrance, press feedback, the usage bar. */
+/* Lot 27: the motion pass — message entrance, tab entrance, press feedback. */
 @import "./motion.css";
 /* The vendored aicss avatar: its identity colours, scoped to .hui-bot. */
 @import "./bot.css";

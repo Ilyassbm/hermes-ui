@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The read-only file routes and the usage key, against a throwaway Hermes home.
+"""The read-only file routes, against a throwaway Hermes home.
 
     /path/to/hermes/.venv/bin/python -I dashboard/test_file_routes.py
 
@@ -15,7 +15,6 @@ home, and private keys.
 """
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import sys
@@ -34,9 +33,7 @@ USER_HOME = Path(_TMP.name) / "home"
 ROOT = USER_HOME / ".hermes"
 os.environ["HOME"] = str(USER_HOME)
 os.environ["HERMES_HOME"] = str(ROOT)
-os.environ.pop("OPENCODE_GO_API_KEY", None)
 
-from dashboard import plugin_api  # noqa: E402
 from dashboard.plugin_api import _allowed_roots, _blob_payload, _file_payload, _resolve  # noqa: E402
 
 TEXT_MAX = 1024 * 1024
@@ -153,68 +150,6 @@ class Refused(unittest.TestCase):
 
     def test_private_keys(self) -> None:
         self.assertRefused(USER_HOME / ".ssh" / "id_ed25519", ROOT / "profiles" / "alpha" / "server.pem")
-
-
-class UsageKey(unittest.TestCase):
-    """OPENCODE_GO_API_KEY only through agent.secret_scope, under the calling profile."""
-
-    def setUp(self) -> None:
-        plugin_api._cache.clear()
-        os.environ.pop("OPENCODE_GO_API_KEY", None)
-
-    def test_the_process_environment_is_never_read(self) -> None:
-        os.environ["OPENCODE_GO_API_KEY"] = "from-the-process"
-        try:
-            for name in ("../..", "nobody", "alpha"):
-                self.assertNotIn("from-the-process", json.dumps(plugin_api._opencode(name)), name)
-        finally:
-            os.environ.pop("OPENCODE_GO_API_KEY", None)
-
-    def test_an_unknown_or_hostile_profile_reads_nothing(self) -> None:
-        for name in ("../..", "nobody", ".deleted", "a/b"):
-            self.assertEqual(plugin_api._opencode(name)["error"], "not_connected", name)
-
-    @unittest.skipUnless(_has_core("agent.secret_scope"), "needs agent.secret_scope from a Hermes checkout")
-    def test_the_calling_profile_key_is_used_and_no_other(self) -> None:
-        write(ROOT / "profiles" / "beta" / "config.yaml", "model: {}\n")
-        write(ROOT / "profiles" / "beta" / ".env", "OPENCODE_GO_API_KEY=beta-key\n")
-        seen: list[str] = []
-
-        class Response:
-            status_code = 401
-
-            def json(self):
-                return {}
-
-        def fake_get(url, headers=None, timeout=None):
-            seen.append(headers["Authorization"])
-            return Response()
-
-        import httpx
-
-        original = httpx.get
-        httpx.get = fake_get
-        try:
-            plugin_api._opencode("beta")
-            alpha = plugin_api._opencode("alpha")
-        finally:
-            httpx.get = original
-        self.assertEqual(seen, ["Bearer beta-key"])
-        self.assertEqual(alpha["error"], "not_connected")
-
-    def test_usage_is_cached_per_profile(self) -> None:
-        calls: list[str] = []
-        original_claude, original_opencode = plugin_api._claude, plugin_api._opencode
-        plugin_api._claude = lambda: {"id": "claude", "windows": []}
-        plugin_api._opencode = lambda profile="": calls.append(profile) or {"id": "opencode_go", "windows": []}
-        try:
-            asyncio.run(plugin_api.usage(profile="alpha"))
-            asyncio.run(plugin_api.usage(profile="beta"))
-            cached = asyncio.run(plugin_api.usage(profile="alpha"))
-        finally:
-            plugin_api._claude, plugin_api._opencode = original_claude, original_opencode
-        self.assertEqual(calls, ["alpha", "beta"])
-        self.assertTrue(cached.get("cached"))
 
 
 if __name__ == "__main__":

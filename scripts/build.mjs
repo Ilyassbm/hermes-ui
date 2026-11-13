@@ -90,6 +90,12 @@ if (motion.status !== 0) process.exit(motion.status ?? 1)
 const resume = spawnSync(process.execPath, [resolve(root, 'scripts/check-resume.mjs')], { stdio: 'inherit' })
 if (resume.status !== 0) process.exit(resume.status ?? 1)
 
+// 0k. The question gate (1.5.3): a `clarify.request` has to become a card in the thread, and its answer has to be the
+//     four keys the gateway's schema takes — a fifth is `invalid_params`, and an unanswered question is a turn stopped
+//     forever. The card is mounted with React's server renderer; the payload is read from a recorder.
+const clarify = spawnSync(process.execPath, [resolve(root, 'scripts/check-clarify.mjs')], { stdio: 'inherit' })
+if (clarify.status !== 0) process.exit(clarify.status ?? 1)
+
 // 1. Tailwind v4 → one stylesheet. app.css pulls `tailwindcss/theme` + `tailwindcss/utilities` in (never the full
 //    `tailwindcss`, whose Preflight is a global reset) and Glaze's own scoped entry.
 const compiled = await postcss([tailwind()]).process(readFileSync(from, 'utf8'), { from, to: cssOut })

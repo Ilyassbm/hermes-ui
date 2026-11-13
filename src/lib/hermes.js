@@ -6,7 +6,7 @@ import { askStep, emptyToolAdapter, replyStep, toolEventStep, turnEndStep } from
 import { UI } from '../app/strings'
 import { view } from '../app/ui-state'
 import { createStore } from './store'
-import { setChosenLooks } from './labels'
+import { modelLabel, setChosenLooks } from './labels'
 
 export const store = createStore({
   ready: false,
@@ -26,7 +26,10 @@ export const store = createStore({
   /** The file the right panel is previewing (null: the list). Set from the panel and from a media block's Open preview. */
   previewFile: null,
   routines: [],
-  usage: null,
+  /** The bot's questions, per session: the card of the conversation on screen is the first of its own list. */
+  clarifyBySession: {},
+  /** The one-shot message the page's toaster shows (a model the session refused, an answer that did not go). */
+  notice: null,
   error: '',
   /** The error banner's Retry reopens the conversation (a failed `session.resume`), not the last prompt. */
   retryOpen: false,
@@ -45,6 +48,17 @@ let msgSeq = 0
 /** Assistant turns are numbered: the tool-call reducer keys its `stop` on the turn's generation. */
 let turnGen = 0
 const nid = p => `${p}-${Date.now().toString(36)}-${(msgSeq++).toString(36)}`
+
+/**
+ * A one-shot message for the page's toaster. The store carries it and `app.tsx` hands it to Glaze's `toast`: this
+ * module stays free of the toast component (the checks bundle it for node), and the call site says why it spoke.
+ */
+let noticeSeq = 0
+export function notify(text) {
+  const body = String(text || '').trim()
+  if (!body) return
+  store.set({ notice: { id: ++noticeSeq, text: body } })
+}
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -501,6 +515,8 @@ export function addNote(text) {
   store.set(s => ({ messages: [...s.messages, { id: nid('n'), role: 'note', text: body, at: Date.now() }] }))
 }
 
+/** Opens `storedId` on the open bot. Answers whether the conversation came back: the takeover reads it before it
+ *  concludes that an id from the app's route belongs to nobody. */
 export async function openConversation(storedId) {
   const { bot } = store.get()
   // The tab is active before the gateway answers: `storedId` is the selection, not a result of the call.
@@ -565,7 +581,7 @@ export async function openConversation(storedId) {
         errorDetail: `${detail} · ${shape}`,
         retryOpen: true
       })
-      return
+      return false
     }
     store.set({
       sid: res?.session_id || storedId,
@@ -577,6 +593,7 @@ export async function openConversation(storedId) {
       live: res?.running ? { phase: 'thinking', verb: '', subagents: 0, startedAt: Date.now(), reasoning: '' } : null
     })
     if (res?.running) startApprovalPoll()
+    return true
   } catch (e) {
     // The banner says what happened, and its Retry replays this very call (see `retryOpen` in the store).
     const late = e instanceof GatewayUnavailable || isGatewayUnavailable(e)
@@ -587,6 +604,7 @@ export async function openConversation(storedId) {
       retryOpen: true,
       retryBoot: false
     })
+    return false
   }
 }
 
@@ -710,36 +728,113 @@ export async function ensureSession() {
     })
   )
   const sid = res?.session_id
-  applied.set(sid, `${prefs.provider || ''}|${prefs.model || ''}|${prefs.effort || ''}`)
+  applied.set(sid, prefsKey(prefs))
   store.set({ sid, storedId: res?.stored_session_id || sid })
   return sid
 }
 
-// A model / effort picked after the session started is applied with the same slash commands
-// the native composer uses, right before the next prompt.
+// ── the session's model ──────────────────────────────────────────────────────
+//
+// A model / effort picked after the session started is applied with the same slash commands the native composer
+// runs. One door for both paths — the click in the picker, and the next prompt after a stored preference changed —
+// so the two can never disagree about what the session runs.
+
+/** `provider|model|effort`: the shape a session's applied state is remembered in. */
+const prefsKey = prefs => `${prefs?.provider || ''}|${prefs?.model || ''}|${prefs?.effort || ''}`
+
+/** The model and effort each live session was last told to run. */
 const applied = new Map()
+
+/**
+ * One `slash.exec`, as a yes / no. The gateway answers `{success:false, error}` (or `{type:'error'}`) when it
+ * refuses a command — an expensive model without the confirmation, a provider this profile is not authenticated for
+ * — and that refusal is exactly what the picker has to show instead of pretending the model changed.
+ */
+async function slashExec(sid, command, confirmExpensive = false) {
+  try {
+    const res = await host.request('slash.exec', {
+      session_id: sid,
+      command,
+      ...(confirmExpensive ? { confirm_expensive_model: true } : {})
+    })
+    if (!res || res.success === false || res.error || res.type === 'error') return false
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Makes `sid` run `next` (`{model, provider, effort}`). Answers whether the session took it: `true` also when the
+ * session was already on those settings, and when it is a fresh session whose creation carried them.
+ *
+ * `force` is the picker's click: the person chose that model now, so the command goes out even when this page has no
+ * record of what the session runs (a conversation resumed from storage).
+ */
+export async function applyModel(sid, next = prefsFor(store.get().bot), { force = false } = {}) {
+  if (!sid) return false
+  const want = prefsKey(next)
+  const prev = applied.get(sid)
+  if (prev === want) return true
+  if (prev === undefined && !force) {
+    // A resumed session: this page never named its model, and the next prompt must not re-send what it already had.
+    applied.set(sid, want)
+    return true
+  }
+  const [pp, pm, pe] = String(prev ?? '||').split('|')
+  let ok = true
+  if (next?.model && (next.model !== pm || (next.provider || '') !== pp)) {
+    ok = await slashExec(sid, `/model ${next.model}${next.provider ? ` --provider ${next.provider}` : ''}`, true)
+  }
+  if (ok && next?.effort && next.effort !== pe) ok = await slashExec(sid, `/reasoning ${next.effort}`)
+  if (ok) applied.set(sid, want)
+  return ok
+}
+
+/**
+ * A model chosen in the picker, both levels of it: applied to the open session now, and written to the stored
+ * preference only once the session took it. The trigger names what the session runs, never a model the gateway
+ * refused — and a refusal says so instead of leaving the click looking ignored.
+ */
+export async function chooseModel(bot, next, provider = '') {
+  const name = bot || store.get().bot
+  if (!name || !next) return false
+  const sid = store.get().sid
+  // No live session (a new conversation), or a bot that is not the open one: the preference is all there is, and
+  // `session.create` carries it.
+  if (!sid || name !== store.get().bot) {
+    savePrefs(name, { model: next, provider })
+    store.set(s => ({ info: { ...s.info } }))
+    return true
+  }
+  const ok = await applyModel(sid, { ...prefsFor(name), model: next, provider }, { force: true })
+  if (!ok) {
+    notify(UI.model.applyFailed(modelLabel(next)))
+    return false
+  }
+  savePrefs(name, { model: next, provider })
+  store.set(s => ({ info: { ...s.info } }))
+  return true
+}
+
+/** The next prompt after a preference changed: the same command, and a failure that reverts and says so. */
 async function applyPrefsToSession(sid) {
   const { bot } = store.get()
+  if (!bot) return
   const prefs = prefsFor(bot)
-  const want = `${prefs.provider || ''}|${prefs.model || ''}|${prefs.effort || ''}`
+  const want = prefsKey(prefs)
   const prev = applied.get(sid)
   if (prev === undefined) {
     applied.set(sid, want)
     return
   }
   if (prev === want) return
-  applied.set(sid, want)
-  const [pp, pm, pe] = prev.split('|')
-  try {
-    if (prefs.model && (prefs.model !== pm || (prefs.provider || '') !== pp)) {
-      await host.request('slash.exec', { session_id: sid, command: `/model ${prefs.model}${prefs.provider ? ` --provider ${prefs.provider}` : ''}`, confirm_expensive_model: true })
-    }
-    if ((prefs.effort || '') !== pe && prefs.effort) {
-      await host.request('slash.exec', { session_id: sid, command: `/reasoning ${prefs.effort}` })
-    }
-  } catch {
-    /* keep the session's current model rather than failing the send */
-  }
+  if (await applyModel(sid, prefs)) return
+  // The gateway refused. The stored preference goes back to what the session really runs, so the next turn does not
+  // retry the same refusal in silence, and the person is told once.
+  const [provider, model, effort] = String(prev).split('|')
+  savePrefs(bot, { provider, model, effort })
+  notify(UI.model.applyFailed(modelLabel(prefs.model)))
 }
 
 export async function send(text, attachments = []) {
@@ -831,6 +926,7 @@ export async function stop() {
     worked: { startedAt, endedAt: Date.now() },
     messages: s.messages.map(m => (m.status === 'streaming' ? { ...m, status: 'done', thinkEnd: m.thinkEnd || Date.now() } : m))
   }))
+  dropClarify(sid)
   stopApprovalPoll()
   return true
 }
@@ -862,7 +958,125 @@ function failTurn(reason) {
     error: reason || "The response did not arrive.",
     messages: s.messages.map(m => (m.status === 'streaming' ? { ...m, status: m.text ? 'done' : 'failed' } : m))
   }))
+  dropClarify()
   stopApprovalPoll()
+}
+
+// ── clarify: the bot's question ──────────────────────────────────────────────
+//
+// The gateway asks with `clarify.request` — `{kind:'clarify', prompt_id, execution_generation, question, choices,
+// multi_select, timeout_s?}` — one event per question of a turn (distinct `prompt_id`s, in order), and takes the
+// answer back through `clarify.respond` with those four keys and no fifth: `{session_id, execution_generation,
+// prompt_id, answer}`. An extra key is refused as `invalid_params`, and an empty answer means "skipped".
+// `clarify.settled` `{prompt_id, execution_generation}` is what takes the card away.
+//
+// The questions are held per session, not for the open one only: a question asked in a conversation the person is not
+// looking at is still there, in its own thread, when they come back to it.
+
+/** One `clarify.request` as the card holds it, or null when the payload names no prompt. */
+function askedClarify(ev) {
+  const p = ev?.payload || {}
+  const promptId = String(p.prompt_id || '')
+  const sessionId = String(ev?.session_id || '')
+  if (!promptId || !sessionId) return null
+  return {
+    sessionId,
+    promptId,
+    generation: p.execution_generation ?? 0,
+    question: String(p.question || ''),
+    choices: Array.isArray(p.choices) ? p.choices.filter(choice => typeof choice === 'string' && choice.trim()) : [],
+    multiSelect: p.multi_select === true,
+    timeoutS: Number.isFinite(Number(p.timeout_s)) && p.timeout_s != null ? Number(p.timeout_s) : null,
+    at: Date.now(),
+    /** In flight: the card is locked until the gateway answers. */
+    sending: false,
+    /** The answer that went out; the card waits for `clarify.settled` rather than vanishing on the RPC's return. */
+    done: false,
+    sent: '',
+    error: ''
+  }
+}
+
+/** The question the open conversation is waiting on: the first of its own list, in arrival order. */
+export function pendingClarify(state = store.get()) {
+  if (!state?.sid) return null
+  const list = state.clarifyBySession?.[state.sid]
+  return Array.isArray(list) && list.length ? list[0] : null
+}
+
+/** Replaces one question in its session's list (or drops it with `null`), leaving the other sessions alone. */
+function patchClarify(sessionId, promptId, patch) {
+  store.set(s => {
+    const list = s.clarifyBySession?.[sessionId]
+    if (!Array.isArray(list) || !list.some(row => row.promptId === promptId)) return null
+    const next = list.map(row => (row.promptId === promptId ? (patch ? { ...row, ...patch } : null) : row)).filter(Boolean)
+    const map = { ...s.clarifyBySession }
+    if (next.length) map[sessionId] = next
+    else delete map[sessionId]
+    return { clarifyBySession: map }
+  })
+}
+
+function askClarify(ev) {
+  const asked = askedClarify(ev)
+  if (!asked) return
+  store.set(s => {
+    // A repeated prompt_id replaces its own card: the gateway re-sends the pending questions on a resume.
+    const list = (s.clarifyBySession?.[asked.sessionId] || []).filter(row => row.promptId !== asked.promptId)
+    return { clarifyBySession: { ...(s.clarifyBySession || {}), [asked.sessionId]: [...list, asked] } }
+  })
+}
+
+function settleClarify(ev) {
+  const sessionId = String(ev?.session_id || '')
+  const promptId = String(ev?.payload?.prompt_id || '')
+  if (!sessionId) return
+  if (promptId) {
+    patchClarify(sessionId, promptId, null)
+    return
+  }
+  // No prompt named: the session's turn is over, and every question it left goes with it.
+  dropClarify(sessionId)
+}
+
+/** Whatever a session asked and nobody answered goes when its turn ends: a card under a finished turn is a lie. */
+function dropClarify(sessionId = store.get().sid) {
+  if (!sessionId) return
+  store.set(s => {
+    if (!s.clarifyBySession?.[sessionId]) return null
+    const map = { ...s.clarifyBySession }
+    delete map[sessionId]
+    return { clarifyBySession: map }
+  })
+}
+
+/**
+ * The person's answer to the question on screen. `answer` is the exact string the gateway expects: the choice as it
+ * was offered, the JSON array of the checked choices when the question is `multi_select` (the shape the native UI
+ * sends), or `''` for "skipped".
+ *
+ * One send per prompt: the card locks on the first click, and the settled event — not this call's return — is what
+ * removes it.
+ */
+export async function answerClarify(answer) {
+  const asked = pendingClarify(store.get())
+  if (!asked || asked.sending || asked.done) return false
+  const text = typeof answer === 'string' ? answer : String(answer ?? '')
+  patchClarify(asked.sessionId, asked.promptId, { sending: true, error: '' })
+  try {
+    // The four keys the gateway's schema names, and nothing else: a fifth is `invalid_params`.
+    await host.request('clarify.respond', {
+      session_id: asked.sessionId,
+      execution_generation: asked.generation,
+      prompt_id: asked.promptId,
+      answer: text
+    })
+    patchClarify(asked.sessionId, asked.promptId, { sending: false, done: true, sent: text })
+    return true
+  } catch {
+    patchClarify(asked.sessionId, asked.promptId, { sending: false, error: UI.clarify.failed })
+    return false
+  }
 }
 
 // ── approvals ────────────────────────────────────────────────────────────────
@@ -1015,6 +1229,16 @@ export function handleEvent(ev) {
     if (s.bot) void loadSessions(s.bot)
     return
   }
+  // The bot's questions come before the open-session guard: a question asked in a conversation that is not on screen
+  // is kept for that conversation instead of being dropped.
+  if (ev.type === 'clarify.request') {
+    askClarify(ev)
+    return
+  }
+  if (ev.type === 'clarify.settled') {
+    settleClarify(ev)
+    return
+  }
   if (!s.sid || ev.session_id !== s.sid) return
   // Any event of the open session tells the watchdog the submitted prompt did reach a turn.
   lastEventAt = Date.now()
@@ -1092,6 +1316,7 @@ export function handleEvent(ev) {
       })
       addFiles(filesFromText(text))
       store.set({ live: null, approval: null, ...(failed && !text ? { error: p.error || "The response did not arrive." } : {}) })
+      dropClarify(s.sid)
       stopApprovalPoll()
       if (s.bot) void loadSessions(s.bot)
       return
@@ -1105,7 +1330,7 @@ export function handleEvent(ev) {
   }
 }
 
-// ── routines & usage ─────────────────────────────────────────────────────────
+// ── routines ─────────────────────────────────────────────────────────────────
 
 export async function loadRoutines() {
   const { bot } = store.get()
@@ -1137,16 +1362,6 @@ export async function toggleRoutine(job) {
     return false
   } finally {
     await loadRoutines()
-  }
-}
-
-export async function loadUsage(fresh = false) {
-  if (!ctxRef) return
-  try {
-    const res = await ctxRef.rest(`/usage${fresh ? '?fresh=1' : ''}`, { timeoutMs: 20000 })
-    store.set({ usage: res?.providers || [] })
-  } catch {
-    store.set({ usage: 'off' })
   }
 }
 
@@ -1234,5 +1449,4 @@ async function bootOnce(force = false) {
     if (bots.length) await selectBot(pick.name)
     else store.set({ bot: pick.name })
   }
-  void loadUsage()
 }

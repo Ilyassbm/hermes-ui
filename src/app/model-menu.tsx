@@ -6,6 +6,11 @@
 // The interaction is lot 9's, unchanged: the button is a plain Glaze Button, not a Base UI trigger, and the menu is
 // controlled — a press on the button closes the menu as an outside press, and the click that follows must close it
 // rather than open it again. `/model` and the model shortcut still ask the menu open through `view.modelMenu`.
+//
+// 1.5.3: a row is a *switch*, not a preference. `chooseModel` runs the same `/model … --provider …` the next turn
+// used to run, at the click, and the trigger only names a model the session took — so a refused switch is visible
+// instead of looking like a click that did nothing, and a press on the portalled submenu no longer closes the menu
+// out from under the row that was clicked.
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Icon, ChevronDown } from '@/components/glaze/icon'
 import { Button } from '@/components/glaze/ui/button'
@@ -23,10 +28,10 @@ import {
   DropdownMenuSubTrigger
 } from '@/components/glaze/ui/dropdown-menu'
 import { SegmentedControl, SegmentedControlItem } from '@/components/glaze/ui/segmented-control'
-import { prefsFor, savePrefs, store } from '@/lib/hermes'
+import { chooseModel, prefsFor, savePrefs, store } from '@/lib/hermes'
 import { modelLabel } from '@/lib/labels'
 import { useStore } from '@/lib/store'
-import { EFFORTS, effortLabel, loadCatalog, MODEL_MENU_TOP, topModels, type Provider } from './models'
+import { chosenModel, EFFORTS, effortLabel, foldSearch, loadCatalog, MODEL_MENU_TOP, searchModels, topModels, type ModelHit, type Provider } from './models'
 import { ProviderLogo, logoFor } from './provider-logo'
 import { UI } from './strings'
 import { view } from './ui-state'
@@ -41,12 +46,19 @@ export function ModelMenu() {
   const meta = useStore(store, s => s.bots).find(b => b.name === bot)
   const prefs = prefsFor(bot)
   // The same model the trigger names: the bot's preference first, then the profile's own default, so the check mark sits
-  // on the model a send would really use.
-  const model = prefs.model || meta?.model || ''
+  // on the model a send would really use. It only moves once the session took the choice (`chooseModel`).
+  const model = chosenModel(prefs, meta)
   const effort = prefs.effort || 'medium'
   const label = model ? modelLabel(model) : UI.header.model
   const [providers, setProviders] = useState<Provider[]>([])
   const [open, setOpen] = useState(false)
+  // A choice is on its way to the session: a second click would send a second `/model`, so the menu waits.
+  const [applying, setApplying] = useState(false)
+  // The search at the top of the menu: typing replaces the provider groups with one flat list of hits.
+  const [query, setQuery] = useState('')
+  const [active, setActive] = useState(0)
+  const search = useRef<HTMLInputElement | null>(null)
+  const hits = searchModels(providers, query)
   const button = useRef<HTMLButtonElement | null>(null)
   const measured = useRef(false)
 
@@ -75,6 +87,20 @@ export function ModelMenu() {
   useEffect(() => {
     if (asked > 0) setOpen(true)
   }, [asked])
+
+  // The field takes the cursor when the menu opens, and typing starts there: the point of the search is that a model
+  // can be named without opening a submenu first. A fresh query starts on its first hit.
+  useEffect(() => {
+    if (!open) return undefined
+    setQuery('')
+    setActive(0)
+    const timer = setTimeout(() => search.current?.focus(), 0)
+    return () => clearTimeout(timer)
+  }, [open])
+
+  useEffect(() => {
+    setActive(0)
+  }, [query])
 
   // `localStorage['hui:perf']` times the first open (dev only, nothing to see otherwise): a mark when the button takes
   // the click, a measure once React has put the menu in the DOM.
@@ -114,6 +140,10 @@ export function ModelMenu() {
     pressedWhileOpen.current = false
     if (!next && details?.reason === 'outside-press') {
       const target = details.event?.target
+      // The submenu is portalled, so a press on one of its rows reaches Base UI as an outside press and the whole
+      // menu closed on the pointerdown, before the click that chose the model could land. A press inside either
+      // popup is ours: the menu stays, and the row's own click does the work.
+      if (target instanceof Element && target.closest('.hui-model-menu, .hui-model-sub')) return
       if (target instanceof Node && button.current?.contains(target)) {
         pressedWhileOpen.current = true
         pressedAt.current = Date.now()
@@ -122,10 +152,17 @@ export function ModelMenu() {
     setOpen(next)
   }
 
-  const pick = (next: string, provider: string) => {
-    if (!bot) return
-    savePrefs(bot, { model: next, provider })
-    store.set(s => ({ info: { ...s.info } }))
+  /**
+   * A model chosen at either level of the menu. The session is told now, with the same command the next turn would
+   * have run (`chooseModel`), and the trigger only moves once it took it: a click that the gateway refused leaves the
+   * menu on the model the conversation really runs, and says so.
+   */
+  const pick = async (next: string, provider: string) => {
+    if (!bot || applying) return
+    setApplying(true)
+    const ok = await chooseModel(bot, next, provider)
+    setApplying(false)
+    if (ok) setOpen(false)
   }
 
   const pickEffort = (value: string) => {
@@ -184,6 +221,51 @@ export function ModelMenu() {
           size="sm"
           className="hui-model-menu"
         >
+          {/* A model named outright, from any provider. The field keeps the cursor and the keys: the menu's own
+              arrow navigation stops at this field (`stopPropagation`), so typing never closes the menu or moves a
+              highlight that is not the one below the list. */}
+          <div className="px-1 pb-1">
+            <Input
+              ref={search}
+              mode="search"
+              size="sm"
+              autoFocus
+              data-hui-part="model-search"
+              value={query}
+              placeholder={UI.model.searchPlaceholder}
+              aria-label={UI.model.searchLabel}
+              // The field is the list's own combobox: the rows below are what it addresses, and the highlighted one is
+              // the answer `Enter` sends.
+              role="combobox"
+              aria-expanded={Boolean(query.trim())}
+              aria-autocomplete="list"
+              aria-controls={query.trim() ? 'hui-model-hits' : undefined}
+              aria-activedescendant={hits.length ? `hui-model-hit-${active}` : undefined}
+              onChange={event => setQuery(event.target.value)}
+              onKeyDown={event => {
+                // Every key the menu would answer belongs to the field while the person is typing.
+                event.stopPropagation()
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                  if (!hits.length) return
+                  event.preventDefault()
+                  setActive(current => (event.key === 'ArrowDown' ? (current + 1) % hits.length : (current - 1 + hits.length) % hits.length))
+                  return
+                }
+                if (event.key === 'Enter') {
+                  const hit = hits[active]
+                  if (!hit) return
+                  event.preventDefault()
+                  void pick(hit.model, hit.provider.slug)
+                  return
+                }
+                // The menu's Escape handler is upstream of this field; closing here keeps the one key one behaviour.
+                if (event.key === 'Escape') {
+                  event.preventDefault()
+                  setOpen(false)
+                }
+              }}
+            />
+          </div>
           <DropdownMenuGroup>
             <DropdownMenuLabel>{UI.header.effort}</DropdownMenuLabel>
             <div className="hui-model-effort" onKeyDown={e => e.stopPropagation()}>
@@ -197,12 +279,15 @@ export function ModelMenu() {
             </div>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          {providers.length === 0 ? (
+          {query.trim() ? (
+            <ModelHits hits={hits} active={active} onHover={setActive} onPick={hit => void pick(hit.model, hit.provider.slug)} />
+          ) : null}
+          {query.trim() ? null : providers.length === 0 ? (
             <DropdownMenuGroup>
               <DropdownMenuLabel>{UI.model.unavailable}</DropdownMenuLabel>
             </DropdownMenuGroup>
           ) : null}
-          {providers.map(provider => (
+          {query.trim() ? null : providers.map(provider => (
             <DropdownMenuGroup key={provider.slug}>
               <DropdownMenuLabel className="hui-model-provider">
                 <ProviderLogo provider={provider.slug} size={18} />
@@ -236,11 +321,14 @@ export function ModelMenu() {
   )
 }
 
-/** The whole catalogue of one provider, behind "All … models…": a filter field on top, then every model. */
+/**
+ * The whole catalogue of one provider, behind "All … models…": a filter field on top, then every model. Its own
+ * filter stays its own (a provider at a time), folded the way the menu's search is: case and accents.
+ */
 function AllModels({ provider, model, onPick }: { provider: Provider; model: string; onPick: (next: string) => void }) {
   const [query, setQuery] = useState('')
-  const needle = query.trim().toLowerCase()
-  const shown = needle ? provider.models.filter(next => modelLabel(next).toLowerCase().includes(needle)) : provider.models
+  const needle = foldSearch(query)
+  const shown = needle ? provider.models.filter(next => foldSearch(modelLabel(next)).includes(needle)) : provider.models
   return (
     <>
       <div className="hui-model-filter">
@@ -265,6 +353,58 @@ function AllModels({ provider, model, onPick }: { provider: Provider; model: str
       </DropdownMenuRadioGroup>
       {!shown.length ? <p className="hui-conv-empty">{UI.model.noModel}</p> : null}
     </>
+  )
+}
+
+/**
+ * The search's answers, every provider at once: the provider's mark, the model's name, and the provider's slug in the
+ * small print. The highlighted row is the one `↓` / `↑` moved and `Enter` chooses; a pointer over a row highlights it
+ * too, so the keyboard and the mouse always agree on what Enter would do. A query that matches nothing says so instead
+ * of leaving an empty box under the field.
+ */
+export function ModelHits({
+  hits,
+  active,
+  onHover,
+  onPick
+}: {
+  hits: ModelHit[]
+  active: number
+  onHover: (index: number) => void
+  onPick: (hit: ModelHit) => void
+}) {
+  if (!hits.length) {
+    return (
+      <p className="px-2 py-2 type-caption text-text-3" data-hui-part="model-no-hit">
+        {UI.model.noModel}
+      </p>
+    )
+  }
+  // The listbox pattern, not a row of buttons: the cursor stays in the field above, which is what types, arrows and
+  // Enter belong to. `aria-selected` is the row Enter would choose, and the pointer lights the same one.
+  return (
+    <div id="hui-model-hits" className="hui-model-hits" role="listbox" aria-label={UI.model.searchResults} data-hui-part="model-hits">
+      {hits.map((hit, index) => (
+        <div
+          key={`${hit.provider.slug}:${hit.model}`}
+          id={`hui-model-hit-${index}`}
+          role="option"
+          aria-selected={index === active}
+          data-model-hit={`${hit.provider.slug}:${hit.model}`}
+          data-model-provider={hit.provider.slug}
+          data-active={index === active ? 'true' : undefined}
+          className="hui-model-hit"
+          // The press must not take the cursor out of the field: the row's click does the choosing.
+          onPointerDown={event => event.preventDefault()}
+          onMouseEnter={() => onHover(index)}
+          onClick={() => onPick(hit)}
+        >
+          <ProviderLogo provider={hit.provider.slug} size={14} />
+          <span className="hui-model-hit-name">{modelLabel(hit.model)}</span>
+          <span className="hui-model-hit-provider">{hit.provider.slug}</span>
+        </div>
+      ))}
+    </div>
   )
 }
 

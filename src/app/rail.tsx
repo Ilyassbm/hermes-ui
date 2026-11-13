@@ -1,8 +1,8 @@
-// The rail: the bots, the way into the rest of the app, and what is left on each subscription.
+// The rail: the bots, and the way into the rest of the app.
 //
 // Laid out like the OpenBot column Dex described: a 44px top bar (the app's menu on the left, the new-discussion
 // button on the right), a search field drawn as a button, the pinned bots as tiles, the rest of the team as rows, and
-// the usage cards at the foot. The data is the same as lot 2's rail — `use-bots` for what each bot said last and when,
+// the app's own menu at the foot. The data is the same as lot 2's rail — `use-bots` for what each bot said last and when,
 // `store` for the selection and the conversation lists, `labels` for names, roles and the avatar identities.
 //
 // The styles live in src/styles/rail.css, on Glaze's tokens, scoped to .glaze: the shapes the spec pins (280, 44, 62,
@@ -33,7 +33,6 @@ import { capsOf } from './keys'
 import { openSettings } from './settings-link'
 import { UI } from './strings'
 import { openPicker } from './ui-state'
-import { usageCards, UsageMeters } from './usage'
 import { useBots } from './use-bots'
 
 type Row = {
@@ -54,7 +53,6 @@ export function Rail({ ctx }: { ctx: any }) {
   const current = useStore(store, s => s.bot)
   const live = useStore(store, s => s.live)
   const approval = useStore(store, s => s.approval)
-  const usage = useStore(store, s => s.usage)
   const connecting = useStore(store, s => s.connecting)
   const { rows } = useBots(ctx)
 
@@ -248,7 +246,6 @@ export function Rail({ ctx }: { ctx: any }) {
       </div>
 
       <div className="hui-rail-foot">
-        <UsageMeters cards={usageCards(usage)} ctx={ctx} />
         <div className="hui-rail-foot-actions">
           <span className="hui-rail-app-name">{UI.rail.appName}</span>
           <Button variant="ghost" size="icon-lg" className="hui-round" aria-label={UI.rail.settings} title={UI.rail.settings} onClick={() => openSettings()}>

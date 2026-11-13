@@ -5,7 +5,7 @@
 // (src/components/glaze) is exempt: it ships its own overlay motion, and its overlay exit curve is deliberate.
 //
 //   node scripts/check-motion.mjs
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 
 const ROOT = new URL('..', import.meta.url).pathname
@@ -16,6 +16,9 @@ const files = execFileSync('git', ['ls-files', 'src/styles', 'src/app'], { cwd: 
   // aicss is vendored (MIT, credited in the README): its thinking pane owns its 360/560ms curves, the way the Glaze
   // package owns its overlay motion. Exempt as a whole rather than carving exceptions into our own sheets.
   .filter(f => f !== 'src/styles/thinking.css')
+  // `git ls-files` still lists a file this working tree deleted (a removal in progress, before its commit): there is
+  // nothing to read, and nothing to gate.
+  .filter(f => existsSync(new URL(f, `file://${ROOT}`)))
 
 const findings = []
 const add = (file, line, rule, text) => findings.push({ file, line, rule, text: text.trim().slice(0, 90) })

@@ -1,6 +1,6 @@
 /* Lot 23 — the sign that a turn is still working.
-   The line under the thread, the rail's "working · 12s", the dot on the tab, the usage foot's refresh control, and the
-   quiet note Stop leaves when the gateway refuses.
+   The line under the thread, the rail's "working · 12s", the dot on the tab, and the quiet note Stop leaves when the
+   gateway refuses.
 
    One dot, painted in --text-1, pulses while work runs; the three dots after the verb fade in a staggered beat; the
    time is tabular so the line does not shift as it counts. Reduced motion (the OS preference, or Settings ▸ Appearance
@@ -126,43 +126,6 @@
   }
 }
 
-/* ---------- The usage foot's refresh ---------- */
-
-/* The two meters keep their 34px rows; the 24×24 control sits to their right, 8px away (the control gap). */
-.glaze .hui-usage-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.glaze .hui-usage-wrap .hui-usage {
-  flex: 1;
-  min-width: 0;
-}
-
-.glaze .hui-usage-refresh {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  padding: 0;
-}
-
-.glaze .hui-usage-refresh-icon {
-  display: grid;
-  place-items: center;
-  animation: hui-usage-spin 0.9s linear infinite;
-}
-
-@keyframes hui-usage-spin {
-  to {
-    rotate: 360deg;
-  }
-}
-
 /* ---------- Stop's quiet failure ---------- */
 
 .glaze .hui-composer-note {
@@ -186,8 +149,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .glaze [data-hui-part='working-dot'],
-  .glaze .hui-working-dots i,
-  .glaze .hui-usage-refresh-icon {
+  .glaze .hui-working-dots i {
     animation: none;
   }
   /* No animated dots: the static dot, the verb and the counting text keep every bit of the information. */
@@ -197,8 +159,7 @@
 }
 
 .glaze[data-motion='reduced'] [data-hui-part='working-dot'],
-.glaze[data-motion='reduced'] .hui-working-dots i,
-.glaze[data-motion='reduced'] .hui-usage-refresh-icon {
+.glaze[data-motion='reduced'] .hui-working-dots i {
   animation: none;
 }
 

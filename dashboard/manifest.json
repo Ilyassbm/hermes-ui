@@ -1,8 +1,8 @@
 {
   "name": "hermes-ui",
   "label": "Hermes UI",
-  "description": "Backend of the Hermes UI chat page (subscription usage).",
-  "version": "1.5.2",
+  "description": "Backend of the Hermes UI chat page (bots' last output, file previews).",
+  "version": "1.5.3",
   "tab": {
     "hidden": true
   },

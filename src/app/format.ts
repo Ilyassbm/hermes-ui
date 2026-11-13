@@ -39,10 +39,3 @@ export function sinceLabel(ts?: number | null): string {
   if (delta < 7 * DAY) return `${Math.floor(delta / DAY)}${UI.time.dayShort}`
   return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
-
-/** A percentage for a usage meter, clamped to what a bar can draw. */
-export function pct(value: unknown): number {
-  const n = typeof value === 'number' ? value : Number(value)
-  if (!Number.isFinite(n)) return 0
-  return Math.max(0, Math.min(100, Math.round(n)))
-}

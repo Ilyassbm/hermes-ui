@@ -79,7 +79,7 @@ export const More = DotsThreeIcon;
 export const Pause = PauseIcon;
 export const Pending = CircleNotchIcon;
 export const Play = PlayIcon;
-/** The usage foot's refresh: two arrows in a circle (lucide's refresh-cw). */
+/** Two arrows in a circle (lucide's refresh-cw). */
 export const Refresh = ArrowsClockwiseIcon;
 export const Retry = ArrowClockwiseIcon;
 export const Return = ArrowElbowDownLeftIcon;
