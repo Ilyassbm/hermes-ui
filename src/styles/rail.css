@@ -1,45 +1,46 @@
 /* The rail: the OpenBot-shaped column — its top bar, its search field, the pinned bots as tiles, the rest of the team
-   as rows, and the subscription meters at the foot. Plain CSS on Glaze's tokens, all of it under .glaze so nothing
+   as rows, and the app's own menu at the foot. Plain CSS on Glaze's tokens, all of it under .glaze so nothing
    reaches the native app (the build's check-css gate looks for exactly that). No Tailwind utility in here: the shapes
-   the spec fixes to the pixel (280px, 44px, 62px, 72×102) are not things a scale has names for.
+   the direction fixes to the pixel (240, 36, 58, 95×90, 21.5) are not things a scale has names for.
 
-   Colours, from the spec: page for the ground, paper for the selected row, hover for the pointer, text-1 / text-2 for
-   the two weights of ink, line-faint for the rules. */
+   Colours, from the direction (spec §1): the sidebar's own ground, surface-1 for what is raised, surface-hover under
+   the pointer, tile-selected for the pinned bot in use, text-1 / text-2 for the two weights of ink, and one 0.5px
+   hairline on the rail's end edge. */
 
 .glaze .hui-rail {
   display: flex;
   flex-direction: column;
-  width: 256px;
+  width: var(--w-sidebar);
   /* In a frame narrower than the column (the phone overlay on a small window) it takes what there is, which is what
      the container query below reads to drop the relative time. */
   max-width: 100%;
   height: 100%;
   min-height: 0;
-  /* A shade lighter than the page, as the reference sets its rail apart from the thread without a rule. Everything
-     in the rail that needs an opaque ground of the rail's own colour reads --rail-ground. */
-  --rail-ground: color-mix(in srgb, var(--ink) 3%, var(--page));
-  background: var(--rail-ground);
+  /* The rail's own ground, the one surface that is a step below the page. Everything in the rail that needs an opaque
+     ground of the rail's own colour reads --rail-ground. */
+  --rail-ground: var(--bg-sidebar);
+  background: var(--bg-sidebar);
+  /* Its only rule: the 0.5px hairline that separates it from the thread (spec §3). */
+  border-inline-end: var(--hairline) solid var(--hairline-sidebar);
   /* Rows hide their relative time when the column is squeezed (an overlay on a phone): a container query reads the
      rail's own width, not the window's. */
   container-type: inline-size;
   container-name: rail;
 }
 
-/* ---------- Top bar: the app menu, then the new-discussion button ---------- */
+/* ---------- Top bar: nothing on the left, two round buttons on the right ---------- */
 
-/* 44px: a 28px control keeps 8px of clear above and below inside the bar, which is the inset lintapple asks of a
-   marked container (lot 17). It stays the same line as the centre's header, which takes the same height. */
+/* 12 from the top, 16 from the edge, 10 apart: the two 36px buttons of the direction (spec §4). */
 .glaze .hui-rail-top {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
-  flex: 0 0 56px;
-  height: 56px;
-  padding: 0 12px;
+  gap: 10px;
+  flex: none;
+  padding: 12px 16px 0;
 }
 
-/* The reference's round button: 36px, the raised wash, a 16px glyph (10px of clear all round). */
+/* The direction's round button: 36, surface-1, a 1px control hairline, the strong icon. */
 .glaze .hui-round {
   appearance: none;
   margin: 0;
@@ -51,14 +52,15 @@
   width: 36px;
   height: 36px;
   border-radius: 999px;
-  background: var(--paper);
-  color: var(--text-1);
+  border: 1px solid var(--border-control);
+  background: var(--surface-1);
+  color: var(--icon-strong);
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out), scale var(--dur-state) var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
   .glaze .hui-round:hover {
-    background: color-mix(in srgb, var(--ink) 12%, var(--page));
+    background: var(--btn-round);
   }
 }
 .glaze .hui-round:active {
@@ -68,13 +70,18 @@
   outline: 2px solid var(--line-focus);
   outline-offset: 2px;
 }
-.glaze .hui-round > svg {
-  width: 16px;
-  height: 16px;
+/* The rail's two glyphs, at the direction's own sizes: the loupe reads at ~9, the plus at ~13 (spec §4). */
+.glaze .hui-round[data-glyph='search'] > svg {
+  width: 9px;
+  height: 9px;
+}
+.glaze .hui-round[data-glyph='add'] > svg {
+  width: 13px;
+  height: 13px;
 }
 
 .glaze .hui-rail-app {
-  /* A real <button> (lot 7): the class owns the box, the UA chrome is dropped. */
+  /* A real <button>: the class owns the box, the UA chrome is dropped. */
   appearance: none;
   margin: 0;
   border: 0;
@@ -95,22 +102,21 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .glaze .hui-rail-app:hover {
-    background: var(--hover);
+    background: var(--surface-hover);
   }
 }
 .glaze .hui-rail-app svg {
-  color: var(--text-3);
+  color: var(--text-2);
 }
 
 .glaze .hui-rail-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-inline-start: auto;
 }
 
-/* "New chat": the visible label and the plus, 28px tall, the secondary wash. It takes the room the gear left at the
-   top of the rail (lot 20); the gear moved to the foot. */
+/* "New chat": the visible label and the plus, 28 tall, surface-1. */
 .glaze .hui-new-chat {
   height: 28px;
   gap: 6px;
@@ -123,9 +129,9 @@
   color: var(--text-2);
 }
 
-/* One 28px icon button: the new discussion, the header's tabs, the panel's toggle. */
+/* One 28px icon button: the preview's actions, the panel's fold. */
 .glaze .hui-icon-btn {
-  /* A real <button> when it is a menu trigger (lot 7): no UA chrome, the class owns the box. */
+  /* A real <button> when it is a menu trigger: no UA chrome, the class owns the box. */
   appearance: none;
   margin: 0;
   border: 0;
@@ -143,7 +149,7 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .glaze .hui-icon-btn:hover {
-    background: var(--hover);
+    background: var(--surface-hover);
     color: var(--text-1);
   }
 }
@@ -154,8 +160,7 @@
   outline: 2px solid var(--line-focus);
   outline-offset: -2px;
 }
-/* The glyph is 12px whatever the call site asks for: (28 − 12) / 2 leaves 8px of clear on each side, the content
-   inset lintapple reads (lot 17). A 14 or 16px glyph in this box measured 7 and 6px. */
+/* The glyph keeps the 8px of clear lintapple reads in a 28px box: (28 − 12) / 2. */
 .glaze .hui-icon-btn > svg {
   width: 12px;
   height: 12px;
@@ -174,17 +179,17 @@
   width: 100%;
   height: 32px;
   padding: 0 8px;
-  border: 0.5px solid var(--line-control);
+  border: var(--hairline) solid var(--border-control);
   border-radius: 8px;
   background: transparent;
   font-size: 13px;
-  color: var(--text-3);
+  color: var(--text-2);
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
   .glaze .hui-search:hover {
-    background: var(--paper);
+    background: var(--surface-1);
   }
 }
 .glaze .hui-search:focus-visible {
@@ -211,7 +216,8 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 4px 12px 0;
+  /* Full-bleed rows: the 21.5px inset of the direction is on the row, not on its column (spec §4). */
+  padding: 0;
   scrollbar-width: none;
 }
 .glaze .hui-rail-list::-webkit-scrollbar {
@@ -230,55 +236,52 @@
   mask-image: linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent);
 }
 
-/* The boot's one status line: the gateway socket is opening and the roster has not landed yet. Quiet (text-3),
+/* The boot's one status line: the gateway socket is opening and the roster has not landed yet. Quiet (text-2),
    never a banner: the page underneath is already its normal skeleton. */
 .glaze .hui-rail-state {
-  margin: 8px 0 4px;
-  padding: 0 2px;
-  font-size: 12px;
+  margin: 8px 21px 4px;
+  padding: 0;
+  font-size: 12.5px;
   line-height: 18px;
-  color: var(--text-3);
+  color: var(--text-2);
 }
 
-/* Pinned bots: centred tiles that wrap, 236px at most, 8px apart. */
+/* Pinned bots: 95 × 90 tiles, centred and wrapping, 8 apart (spec §4). */
 .glaze .hui-pinned {
   display: flex;
   flex-wrap: wrap;
-  /* Centred, and it wraps: one pin sits in the middle of the column, several share the line and fall to the next. */
   justify-content: center;
   gap: 8px;
-  padding: 0 2px 12px;
+  padding: 23px 12px 8px;
 }
 
 .glaze .hui-tile {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  /* The tile takes the width of its content, with a floor: 72px is the empty-tile look, 132px the ceiling past
-     which the role is ellipsised. A fixed 72px truncated « Chief of Staff » (scrollWidth 86 > clientWidth 66). */
-  width: 76px;
-  height: 92px;
-  padding-top: 4px;
+  justify-content: center;
+  gap: 8px;
+  width: 95px;
+  height: 90px;
+  padding: 0;
   /* An explicit ground, so the name's contrast is measurable: on a bare tile the browser walked up to the rail and
-     axe answered "overlapped by another element" (lot 17). */
-  background: var(--rail-ground);
-  border-radius: 12px;
+     axe answered "overlapped by another element". */
+  background: var(--bg-sidebar);
+  border-radius: var(--radius-card);
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out), scale var(--dur-state) var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
   .glaze .hui-tile:hover {
-    background: var(--hover);
+    background: var(--surface-hover);
   }
 }
 .glaze .hui-tile:active {
   scale: 0.96;
 }
 .glaze .hui-tile[aria-selected='true'] {
-  /* Every tile is paper now, so selection is the ink wash the row uses, not a second paper — otherwise the selected
-     tile would look like the others (lot 17 gave the tile an explicit ground for its contrast). */
-  background: var(--pressed);
+  /* tile-selected is the direction's own step for the pinned bot in use. */
+  background: var(--tile-selected);
 }
 .glaze .hui-tile:focus-visible {
   outline: 2px solid var(--line-focus);
@@ -289,24 +292,20 @@
   display: block;
   width: 100%;
   max-width: 100%;
-  /* The name paints above the avatar's drawing, not under it: the avatar's 56px box holds a 1.6× SVG whose
-     transformed box is ~90px tall, and its ground shadow reached the name's line. An accessibility check then
-     answered "background overlapped by another element" for the name, whose contrast could not be measured
-     (lot 18). A relative name with a stack level is the paint order the eye already sees. */
+  /* The name paints above the avatar's drawing, not under it: the avatar's box holds a 1.6× SVG whose transformed box
+     is taller than its cell, and its ground shadow reached the name's line (lot 18, lot 19). */
   position: relative;
   z-index: 1;
   font-size: 13px;
   /* A 17px line box holds the 13px face whole inside its ellipsis clip. */
   line-height: 17px;
-  font-weight: 450;
-  margin-top: 4px;
+  font-weight: 400;
+  margin-top: 0;
   color: var(--text-1);
-  /* An opaque ground of the tile's own colour, behind the label and nowhere else: the avatar's SVG is blown up
-     1.6× and its box overhangs the name's line, so axe found an image node in the name's background stack and
-     answered "contrast could not be measured" (lot 19). The band is the tile's own ground — paper at rest, the ink
-     wash flattened onto the page on hover and while selected — so it is invisible, and it ends the stack at the
-     name. `color-mix` flattens the wash because a translucent ground would let the check read through to the SVG. */
-  background-color: var(--rail-ground);
+  /* An opaque band of the tile's own colour behind the label, nowhere else: the avatar's SVG is scaled up and its box
+     overhangs the name's line, so axe found an image node in the name's background stack and answered "contrast could
+     not be measured". The band is the tile's own ground, so it is invisible. */
+  background-color: var(--bg-sidebar);
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -314,17 +313,14 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .glaze .hui-tile:hover .hui-tile-name {
-    /* --hover (--ink at 6%) over the rail's page, flattened: the same pixels, an opaque colour. */
-    background-color: color-mix(in srgb, var(--ink) 6%, var(--rail-ground));
+    background-color: var(--surface-hover);
   }
 }
 .glaze .hui-tile[aria-selected='true'] .hui-tile-name {
-  /* --pressed (--ink at 10%) over the rail's page, flattened. */
-  background-color: color-mix(in srgb, var(--ink) 10%, var(--rail-ground));
+  background-color: var(--tile-selected);
 }
 .glaze .hui-tile[data-menu-open] .hui-tile-name {
-  /* An open context menu turns the tile to paper (below), so the label's ground follows it. */
-  background-color: var(--paper);
+  background-color: var(--surface-hover);
 }
 /* The house bot's star: a 16px amber disc on the avatar's bottom corner, ringed in the rail's ground. */
 .glaze .hui-star {
@@ -336,8 +332,8 @@
   width: 16px;
   height: 16px;
   border-radius: 999px;
-  background: #f0a33c;
-  box-shadow: 0 0 0 2px var(--rail-ground);
+  background: var(--data-orange);
+  box-shadow: 0 0 0 2px var(--bg-sidebar);
   color: #fff;
 }
 
@@ -347,59 +343,61 @@
   display: block;
   min-width: 2ch;
   max-width: 100%;
-  /* 20px box on a 19px line: the role sits whole inside its own ellipsis clip (it measured 1.84px of bottom
-     clipping at 18px / 17px), and the tile's 2px gaps keep the 102px tile. */
   height: 20px;
   padding: 0 4px;
-  border: 0.5px solid var(--line-faint);
+  border: var(--hairline) solid var(--hairline-sidebar);
   border-radius: 4px;
-  background: var(--hover);
+  background: var(--surface-1);
   font-size: 12px;
-  line-height: 19px;
+  line-height: 18px;
   color: var(--text-2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* ---------- The team: a header that collapses, then one row per bot ---------- */
+/* ---------- The team: a section title, then one 58px row per bot ---------- */
 
+/* 13px, text-2, 21 from the edge, 30 of air before it (spec §4). */
 .glaze .hui-team-head {
   display: flex;
   align-items: center;
-  height: 36px;
-  padding: 8px 8px 0;
+  height: auto;
+  padding: 30px 21px 8px;
   font-size: 13px;
+  line-height: 18px;
   color: var(--text-2);
   cursor: default;
 }
 .glaze .hui-bot-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  /* 54px: the 36px avatar and two 18px lines, 9px above and below. */
-  min-height: 54px;
-  padding: 8px 10px;
-  margin: 0 -4px 4px;
-  border-radius: 10px;
+  /* 12.5: the avatar sits at 21.5 and the text at 67 (21.5 + 33 + 12.5). */
+  gap: 12.5px;
+  min-height: var(--h-row);
+  height: var(--h-row);
+  /* 21.5: the avatar sits at 21.5 from the edge and the text at 67 (21.5 + 33 + 12.5), as the direction measures it. */
+  padding: 0 21.5px;
+  margin: 0;
+  border-radius: 0;
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out), scale var(--dur-state) var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
   .glaze .hui-bot-row:hover {
-    background: var(--hover);
+    background: var(--surface-hover);
   }
 }
 .glaze .hui-bot-row:active {
   scale: 0.99;
 }
 .glaze .hui-bot-row[aria-selected='true'] {
-  background: var(--paper);
+  background: var(--nav-active);
 }
-/* The row whose context menu is open keeps the paper wash, so the person sees what its actions will hit. */
+/* The row whose context menu is open keeps a wash, so the person sees what its actions will hit. */
 .glaze .hui-bot-row[data-menu-open],
 .glaze .hui-tile[data-menu-open] {
-  background: var(--paper);
+  background: var(--tile-selected);
 }
 .glaze .hui-bot-row:focus-visible {
   outline: 2px solid var(--line-focus);
@@ -411,7 +409,7 @@
   min-width: 0;
   flex: 1;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 .glaze .hui-row-line {
   display: flex;
@@ -422,9 +420,9 @@
 .glaze .hui-row-name {
   min-width: 0;
   flex: 1 1 auto;
-  font-size: 14px;
-  line-height: 18px;
-  font-weight: 450;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 400;
   color: var(--text-1);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -435,20 +433,18 @@
 }
 .glaze .hui-row-time {
   flex: none;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
-/* A rail narrower than 210px is an overlay on a phone: the time goes, the names stay. */
-@container rail (max-width: 209px) {
+/* A rail narrower than 200px is an overlay on a phone: the time goes, the names stay. */
+@container rail (max-width: 199px) {
   .glaze .hui-row-time {
     display: none;
   }
 }
-/* Two lines, ellipsised: the row is at least 62px and carries the bot, its role, its time and the first two lines of
-   what it said. One line cut the message at the first ~200px ("J'ai relu la séquence d'emails : les deux premiers")
-   and lintapple measured 470 to 694px of right clipping on every row (lot 17, then lot 18). The full output is on the
-   row's `title`, so the truncation is announced rather than lost. */
+/* One line, ellipsised: the preview of what the bot said last. The full output is on the row's `title`, so the
+   truncation is announced rather than lost. */
 .glaze .hui-row-output {
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -471,24 +467,22 @@
   display: grid;
   place-items: center;
 }
-/* The cell pins its size: a team row's avatar is 46px in a 46×46 cell (it measured ~28 before lot 7, the avatar
-   shrank inside a flex row), the pinned tile's is 56px in a 56×56 one. `--bot-size` alone is not enough when a
-   parent flex row can compress the item, so both the cell and the avatar box are set here. */
+/* The cell pins its size: a row's avatar is 33px, the pinned tile's is 55 (spec §4). */
 .glaze .hui-bot-row .hui-avatar {
-  width: 36px;
-  height: 36px;
+  width: 33px;
+  height: 33px;
 }
 .glaze .hui-tile .hui-avatar {
-  width: 58px;
-  height: 58px;
+  width: 55px;
+  height: 55px;
 }
 .glaze .hui-bot-row .hui-avatar > .hui-bot {
-  width: 36px;
-  height: 36px;
+  width: 33px;
+  height: 33px;
 }
 .glaze .hui-tile .hui-avatar > .hui-bot {
-  width: 58px;
-  height: 58px;
+  width: 55px;
+  height: 55px;
 }
 .glaze .hui-work {
   position: absolute;
@@ -509,22 +503,21 @@
 }
 .glaze .hui-bot-row[aria-selected='true'] .hui-work,
 .glaze .hui-tile[aria-selected='true'] .hui-work {
-  background: var(--paper);
-  box-shadow: 0 0 0 2px var(--paper);
+  background: var(--tile-selected);
+  box-shadow: 0 0 0 2px var(--tile-selected);
 }
 
-/* ---------- The foot: the app's own menu ---------- */
+/* ---------- The foot: the workspace's name, then the round buttons ---------- */
 
-/* One 36px line: the workspace's name, the gear and the app menu. */
+/* 16 off the edge and the bottom, no separator above it (spec §4). */
 .glaze .hui-rail-foot {
   flex: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 8px 12px 12px;
+  gap: 0;
+  padding: 0 16px 16px;
 }
 
-/* The gear and the menu, at the inline end of the line, 8px apart (the control gap lintapple reads). */
 .glaze .hui-rail-foot-actions {
   display: flex;
   align-items: center;
@@ -534,7 +527,9 @@
 .glaze .hui-rail-app-name {
   flex: 1;
   min-width: 0;
-  padding-inline-start: 4px;
-  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
   color: var(--text-1);
 }

@@ -181,6 +181,7 @@ export function ModelMenu() {
         size="sm"
         className="hui-model-trigger"
         aria-label={UI.model.trigger(label, effortShort(effort))}
+        data-ui-tooltip="hui-tip-model"
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => {

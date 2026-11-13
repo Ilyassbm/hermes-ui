@@ -4,14 +4,15 @@
 // the page owns; they live in the plugin's own storage (`ctx.storage`), the same door the rail uses for its pins, so
 // the form and the page can never disagree about a value.
 //
-// The defaults are today's look: dark, comfortable, 680px of reading measure, motion on, Enter sends, activity shown.
+// The defaults are today's look: dark, comfortable, 960px of reading measure (the direction's column, spec §3), motion
+// on, Enter sends, activity shown.
 // A load merges only known, well-typed values, so a stored object from an older version cannot put the page in a state
 // no control offers.
 import { createStore } from '@/lib/store'
 
 export type ThemeChoice = 'system' | 'dark' | 'light'
 export type DensityChoice = 'comfortable' | 'compact'
-export type MeasureChoice = 680 | 760 | 840
+export type MeasureChoice = 680 | 760 | 840 | 960
 export type MotionChoice = 'on' | 'reduced'
 export type SendKeyChoice = 'enter' | 'mod+enter'
 
@@ -28,7 +29,7 @@ export type Settings = {
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'dark',
   density: 'comfortable',
-  measure: 680,
+  measure: 960,
   motion: 'on',
   sendKey: 'enter',
   activity: true
@@ -38,7 +39,7 @@ const KEY = 'settings'
 
 const THEMES: ThemeChoice[] = ['system', 'dark', 'light']
 const DENSITIES: DensityChoice[] = ['comfortable', 'compact']
-const MEASURES: MeasureChoice[] = [680, 760, 840]
+const MEASURES: MeasureChoice[] = [680, 760, 840, 960]
 const MOTIONS: MotionChoice[] = ['on', 'reduced']
 const SEND_KEYS: SendKeyChoice[] = ['enter', 'mod+enter']
 

@@ -59,20 +59,39 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
     // once a conversation is open, its title in small print — and the pill opens every conversation of the bot. The
     // new conversation and the panel's toggle are round buttons at the end.
     <div className="hui-hdr" data-ui-container="" data-ui-actions="">
+      {/* The veil over the thread: the page's own top colour, opaque at the top, clear by 60px. A real element rather
+          than a ::before, so nothing generated sits between a control's words and the surface they are read on. */}
+      <div className="hui-veil" aria-hidden />
       <div className="hui-hdr-start">
         {narrowRail ? (
-          <Button variant="ghost" size="icon-lg" className="hui-round" aria-label={UI.header.toggleRail} title={UI.header.toggleRail} onClick={() => view.set({ railOpen: !railOpen })}>
-            <Icon icon={SidebarSimple} size={16} />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-36"
+                    className="hui-round"
+                    aria-label={UI.header.toggleRail}
+                    data-ui-tooltip="hui-tip-header-rail"
+                    onClick={() => view.set({ railOpen: !railOpen })}
+                  />
+                }
+              >
+                <Icon icon={SidebarSimple} size={12} />
+              </TooltipTrigger>
+              <TooltipContent id="hui-tip-header-rail">{UI.header.toggleRail}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         ) : null}
       </div>
 
       <DropdownMenu>
         <DropdownMenuTrigger
           openOnHover={false}
-          render={<Button variant="ghost" className="hui-pill" aria-label={UI.header.conversations(name)} title={open?.title || UI.header.allConversations} />}
+          render={<Button variant="ghost" className="hui-pill" title={open?.title || UI.header.allConversations} />}
         >
-          <BotAvatar size={24} colors={identity.colors} shape={identity.shape} label={name} hoverGiggle={false} />
+          <BotAvatar size={22} colors={identity.colors} shape={identity.shape} label={name} hoverGiggle={false} />
           <span className="hui-pill-name">{role ? `${name} · ${role}` : name}</span>
           {open?.title ? <span className="hui-pill-title">{open.title}</span> : null}
           {live ? <WorkingDot className="hui-tab-dot" /> : null}
@@ -121,9 +140,9 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger
-              render={<Button variant="ghost" size="icon-lg" className="hui-round hui-tab-new" aria-label={UI.header.newConversation} data-ui-tooltip="hui-tip-header-new" onClick={() => newConversation()} />}
+              render={<Button variant="ghost" size="icon-36" className="hui-round hui-tab-new" aria-label={UI.header.newConversation} data-ui-tooltip="hui-tip-header-new" onClick={() => newConversation()} />}
             >
-              <Icon icon={Add} size={16} />
+              <Icon icon={Add} size={12} />
             </TooltipTrigger>
             <TooltipContent id="hui-tip-header-new" shortcut={capsOf('hermes-ui.newConversation')}>{UI.header.newConversation}</TooltipContent>
           </Tooltip>
@@ -133,9 +152,9 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger
-              render={<Button variant="ghost" size="icon-lg" className="hui-round" aria-label={asideOpen ? UI.header.hideAside : UI.header.showAside} data-ui-tooltip="hui-tip-header-aside" onClick={() => toggleAside(ctx)} />}
+              render={<Button variant="ghost" size="icon-36" className="hui-round" aria-label={asideOpen ? UI.header.hideAside : UI.header.showAside} data-ui-tooltip="hui-tip-header-aside" onClick={() => toggleAside(ctx)} />}
             >
-              <Icon icon={SidebarSimple} size={16} mirrored />
+              <Icon icon={SidebarSimple} size={12} mirrored />
             </TooltipTrigger>
             <TooltipContent id="hui-tip-header-aside" shortcut={capsOf('hermes-ui.toggleAside')}>{asideOpen ? UI.header.hideAside : UI.header.showAside}</TooltipContent>
           </Tooltip>

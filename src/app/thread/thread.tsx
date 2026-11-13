@@ -4,7 +4,7 @@
 // and ConversationJump ("Aller en bas") is the way back — we never scroll it ourselves.
 import { type RefObject, useMemo } from 'react'
 import { Conversation, ConversationContent, ConversationError, ConversationJump, ConversationProvider, ConversationViewport, useConversation } from '@/components/glaze/ai/conversation'
-import { Message, MessageBubble, MessageBubbleContent, MessageContent, MessageGroup, MessageHeader, MessageTime } from '@/components/glaze/ai/message'
+import { Message, MessageBubble, MessageBubbleContent, MessageContent, MessageGroup } from '@/components/glaze/ai/message'
 import { Response } from '@/components/glaze/ai/response'
 import type { PromptInputHandle } from '@/components/glaze/ai/prompt-input'
 import { Attachment, AttachmentContent, AttachmentGlyph, AttachmentGroup, AttachmentMedia, AttachmentTitle } from '@/components/glaze/ui/attachment'
@@ -79,12 +79,10 @@ export function Thread({ bot, name, input }: ThreadProps) {
                   m.role === 'note' ? (
                     <NoteLine key={m.id} text={m.text} />
                   ) : m.role === 'user' ? (
-                    <Message key={m.id} from="user">
+                    // The person's turn has no speaker line to draw: its name and time are the group's label, read
+                    // once when the turn is entered.
+                    <Message key={m.id} from="user" role="group" aria-label={`${UI.thread.you}, ${hourOf(m.at)}`}>
                       <MessageContent>
-                        <MessageHeader>
-                          {UI.thread.you}
-                          <MessageTime>{hourOf(m.at)}</MessageTime>
-                        </MessageHeader>
                         {m.attachments?.length ? <UserAttachments files={m.attachments} /> : null}
                         <UserText text={m.text} />
                       </MessageContent>
@@ -115,7 +113,7 @@ export function Thread({ bot, name, input }: ThreadProps) {
             {/* The turn is still working: one line under the last message, never inside its bubble. It folds into
                 "Worked for 12s" once Stop ended the turn, and leaves on the next prompt. */}
             {/* Settings ▸ Chat ▸ activity line: off hides this one status; the reasoning, the calls and the answer stay. */}
-            {(live || worked) && activity ? <WorkingLine live={live} worked={worked} name={name} /> : null}
+            {(live || worked) && activity ? <WorkingLine live={live} worked={worked} name={name} identity={identity} /> : null}
 
             {error ? (
               <ConversationError

@@ -25,7 +25,9 @@ Options:
   --url <url>            Page to check (required).
   --out <file>           JSON report path, relative to the repository (default cache/lint-ui.json).
   --viewport <WxH>       1440x900 or 390x844 (default 1440x900).
+  --viewport(s) / --widths  one viewport, or a comma list of widths the default height is used for: --widths 1440,390
   --scheme <dark|light>  Colour scheme of the context (default dark).
+  --schemes <a,b>        Every scheme in the list, one run each: --schemes dark,light
   --ready <selector>     Visible once the page is ready (default .glaze).
   --keep                 Keep the screenshot next to the JSON report.
   -h, --help             Print this help and exit, without a browser.
@@ -42,6 +44,21 @@ function parseViewport(value) {
   const height = Number(match[2])
   if (width < 1 || height < 1) throw new UsageError('--viewport values must be positive.')
   return { width, height }
+}
+
+function parseWidths(value) {
+  return value.split(',').map(part => part.trim()).filter(Boolean).map(part => {
+    const width = Number(part.replace(/x.*$/, ''))
+    if (!Number.isFinite(width) || width < 1) throw new UsageError(`--widths wants numbers, not "${part}".`)
+    return { width, height: width <= 600 ? 844 : 900 }
+  })
+}
+
+function parseSchemes(value) {
+  const list = value.split(',').map(part => part.trim()).filter(Boolean)
+  for (const scheme of list) if (!['dark', 'light'].includes(scheme)) throw new UsageError(`--schemes wants dark or light, not "${scheme}".`)
+  if (!list.length) throw new UsageError('--schemes needs at least one scheme.')
+  return list
 }
 
 function parseArgs(argv) {
@@ -64,6 +81,12 @@ function parseArgs(argv) {
     else if (arg.startsWith('--viewport=')) args.viewport = parseViewport(arg.slice('--viewport='.length))
     else if (arg === '--scheme') args.scheme = value()
     else if (arg.startsWith('--scheme=')) args.scheme = arg.slice('--scheme='.length)
+    else if (arg === '--schemes') args.schemes = parseSchemes(value())
+    else if (arg.startsWith('--schemes=')) args.schemes = parseSchemes(arg.slice('--schemes='.length))
+    else if (arg === '--widths') args.viewports = parseWidths(value())
+    else if (arg.startsWith('--widths=')) args.viewports = parseWidths(arg.slice('--widths='.length))
+    else if (arg === '--viewports') args.viewports = value().split(',').map(part => parseViewport(part.trim()))
+    else if (arg.startsWith('--viewports=')) args.viewports = arg.slice('--viewports='.length).split(',').map(part => parseViewport(part.trim()))
     else if (arg === '--ready') args.ready = value()
     else if (arg.startsWith('--ready=')) args.ready = arg.slice('--ready='.length)
     else throw new UsageError(`Unknown argument: ${arg}`)
@@ -143,30 +166,56 @@ async function main() {
     return 2
   }
 
+  // One run per (viewport, scheme): --widths and --schemes turn the one check into the matrix the release gate wants.
+  // The report of each run goes to its own file (`<out>` gets a suffix when there is more than one).
+  const viewports = args.viewports ?? [args.viewport]
+  const schemes = args.schemes ?? [args.scheme]
+  const runs = viewports.flatMap(viewport => schemes.map(scheme => ({ viewport, scheme })))
+
   let browser
+  let failed = 0
   try {
     browser = await chromium.launch({
       executablePath: process.env.HUI_CHROME || DEFAULT_CHROME,
       args: ['--no-sandbox']
     })
-    const context = await browser.newContext({ viewport: args.viewport, colorScheme: args.scheme })
-    const page = await context.newPage()
-    await page.goto(args.url, { waitUntil: 'load', timeout: 30000 })
-    await page.waitForSelector(args.ready, { state: 'visible', timeout: 30000 })
-    const report = await checkPage(page, policy.policy)
+    for (const { viewport, scheme } of runs) {
+      const out = runs.length === 1 ? args.out : args.out.replace(/\.json$/, `-${viewport.width}x${viewport.height}-${scheme}.json`)
+      const context = await browser.newContext({ viewport, colorScheme: scheme })
+      const page = await context.newPage()
+      await page.goto(args.url, { waitUntil: 'load', timeout: 30000 })
+      await page.waitForSelector(args.ready, { state: 'visible', timeout: 30000 })
+      // Measure a settled page: the entrances are CSS animations, and a check taken mid-fade reads a blended text
+      // colour (a message at 40% of its fade measured #666 on #121212 instead of #f5f5f5). Fonts first, then every
+      // running animation, with a 3 s ceiling for a page that loops one on purpose.
+      await page
+        .evaluate(async () => {
+          await document.fonts?.ready
+          const until = performance.now() + 3000
+          while (performance.now() < until) {
+            if (!document.getAnimations().some(animation => animation.playState === 'running')) break
+            await new Promise(done => setTimeout(done, 100))
+          }
+        })
+        .catch(() => {})
+      const report = await checkPage(page, policy.policy)
 
-    mkdirSync(dirname(args.out), { recursive: true })
-    const checkedAt = new Date().toISOString()
-    writeFileSync(args.out, `${JSON.stringify({ url: args.url, viewport: args.viewport, colorScheme: args.scheme, ready: args.ready, checkedAt, policy: 'ui-policy.json', report }, null, 2)}\n`)
+      mkdirSync(dirname(out), { recursive: true })
+      const checkedAt = new Date().toISOString()
+      writeFileSync(out, `${JSON.stringify({ url: args.url, viewport, colorScheme: scheme, ready: args.ready, checkedAt, policy: 'ui-policy.json', report }, null, 2)}\n`)
 
-    let screenshot
-    if (args.keep) {
-      screenshot = args.out.replace(/\.json$/, '') + '.png'
-      await page.screenshot({ path: screenshot })
+      let screenshot
+      if (args.keep) {
+        screenshot = out.replace(/\.json$/, '') + '.png'
+        await page.screenshot({ path: screenshot })
+      }
+
+      printReport(report, { url: args.url, viewport, scheme, out, screenshot })
+      console.log('')
+      if (report.findings.length) failed += 1
+      await context.close()
     }
-
-    printReport(report, { url: args.url, viewport: args.viewport, scheme: args.scheme, out: args.out, screenshot })
-    return report.findings.length ? 1 : 0
+    return failed ? 1 : 0
   } catch (error) {
     console.error(`The check did not finish: ${error.message}`)
     return 2

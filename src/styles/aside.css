@@ -5,8 +5,12 @@
    markdown answer with its source, or the image). Shapes and paddings are hand-set here; the outline is the policy's
    (24px minimum target, 8px between controls, 8px of content inset). */
 
+/* 320 wide, the app's own ground, one 0.5px hairline on its start edge (spec §3): the panel is a page surface, not a
+   card, and it never sits on top of the thread — the centre narrows instead. */
 .glaze .hui-aside {
   gap: 16px;
+  padding: 12px;
+  border-inline-start: var(--hairline) solid var(--hairline-panel);
 }
 
 /* The section heading: "Files" and its count on one 28px line; the fold and its create button on another. */
@@ -30,49 +34,64 @@
   width: 100%;
 }
 
-/* One file row: 34px, 8px of clear inside, 8px between two rows. The name truncates, the folder under it truncates,
-   the age stays at the inline end. */
+/* One file row: 36px, the name at 15 on a single line, the age at the inline end (spec §4). The card's rows are
+   full-bleed, so the wash under the pointer is the row itself. */
 .glaze .hui-aside-row {
-  min-height: 34px;
-  margin-bottom: 8px;
+  min-height: 36px;
+  margin-bottom: 0;
   border-radius: 6px;
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
   .glaze .hui-aside-row:hover {
-    background: var(--hover);
+    background: var(--surface-hover);
   }
 }
 .glaze .hui-aside-row:active {
-  background: var(--pressed);
+  background: var(--nav-active);
 }
 .glaze .hui-aside-row:focus-visible {
   outline: 2px solid var(--line-focus);
   outline-offset: -2px;
 }
 .glaze .hui-aside-row [data-hui-part='item'] {
-  min-height: 34px;
+  min-height: 36px;
   padding-block: 0;
+  padding-inline: 18px;
+  gap: 14px;
 }
 .glaze .hui-aside-row [data-hui-part='item-title'] {
-  font-size: 13px;
+  display: block;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--text-1);
 }
-.glaze .hui-aside-row [data-hui-part='item-description'] {
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--text-3);
-  white-space: nowrap;
+.glaze .hui-aside-row [data-hui-part='item-title'] > span {
+  display: block;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* One line per row, as the direction draws a file: the second line (the action and the folder) is not drawn — the
+   row's name says which file it is, and the whole path is on its label. */
+.glaze .hui-aside-row [data-hui-part='item-description'] {
+  display: none;
+}
+.glaze .hui-aside-row [data-hui-part='item-media'] svg {
+  width: 14px;
+  height: 14px;
+  color: var(--text-3);
 }
 
 .glaze .hui-aside-age {
   flex: none;
   margin-inline-start: 8px;
-  font-size: 12px;
+  font-size: 12.5px;
   line-height: 16px;
-  color: var(--text-3);
+  color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
 
@@ -289,8 +308,9 @@
 }
 
 
-/* ---------- The bot card, after the Grok Bot reference ---------- */
+/* ---------- The bot card, after the direction (spec §4) ---------- */
 
+/* The two round 36px buttons, 12 from the panel's edges (the panel's own padding). */
 .glaze .hui-aside-top {
   display: flex;
   justify-content: space-between;
@@ -301,18 +321,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 4px 0 8px;
+  gap: 10px;
+  /* The avatar is 59 and starts 22.5 under the top row (12 of panel padding + 36 of buttons = 48, so 70.5 from the
+     panel's top edge). */
+  padding: 22.5px 0 8px;
   flex: none;
 }
 .glaze .hui-aside-profile > .hui-bot {
-  width: 76px;
-  height: 76px;
+  width: 59px;
+  height: 59px;
 }
 .glaze .hui-aside-name {
-  margin-top: 4px;
-  font-size: 17px;
-  line-height: 22px;
+  margin-top: 0;
+  font-size: 18px;
+  line-height: 24px;
   font-weight: 500;
   color: var(--text-1);
   text-align: center;
@@ -320,18 +342,41 @@
 .glaze .hui-aside-facts {
   margin-top: -4px;
   font-size: 13px;
+  line-height: 18px;
   color: var(--text-2);
 }
+/* The panel's two views: 26px pills, the chosen one on surface-hover, the other in text-2 (spec §4). No track. */
 .glaze .hui-aside-profile [data-hui-part='segmented-control'] {
-  margin-top: 6px;
+  margin-top: 8px;
+  height: 26px;
+  gap: 4px;
+  background: transparent;
+  border: 0;
 }
-/* A section title: 13px, text-2, 18px above it — the reference's "Development", "Upcoming". */
+.glaze .hui-aside-profile [data-hui-part='segmented-control-item'] {
+  height: 26px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.glaze .hui-aside-profile [data-hui-part='segmented-control-item'][data-checked] {
+  background: var(--surface-hover);
+  color: var(--text-1);
+}
+.glaze .hui-aside-profile [data-hui-part='segmented-control-thumb'] {
+  height: 26px;
+  background: var(--surface-hover);
+  box-shadow: none;
+}
+/* A section title: 13px, text-2, 18px above it — the direction's "Development", "Upcoming". */
 .glaze .hui-aside-h {
   display: flex;
   align-items: center;
   justify-content: space-between;
   min-height: 28px;
-  padding: 14px 2px 6px;
+  padding: 18px 2px 8px;
   font-size: 13px;
   font-weight: 400;
   color: var(--text-2);
@@ -342,21 +387,28 @@
 }
 .glaze .hui-aside-link {
   height: 24px;
-  padding: 0 6px;
+  padding: 0 8px;
   font-size: 13px;
-  color: var(--text-2);
+  color: var(--text-link);
 }
-/* The card a list sits in: a raised surface, a hairline, 14px of radius, 4px of inset for the rows' own wash. */
+/* The card a list sits in: 288 wide (16 of margin each side), surface-1, a 0.5px control hairline, a 10px corner. */
 .glaze .hui-aside-card {
   display: flex;
   flex-direction: column;
-  padding: 4px;
-  border-radius: 14px;
-  border: 0.5px solid var(--line-faint);
-  background: var(--paper);
+  width: 288px;
+  max-width: 100%;
+  margin-inline: auto;
+  padding: 6px 0;
+  border-radius: var(--radius-card);
+  border: var(--hairline) solid var(--border-control);
+  background: var(--surface-1);
 }
 .glaze .hui-aside-card .hui-aside-row {
-  border-radius: 10px;
+  border-radius: 6px;
+}
+/* 8 between two rows: two stacked targets need the clear space (ui-policy minControlGap). */
+.glaze .hui-aside-card [data-hui-part='item-group'] {
+  gap: 8px;
 }
 .glaze .hui-aside-done {
   display: grid;
@@ -365,16 +417,18 @@
   height: 16px;
   border-radius: 999px;
   background: var(--ok, #3fb26b);
-  color: var(--page);
+  color: var(--bg-app);
 }
 .glaze .hui-aside-chev {
   flex: none;
   color: var(--text-3);
 }
+/* "Afficher plus": the link ink, centred under the rows (spec §4). */
 .glaze .hui-aside-more {
   align-self: center;
-  margin: 2px 0;
-  color: var(--text-2);
+  margin: 4px 0;
+  font-size: 14px;
+  color: var(--text-link);
 }
 .glaze .hui-aside-routine {
   cursor: default;
@@ -383,5 +437,5 @@
   padding: 10px 4px;
   font-size: 13px;
   line-height: 18px;
-  color: var(--text-3);
+  color: var(--text-2);
 }

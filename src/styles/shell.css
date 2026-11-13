@@ -1,8 +1,8 @@
 /* The centre's shell, the composer's single surface, and the bot picker. Plain CSS on Glaze's tokens, under .glaze,
-   beside rail.css — the same reason: shapes pinned by the spec that no utility class spells.
+   beside rail.css — the same reason: shapes pinned by the direction that no utility class spells.
 
-   Three blocks: the 44px header with its conversation tabs and the model trigger; the composer, whose Glaze shell is
-   neutralised so the panel and the toolbar read as one surface; the picker dialog, a fifth of the way down. */
+   Three blocks: the floating title pill over a 60px top fade (spec §4), the 44px composer (spec §3–4), and the
+   picker dialog. */
 
 /* ---------- Selection ---------------------------------------------------------------- */
 /* The app turns text selection OFF on its <body> (apps/desktop/src/styles.css:819, `user-select: none`), so every page
@@ -23,21 +23,37 @@
   user-select: none;
 }
 
-/* ---------- The header: a floating pill and two round buttons ---------- */
+/* ---------- The header: a floating pill over the thread ---------- */
 
-/* Three columns so the pill stays centred whatever sits at either end; 56px tall, no fill, no rule. */
+/* No bar: the header floats over the top of the thread, 10px down, on a 60px fade (spec §4). Three columns so the pill
+   stays centred whatever sits at either end. The frame itself takes no pointer, so a click on the thread under it
+   still lands on the thread; its three columns do. */
 .glaze .hui-hdr {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 3;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  align-items: center;
+  align-items: start;
   gap: 8px;
-  flex: 0 0 56px;
-  height: 56px;
-  padding: 0 12px;
+  height: var(--h-topbar);
+  padding: 10px 16px 0;
   background: transparent;
   min-width: 0;
-  position: relative;
-  z-index: 2;
+  pointer-events: none;
+}
+.glaze .hui-hdr > * {
+  pointer-events: auto;
+}
+/* The veil: the page's own top colour, opaque at the top, clear by 60px — under the pill, above the thread. */
+.glaze .hui-veil {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--h-topbar);
+  background: linear-gradient(to bottom, var(--bg-topfade) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
 }
 .glaze .hui-hdr-start {
   display: flex;
@@ -49,29 +65,31 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
 }
 
-/* The pill: the bot's avatar, "Name · Role", the open conversation's title in small print, a chevron. A raised
-   capsule with a soft shadow, the way the reference floats the bot over the thread. */
+/* The pill: the bot's avatar, "Name · Role", the open conversation's title in small print, a chevron. 40 high, a
+   capsule on surface-1 with a 0.5px control hairline — no shadow (spec §4). */
 .glaze .hui-pill {
   display: flex;
   align-items: center;
-  gap: 8px;
-  max-width: min(560px, 52vw);
-  height: 36px;
-  padding: 0 12px 0 6px;
+  gap: 10px;
+  max-width: min(var(--w-bubble), 52vw);
+  height: var(--h-pill);
+  padding: 0 14.5px 0 8px;
+  border: var(--hairline) solid var(--border-control);
   border-radius: 999px;
-  background: var(--paper);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 4%, transparent) inset, 0 4px 18px rgb(0 0 0 / 0.28);
-  font-size: 14px;
+  background: var(--surface-1);
+  box-shadow: none;
+  font-size: 14.5px;
+  line-height: 20px;
   color: var(--text-1);
   white-space: nowrap;
 }
 @media (hover: hover) and (pointer: fine) {
   .glaze .hui-pill:hover {
-    background: color-mix(in srgb, var(--ink) 12%, var(--page));
+    background: var(--surface-hover);
   }
 }
 .glaze .hui-pill:focus-visible {
@@ -79,8 +97,8 @@
   outline-offset: 2px;
 }
 .glaze .hui-pill > .hui-bot {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   flex: none;
 }
 .glaze .hui-pill-name {
@@ -90,20 +108,22 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* A 20px box for a 13px face: the ellipsis clip keeps the descenders. */
+  line-height: 20px;
   font-size: 13px;
-  color: var(--text-2);
+  color: var(--text-3);
 }
 .glaze .hui-pill > svg:last-child {
   flex: none;
-  color: var(--text-3);
+  color: var(--text-2);
 }
 .glaze .hui-conv-menu [data-current] {
   background: var(--pressed);
 }
 
 .glaze .hui-model-trigger {
-  /* A real <button> (lot 7): the UA chrome is dropped and the class owns the box. In the composer's toolbar (lot 14)
-     it reads as the model, not as an icon: the provider's mark, the short name at 14px, the effort in small print. */
+  /* A real <button>: the UA chrome is dropped and the class owns the box. In the composer's toolbar it reads as the
+     model, not as an icon: the provider's mark, the short name at 13px, the effort in small print. */
   appearance: none;
   margin: 0;
   border: 0;
@@ -118,7 +138,7 @@
   padding: 0 8px;
   border-radius: 6px;
   font-size: 13px;
-  color: var(--text-1);
+  color: var(--text-2);
   cursor: default;
   white-space: nowrap;
   max-width: 240px;
@@ -126,7 +146,8 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .glaze .hui-model-trigger:hover {
-    background: var(--hover);
+    background: var(--surface-hover);
+    color: var(--text-1);
   }
 }
 .glaze .hui-model-trigger:focus-visible {
@@ -134,7 +155,7 @@
   outline-offset: -2px;
 }
 .glaze .hui-model-trigger svg {
-  color: var(--text-3);
+  color: var(--text-2);
 }
 .glaze .hui-model-trigger .hui-model-logo {
   width: 16px;
@@ -148,12 +169,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 13px;
-  font-weight: 450;
+  font-weight: 400;
   line-height: 20px;
 }
 .glaze .hui-model-effort-tag {
   flex: none;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 16px;
   color: var(--text-3);
   font-variant-numeric: tabular-nums;
@@ -170,8 +191,8 @@
 .glaze .hui-model-provider svg {
   color: var(--text-2);
 }
-/* The provider the profile has no key for (1.5.4): the group still names it — the person knows they use it — and this
-   small print says why every row under it is disabled. */
+/* The provider the profile has no key for: the group still names it — the person knows they use it — and this small
+   print says why every row under it is disabled. */
 .glaze .hui-model-provider-key {
   margin-inline-start: auto;
   padding-inline-end: 4px;
@@ -203,11 +224,11 @@
   top: -4px;
   z-index: 1;
   padding: 4px 4px 6px;
-  background: var(--popover);
+  background: var(--surface-1);
 }
 
-/* The picker's search (1.5.3): the hits are the menu's rows, one flat list, with the row Enter would choose carrying
-   the pointer's own wash. The provider's slug rides at the inline end in the small print. */
+/* The picker's search: the hits are the menu's rows, one flat list, with the row Enter would choose carrying the
+   pointer's own wash. The provider's slug rides at the inline end in the small print. */
 .glaze .hui-model-hits {
   display: flex;
   flex-direction: column;
@@ -218,15 +239,15 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 30px;
+  min-height: 34px;
   padding: 2px 8px;
   border-radius: var(--radius-tag);
-  font-size: 13px;
+  font-size: 15px;
   color: var(--text-1);
   cursor: default;
 }
 .glaze .hui-model-hit[data-active='true'] {
-  background: var(--hover);
+  background: var(--surface-hover);
 }
 .glaze .hui-model-hit-name {
   min-width: 0;
@@ -237,7 +258,7 @@
 }
 .glaze .hui-model-hit-provider {
   flex: none;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-3);
 }
 
@@ -258,60 +279,128 @@
 .glaze .hui-conv-time {
   margin-inline-start: auto;
   flex: none;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
 .glaze .hui-conv-empty {
   padding: 6px 8px;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-3);
 }
 
 /* Under 560px the three conversation tabs go: the bot's own tab, the way into the full list and the new-conversation
-   button stay. */
+   button stay. The pill drops its small print — the open conversation's title — because the header's two round buttons
+   and the pill no longer fit on one 390px line with it, and the title is on the pill's own tooltip. */
 @media (max-width: 559px) {
   .glaze .hui-tab-conv {
     display: none;
   }
+  .glaze .hui-pill-title {
+    display: none;
+  }
 }
 
-/* ---------- The composer: one surface, not a field in a box ---------- */
+/* ---------- The composer: one surface, 44 high ---------- */
 
-/* PromptInput is a grey shell holding a white panel with the toolbar under it. The spec asks for the opposite: one
-   paper surface, the editor on top and the toolbar at its foot. The shell and the panel are neutralised here, scoped
-   to our composer (`.hui-composer`), so the component itself is untouched and every other user of it keeps its look. */
+/* PromptInput is a grey shell holding a white panel with the toolbar under it. The direction asks for the opposite:
+   one surface, the editor on top and the toolbar at its foot. The shell and the panel are neutralised here, scoped to
+   our composer (`.hui-composer`), so the component itself is untouched and every other user of it keeps its look. */
 .glaze .hui-composer [data-hui-part='prompt-input'] {
   background: transparent;
   border: 0;
   padding: 0;
 }
-/* The reference's capsule: one 48px row on the paper wash, a hairline, a 24px radius that stays round while the
-   editor grows to several lines. */
+/* The direction's capsule: 44 high, one row on surface-1, a 0.5px composer hairline and its 1px outer halo — the only
+   shadow the direction allows. The radius stays round as the editor grows. */
 .glaze .hui-composer [data-hui-part='prompt-input-panel'] {
-  background: var(--paper);
-  border: 0.5px solid var(--line-control);
-  border-radius: 24px;
-  padding: 5px 5px 5px 6px;
-  box-shadow: none;
+  background: var(--surface-1);
+  border: var(--hairline) solid var(--border-composer);
+  border-radius: 999px;
+  min-height: var(--h-composer);
+  padding: 0;
+  box-shadow: 0 0 0 1px var(--halo-composer);
   /* motion:layout — the capsule grows with what is typed into it; an auto height cannot be a transform. */
   height: auto;
   interpolate-size: allow-keywords;
   transition: height 300ms var(--ease-out), border-color var(--dur-state) var(--ease-out);
 }
+/* Focus: the composer's own hairline darkens to the focus step (the library sets the colour on the panel). */
+.glaze .hui-composer [data-focused] [data-hui-part='prompt-input-panel'],
+.glaze .hui-composer [data-force-focus] [data-hui-part='prompt-input-panel'] {
+  border-color: var(--border-composer-focus);
+}
+/* 8 of internal padding and 8 between the controls (spec §4). */
 .glaze .hui-composer [data-hui-part='prompt-input-body'] {
-  padding: 0;
-  align-items: flex-end;
+  padding: 8px;
+  gap: 8px;
+  min-height: var(--h-composer);
+}
+.glaze .hui-composer [data-hui-part='prompt-input-body'] > div {
+  min-height: var(--control-sm);
+  gap: 8px;
+  padding-inline: 0;
 }
 .glaze .hui-composer [data-hui-part='prompt-input-editor'] {
-  min-height: 24px;
+  min-height: 22px;
   max-height: 40vh;
   overflow-y: auto;
-  padding-block: 6px;
+  padding-block: 0;
 }
-/* The placeholder sits on the editor's first line, which the 6px of block padding moved down. */
+/* The placeholder sits on the editor's first line. */
 .glaze .hui-composer [data-hui-part='prompt-input-placeholder'] {
-  top: 6px;
+  top: 0;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--placeholder);
+}
+/* The pill's avatar keeps its 22px cell: the aicss engine draws the body at 55.8% of its box and the sheet scales the
+   svg 1.6 so the face reads at the cell's size, which makes the svg's transformed box (35px) wider than the cell it
+   paints in. The cell clips to its circle — the body tops out at 95% of it, so nothing visible is cut — and the
+   avatar's box stays inside the pill's content edge (the control's 8px inset). */
+.glaze .hui-pill > .hui-bot {
+  overflow: hidden;
+  border-radius: 999px;
+  clip-path: inset(0 round 999px);
+}
+
+/* The composer's round buttons: 28, the control's own surface, a 1px round hairline, the muted icon. Send is the ink
+   and keeps its own fill (the direction's one filled control). */
+.glaze .hui-composer [data-hui-part='prompt-input-body'] > button:not([data-hui-part='send-button']) {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  /* The hairline is drawn inside: a real border shrinks the content box, and a 12px glyph in a 28px box then sits
+     7px from the edge instead of the 8 the policy reads. */
+  box-shadow: inset 0 0 0 1px var(--border-separator);
+  background: var(--btn-round);
+  color: var(--icon-muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-composer [data-hui-part='prompt-input-body'] > button:not([data-hui-part='send-button']):hover {
+    background: var(--surface-hover);
+    color: var(--icon-strong);
+  }
+}
+.glaze .hui-composer [data-hui-part='send-button'] {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+}
+/* On a phone the model trigger is its provider's mark alone: its name and effort took 227px of a 390px row and left
+   the editor 33px wide. The name is still read out (the button's aria-label names it) and the menu is unchanged. */
+@media (max-width: 559px) {
+  .glaze .hui-composer .hui-model-name,
+  .glaze .hui-composer .hui-model-effort-tag {
+    display: none;
+  }
+}
+/* An attachment's thumbnail: 56, the separator's hairline, an 8px corner (spec §4). */
+.glaze .hui-composer [data-hui-part='prompt-input-attachments'] [data-hui-part='attachment'] {
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--border-separator);
+  border-radius: 8px;
 }
 @media (prefers-reduced-motion: reduce) {
   .glaze .hui-composer [data-hui-part='prompt-input-panel'] {
@@ -319,19 +408,42 @@
   }
 }
 
+/* ---------- The thread: 64 under the veil, the column of the direction ---------- */
+
+/* The pill and its veil sit over the thread, so the thread starts under them; the padding is inside the scrollport, so
+   scrolled content still passes under the fade. */
+.glaze [data-hui-part='conversation-viewport'] {
+  padding-top: 64px;
+}
+
 /* ---------- The bot's answer: a bubble on the page ---------- */
 
+/* 18px corner, 7/13 of padding, 15/22 text (spec §4; the surface and its hairline are theme.css's). */
 .glaze .hui-bubble {
   align-self: flex-start;
-  max-width: 100%;
+  max-width: min(var(--w-bubble), 100%);
   min-width: 0;
-  padding: 11px 14px;
-  border-radius: 16px;
-  background: var(--paper);
+  padding: 7px 13px;
+  border-radius: var(--radius-bubble);
 }
 /* A card the bot drew inside its answer keeps its own surface: the bubble's padding is enough frame. */
 .glaze .hui-bubble [data-hui-part='response-tag'] {
   margin-block: 2px;
+}
+/* Paragraphs 10 apart, bullets 4 apart and the list 16 in (spec §4). */
+.glaze .hui-bubble [data-hui-part='response'] {
+  gap: 10px;
+}
+.glaze .hui-bubble :is(ul, ol) {
+  margin-inline-start: 16px;
+  gap: 4px;
+}
+.glaze .hui-bubble :is(ul, ol) > li {
+  gap: 6px;
+}
+/* A cut line wraps under the text it belongs to, not under its bullet. */
+.glaze .hui-bubble :is(ul, ol) > li > span:last-child {
+  min-width: 0;
 }
 
 /* ---------- The bot picker ---------- */
@@ -356,7 +468,7 @@
 
 .glaze .hui-picker-form {
   padding: 12px 16px 8px;
-  border-bottom: 1px solid var(--line-faint);
+  border-bottom: var(--hairline) solid var(--border-separator);
 }
 
 .glaze .hui-picker-list {
@@ -372,7 +484,7 @@
 
 .glaze .hui-picker-section {
   padding: 6px 8px 2px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-2);
 }
 
@@ -383,13 +495,13 @@
   min-height: 44px;
   padding: 0 8px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--text-1);
   cursor: default;
   transition: background-color var(--dur-state) var(--ease-out);
 }
 .glaze .hui-picker-row[data-active='true'] {
-  background: var(--hover);
+  background: var(--surface-hover);
 }
 .glaze .hui-picker-section + .hui-picker-row {
   margin-top: 0;
@@ -408,7 +520,7 @@
   white-space: nowrap;
 }
 .glaze .hui-picker-detail {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-2);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -417,7 +529,7 @@
 
 .glaze .hui-picker-time {
   flex: none;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }

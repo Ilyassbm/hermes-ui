@@ -52,6 +52,10 @@ const buttonVariants = cva(
         'icon-sm': 'size-(--control-sm) px-0 [&_svg]:size-(--icon-sm)',
         icon: 'size-(--control) px-0 [&_svg]:size-(--icon)',
         'icon-lg': 'size-(--control-lg) px-0 [&_svg]:size-(--icon-lg)',
+        // The direction's two round sizes, fixed whatever the theme's control tokens say: 28 in the composer's row,
+        // 36 for the rail's, the header's and the panel's round buttons (spec §4, §5.2).
+        'icon-28': 'h-[28px] w-[28px] px-0 [&_svg]:size-(--icon-sm)',
+        'icon-36': 'h-[36px] w-[36px] px-0 [&_svg]:size-(--icon-lg)',
       },
     },
     defaultVariants: {variant: 'primary', size: 'default'},

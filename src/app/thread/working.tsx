@@ -13,6 +13,7 @@
 // Reduced motion is CSS's: no pulse, no dots, and a static dot with the time still counting (src/styles/working.css).
 import { useEffect, useState } from 'react'
 import { toolVerbPresent, workingTime } from '@/lib/labels'
+import { BotAvatar } from '../bot-avatar'
 import { UI } from '../strings'
 
 export type LiveTurn = {
@@ -67,7 +68,18 @@ function WorkingDots() {
  * The time sits outside the polite region's words (`aria-hidden`), so a screen reader hears the verb change once, not
  * the clock every second.
  */
-export function WorkingLine({ live, worked, name }: { live: LiveTurn; worked: WorkedTurn; name?: string }) {
+export function WorkingLine({
+  live,
+  worked,
+  name,
+  identity
+}: {
+  live: LiveTurn
+  worked: WorkedTurn
+  name?: string
+  /** The bot's own avatar, at 26: the direction's activity line opens on it (spec §4). */
+  identity?: { colors: [string, string]; shape: any }
+}) {
   const active = Boolean(live)
   const now = useLiveNow(active, live?.startedAt)
   if (!live && !worked) return null
@@ -83,7 +95,15 @@ export function WorkingLine({ live, worked, name }: { live: LiveTurn; worked: Wo
       data-state={live ? 'working' : 'done'}
       className="hui-working"
     >
-      <WorkingDot done={!live} />
+      {/* The bot at 26, and the state dot on its corner: the direction's avatar, the pulse the line already had. */}
+      {identity ? (
+        <span className="hui-avatar hui-working-avatar">
+          <BotAvatar size={26} colors={identity.colors} shape={identity.shape} label={name || ''} hoverGiggle={false} />
+          <WorkingDot done={!live} className="hui-working-mark" />
+        </span>
+      ) : (
+        <WorkingDot done={!live} />
+      )}
       <span data-hui-part="working-verb" className={live ? 'hui-working-verb hui-shimmer' : 'hui-working-verb'}>
         {phrase}
       </span>

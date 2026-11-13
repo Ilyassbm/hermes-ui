@@ -12,6 +12,7 @@ import { Icon, Add, Search, Settings, SquaresFour, Star, Time } from '@/componen
 import { WorkingDot, WorkingStatus } from './thread/working'
 import { Badge } from '@/components/glaze/ui/badge'
 import { Button } from '@/components/glaze/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/glaze/ui/tooltip'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -129,19 +130,52 @@ export function Rail({ ctx }: { ctx: any }) {
       {/* The top: two round buttons at the inline end, search and a new conversation, as in the reference. The app's
           own menu moved to the foot, behind the grid button. */}
       <div className="hui-rail-top">
-        <Button
-          variant="ghost"
-          size="icon-lg"
-          className="hui-round"
-          aria-label={`${UI.rail.search} ${capsOf('hermes-ui.search').join(' ')}`}
-          title={UI.rail.searchLabel}
-          onClick={() => openPicker('search')}
-        >
-          <Icon icon={Search} size={16} />
-        </Button>
-        <Button variant="ghost" size="icon-lg" className="hui-round" aria-label={UI.rail.newChat} title={UI.rail.newWithBot} onClick={() => openPicker('new')}>
-          <Icon icon={Add} size={16} />
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-36"
+                  className="hui-round"
+                  data-glyph="search"
+                  aria-label={`${UI.rail.search} ${capsOf('hermes-ui.search').join(' ')}`}
+                  data-ui-tooltip="hui-tip-rail-search"
+                  onClick={() => openPicker('search')}
+                />
+              }
+            >
+              {/* The direction's two glyphs in a 36px box: a loupe at ~9, a plus at ~13 (the sizes are in rail.css,
+                  since Icon's own size prop only takes the library's scale). */}
+              <Icon icon={Search} size={12} />
+            </TooltipTrigger>
+            <TooltipContent id="hui-tip-rail-search" shortcut={capsOf('hermes-ui.search')}>
+              {UI.rail.searchLabel}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-36"
+                  className="hui-round"
+                  data-glyph="add"
+                  aria-label={UI.rail.newChat}
+                  data-ui-tooltip="hui-tip-rail-new"
+                  onClick={() => openPicker('new')}
+                />
+              }
+            >
+              <Icon icon={Add} size={12} />
+            </TooltipTrigger>
+            <TooltipContent id="hui-tip-rail-new" shortcut={capsOf('hermes-ui.newChatWithBot')}>
+              {UI.rail.newWithBot}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <div
@@ -169,7 +203,7 @@ export function Rail({ ctx }: { ctx: any }) {
                   onKeyDown={enter(() => selectBot(row.name))}
                 >
                   <span className="hui-avatar">
-                    <BotAvatar size={58} colors={row.identity.colors} shape={row.identity.shape} label={row.label} />
+                    <BotAvatar size={55} colors={row.identity.colors} shape={row.identity.shape} label={row.label} />
                     {busy(row.name) ? (
                       <span className="hui-work" role="img" aria-label={UI.rail.working}>
                         <WorkingDot />
@@ -191,7 +225,9 @@ export function Rail({ ctx }: { ctx: any }) {
         {sections.map(group => (
           <section key={group.title} className="hui-team">
             <div className="hui-team-head">{group.title}</div>
-            <div role="listbox" aria-label={group.title} data-ui-stack="">
+            {/* A listbox of options, not a stack of separated cards: the rows touch, as the direction draws them, so
+                the stack marker (which asks every child to sit 8px apart) does not apply. */}
+            <div role="listbox" aria-label={group.title}>
               {group.rows.map(row => (
                     <BotContextMenu
                       key={row.name}
@@ -212,7 +248,7 @@ export function Rail({ ctx }: { ctx: any }) {
                         onKeyDown={enter(() => selectBot(row.name))}
                       >
                         <span className="hui-avatar">
-                          <BotAvatar size={36} colors={row.identity.colors} shape={row.identity.shape} label={row.label} />
+                          <BotAvatar size={33} colors={row.identity.colors} shape={row.identity.shape} label={row.label} />
                           {busy(row.name) ? (
                             <span className="hui-work" role="img" aria-label={UI.rail.working}>
                               <WorkingDot />
@@ -248,9 +284,27 @@ export function Rail({ ctx }: { ctx: any }) {
       <div className="hui-rail-foot">
         <div className="hui-rail-foot-actions">
           <span className="hui-rail-app-name">{UI.rail.appName}</span>
-          <Button variant="ghost" size="icon-lg" className="hui-round" aria-label={UI.rail.settings} title={UI.rail.settings} onClick={() => openSettings()}>
-            <Icon icon={Settings} size={16} />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-36"
+                    className="hui-round"
+                    aria-label={UI.rail.settings}
+                    data-ui-tooltip="hui-tip-rail-settings"
+                    onClick={() => openSettings()}
+                  />
+                }
+              >
+                <Icon icon={Settings} size={12} />
+              </TooltipTrigger>
+              <TooltipContent id="hui-tip-rail-settings" shortcut={['⌘', ',']}>
+                {UI.rail.settings}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <AppMenu ctx={ctx} />
         </div>
       </div>
@@ -274,9 +328,17 @@ function AppMenu({ ctx }: { ctx: any }) {
           keypress and the mouseup that followed a mouse click closed it at once (lot 7). */}
       <DropdownMenuTrigger
         openOnHover={false}
-        render={<Button variant="ghost" size="icon-lg" className="hui-round" aria-label={`${UI.rail.appName}, ${UI.rail.appMenu.toLowerCase()}`} />}
+        render={
+          <Button
+            variant="ghost"
+            size="icon-36"
+            className="hui-round"
+            aria-label={`${UI.rail.appName}, ${UI.rail.appMenu.toLowerCase()}`}
+            data-ui-tooltip="hui-tip-rail-app"
+          />
+        }
       >
-        <Icon icon={SquaresFour} size={16} />
+        <Icon icon={SquaresFour} size={12} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" side="top" size="sm">
         <DropdownMenuGroup>
