@@ -1,31 +1,31 @@
 /* Hermes UI's own visual language, laid over the vendored component library.
 
    The components keep their structure and behaviour; what they look like is decided here, last in the cascade:
-   - the platform's UI font (SF Pro on a Mac), a 15px reading size, no letter-spacing games;
-   - neutral greys with a clear step between the page, the rail and anything raised (bubbles, cards, menus);
-   - solid controls: no glass, no sheen, no gradient rims, no blur — a primary is the ink, a confirm is green;
-   - real elevation for what floats (menus, popovers, dialogs, the bot pill), and none for what sits in the page;
-   - rounder corners, roomier rows.
+   - the platform's UI font (SF Pro on a Mac), one reading size, no letter-spacing games;
+   - one page, one rail, one raised surface per role, and hairlines instead of shadows: nothing floats but the
+     composer's 1px halo, which the direction allows as its only exception;
+   - solid controls: no glass, no sheen, no gradient rims, no blur — a primary is the ink;
+   - the direction's measures: a 240 rail, a 960 column, a 320 panel, 560 bubbles, a 44 composer.
    Everything is scoped to .glaze: nothing here reaches the host app. */
 
 .glaze {
   /* == Type == */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
   --mono-scale: 0.9;
   --weight-medium: 500;
-  --type-title: 600 26px/1.2 var(--font-sans);
-  --type-heading: 600 19px/1.3 var(--font-sans);
-  --type-heading-sm: 600 15px/1.35 var(--font-sans);
-  --type-body: 400 15px/1.55 var(--font-sans);
-  --type-body-sm: 400 14px/1.5 var(--font-sans);
-  --type-label: 500 14px/1.3 var(--font-sans);
-  --type-label-sm: 500 13px/1.3 var(--font-sans);
+  --type-title: 500 23px/1.2 var(--font-sans);
+  --type-heading: 500 19px/1.3 var(--font-sans);
+  --type-heading-sm: 500 18px/1.3 var(--font-sans);
+  --type-body: 400 15px/22px var(--font-sans);
+  --type-body-sm: 400 14px/20px var(--font-sans);
+  --type-label: 400 15px/1.3 var(--font-sans);
+  --type-label-sm: 400 13px/1.3 var(--font-sans);
   --type-label-lg: 500 15px/1.3 var(--font-sans);
   --type-caption: 400 12.5px/1.35 var(--font-sans);
-  --type-code: 400 calc(15px * var(--mono-scale))/1.55 var(--font-mono);
-  --type-code-sm: 400 calc(14px * var(--mono-scale))/1.5 var(--font-mono);
-  --type-code-xs: 400 calc(12.5px * var(--mono-scale))/1.35 var(--font-mono);
+  --type-code: 400 14px/1.55 var(--font-mono);
+  --type-code-sm: 400 13px/1.5 var(--font-mono);
+  --type-code-xs: 400 12px/1.35 var(--font-mono);
   --type-code-block: 400 13px/21px var(--font-mono);
   --tracking-heading: -0.012em;
   --tracking-body: 0em;
@@ -34,20 +34,33 @@
   /* == Shape == */
   --radius-shell: 16px;
   --radius-panel: 16px;
-  --radius-overlay: 14px;
+  --radius-card: 10px;
+  --radius-overlay: 10px;
+  --radius-bubble: 18px;
+  --radius-modal: 16px;
   --radius-tag: 8px;
   --control-sm: 28px;
-  --control: 34px;
-  --control-lg: 38px;
+  --control: 36px;
+  --control-lg: 36px;
   --row: 40px;
   --menu-row: 34px;
-  --menu-row-sm: 30px;
-  --icon-sm: 13px;
+  --menu-row-sm: 34px;
+  --icon-sm: 12px;
   --icon: 15px;
-  --icon-lg: 17px;
+  --icon-lg: 16px;
   --shell-inset: 0px;
   --focus-width: 2px;
   --focus-offset: 2px;
+
+  /* == Layout: the direction's measures == */
+  --w-sidebar: 240px;
+  --w-panel: 320px;
+  --w-bubble: 560px;
+  --h-row: 58px;
+  --h-pill: 40px;
+  --h-topbar: 60px;
+  --h-composer: 44px;
+  --hairline: 0.5px;
 
   /* == Motion: the house curve, a touch snappier == */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -55,60 +68,56 @@
   --scale-press-flat: 0.98;
   --scale-press-glass: 0.97;
 
-  /* == Light colours == */
-  --page: #f5f5f7;
-  --rail: #eeeef0;
-  --paper: #ffffff;
-  --shell: #ffffff;
-  --field: #ececee;
-  --code-surface: #f4f4f6;
-  --ink: #1d1d1f;
-  --hover: rgb(0 0 0 / 0.045);
-  --hover-row: rgb(0 0 0 / 0.035);
-  --pressed: rgb(0 0 0 / 0.08);
-  --scrim: rgb(0 0 0 / 0.28);
-  --text-1: #1d1d1f;
-  --text-2: rgb(29 29 31 / 0.62);
-  --text-3: rgb(29 29 31 / 0.5);
-  --text-disabled: rgb(29 29 31 / 0.3);
-  --text-inverse: #ffffff;
-  --line-faint: rgb(0 0 0 / 0.06);
-  --line: rgb(0 0 0 / 0.09);
-  --line-control: rgb(0 0 0 / 0.12);
-  --line-focus: rgb(0 0 0 / 0.28);
-  --line-strong: rgb(0 0 0 / 0.4);
-  --focus: rgb(0 113 227 / 0.7);
-  --ok: #28b45a;
-  --ok-text: #1a7f3f;
-  --ok-tint: #e5f6eb;
-  --warn: #e8930c;
-  --warn-text: #8f5b00;
-  --warn-tint: #fdf2dc;
-  --fail: #e5484d;
-  --fail-text: #b42328;
-  --fail-tint: #fdebec;
-  --raised-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.08);
-  --float-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.08), 0 12px 36px rgb(0 0 0 / 0.14), 0 2px 6px rgb(0 0 0 / 0.06);
-  --thumb: #ffffff;
-  --thumb-text: #1d1d1f;
-  --glaze-sm-text: var(--thumb-text);
-  --user-bubble: #e9e9ec;
-  --switch-on: #34c759;
-  --switch-off: rgb(0 0 0 / 0.12);
-  --switch-knob: #ffffff;
-  --scrollbar-thumb: rgb(0 0 0 / 0.18);
+  /* == Fonds, light == */
+  --bg-sidebar: #f4f4f4;
+  --bg-app: #ffffff;
+  --bg-topfade: #ffffff;
+  --surface-1: #f7f7f7;
+  --surface-hover: #efefef;
+  --tile-selected: #eaeaea;
+  --nav-active: #e8e8e8;
+  --btn-secondary: #ececec;
+  --btn-round: #ececec;
+  --segment-active: #ffffff;
+  --bubble-user: #e9e9e9;
+  --bubble-bot: linear-gradient(180deg, #f7f7f7 0%, #f2f2f2 100%);
+  /* The bubble's own flat tone: the gradient's midpoint. It is what the bubble paints, so the contrast audit can
+     measure the ink on it (a gradient background cannot be measured, which the gate counts as a finding). */
+  --bubble-bot-flat: #f7f7f7;
+  --code-bg: #efefef;
+  --overlay: rgb(0 0 0 / 0.7);
+  --halo-composer: #ececec;
 
-  /* The primary key: the ink itself, solid. Confirm is a true green, destructive a true red. */
-  --primary-bg: #1d1d1f;
-  --primary-text: #ffffff;
-  --confirm-bg: #28b45a;
-  --confirm-text: #ffffff;
-  --danger-bg: #e5484d;
-  --danger-text: #ffffff;
-  --flat-bg: rgb(0 0 0 / 0.05);
-  --flat-ring: transparent;
-  --flat-text: #1d1d1f;
-  --flat-hover: rgb(0 0 0 / 0.08);
+  /* == Filets, light: 0.5px, the hairline of the direction == */
+  --hairline-sidebar: #e6e6e6;
+  --hairline-panel: #e6e6e6;
+  --border-control: #dedede;
+  --border-menu: #dedede;
+  --border-modal: #dedede;
+  --border-modal-card: #e6e6e6;
+  --border-separator: #d6d6d6;
+  --border-composer: #dedede;
+  --border-composer-focus: #b8b8b8;
+
+  /* == Texte et signaux, light == */
+  --ink-text-1: #111111;
+  --ink-text-2: #5f5f5f;
+  --ink-text-3: #6b6b6b;
+  --text-link: #5f5f5f;
+  --placeholder: #6f6f6f;
+  --icon-strong: #111111;
+  --icon-muted: #5f5f5f;
+  --danger: #c8403a;
+  --danger-bg: #fbeceb;
+  --accent-text: #2f6ad0;
+  --accent-control: #2f6ad0;
+  --progress: #2f6ad0;
+  --data-blue: #2f6ad0;
+  --data-orange: #b8730f;
+  --data-teal: #1f7f70;
+  --chart-grid: #e6e6e6;
+  --activity-dim: #7d7d7d;
+  --activity-bright: #2f2f2f;
 
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -118,60 +127,148 @@
 
 .glaze[data-theme='dark'],
 [data-theme='dark'] .glaze {
-  --page: #111112;
-  --rail: #161618;
-  --paper: #1f1f22;
-  --shell: #1f1f22;
-  --field: #2a2a2e;
-  --code-surface: #18181b;
-  --ink: #f5f5f7;
-  --ink-80: #f5f5f7;
-  --hover: rgb(255 255 255 / 0.055);
-  --hover-row: rgb(255 255 255 / 0.04);
-  --pressed: rgb(255 255 255 / 0.09);
-  --scrim: rgb(0 0 0 / 0.6);
-  --text-1: #f5f5f7;
-  --text-2: rgb(235 235 245 / 0.62);
-  --text-3: rgb(235 235 245 / 0.5);
-  --text-disabled: rgb(235 235 245 / 0.3);
-  --text-inverse: #111112;
-  --line-faint: rgb(255 255 255 / 0.06);
-  --line: rgb(255 255 255 / 0.09);
-  --line-control: rgb(255 255 255 / 0.12);
-  --line-focus: rgb(255 255 255 / 0.28);
-  --line-strong: rgb(255 255 255 / 0.4);
-  --focus: rgb(100 170 255 / 0.75);
+  /* == Fonds, dark: the source of truth (spec §1) == */
+  --bg-sidebar: #0e0e0e;
+  --bg-app: #121212;
+  --bg-topfade: #111111;
+  --surface-1: #1f1f1f;
+  --surface-hover: #1b1b1b;
+  --tile-selected: #202020;
+  --nav-active: #242424;
+  --btn-secondary: #272727;
+  --btn-round: #282828;
+  --segment-active: #2f2f2f;
+  --bubble-user: #3c3c3c;
+  --bubble-bot: linear-gradient(180deg, #232323 0%, #1b1b1b 100%);
+  /* The gradient's midpoint: the bubble paints it flat (see the light block). */
+  --bubble-bot-flat: #1f1f1f;
+  --code-bg: #222222;
+  --overlay: rgb(0 0 0 / 0.7);
+  --halo-composer: #1a1a1a;
+
+  --hairline-sidebar: #1c1c1c;
+  --hairline-panel: #1f1f1f;
+  --border-control: #2c2c2c;
+  --border-menu: #2a2a2a;
+  --border-modal: #292929;
+  --border-modal-card: #252525;
+  --border-separator: #353535;
+  --border-composer: #353535;
+  --border-composer-focus: #4e4e4e;
+
+  --ink-text-1: #f5f5f5;
+  --ink-text-2: #a8a8a8;
+  --ink-text-3: #939393;
+  --text-link: #acacac;
+  --placeholder: #8a8a8a;
+  --icon-strong: #e0e0e0;
+  --icon-muted: #969696;
+  --danger: #ed6e69;
+  --danger-bg: #2a1e1e;
+  --accent-text: #6199f8;
+  --accent-control: #346dcc;
+  --progress: #326ccb;
+  --data-blue: #3c82f6;
+  --data-orange: #f19d38;
+  --data-teal: #55b9a7;
+  --chart-grid: #2c2c2c;
+  --activity-dim: #6e6e6e;
+  --activity-bright: #dadada;
+
+  --ink: #f5f5f5;
+  --hover: color-mix(in srgb, #ffffff 6%, transparent);
+  --text-inverse: #121212;
+  --text-disabled: color-mix(in srgb, #f5f5f5 38%, transparent);
+  --line-strong: var(--icon-muted);
+  --focus: var(--border-composer-focus);
   --ok: #30d158;
   --ok-text: #5fe08a;
   --ok-tint: rgb(48 209 88 / 0.14);
   --warn: #ffb340;
   --warn-text: #ffc66e;
   --warn-tint: rgb(255 179 64 / 0.14);
-  --fail: #ff6961;
   --fail-text: #ff8c85;
-  --fail-tint: rgb(255 105 97 / 0.14);
-  --raised-shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 8px 24px rgb(0 0 0 / 0.35);
-  --float-shadow: 0 0 0 0.5px rgb(255 255 255 / 0.08), 0 16px 40px rgb(0 0 0 / 0.55), 0 2px 8px rgb(0 0 0 / 0.35);
-  --thumb: #545458;
-  --thumb-text: #ffffff;
-  --glaze-sm-text: var(--thumb-text);
-  --user-bubble: #19191b;
-  --switch-on: #30d158;
-  --switch-off: rgb(255 255 255 / 0.16);
+  --thumb: var(--segment-active);
+  --thumb-text: var(--text-1);
+  --glaze-sm-text: #f5f5f5;
   --switch-knob: #ffffff;
-  --scrollbar-thumb: rgb(255 255 255 / 0.16);
+  --scrollbar-thumb: color-mix(in srgb, #ffffff 16%, transparent);
 
-  --primary-bg: #f5f5f7;
-  --primary-text: #111112;
+  --primary-bg: #f5f5f5;
+  --primary-text: #121212;
   --confirm-bg: #30d158;
   --confirm-text: #062b12;
-  --danger-bg: #ff6961;
   --danger-text: #2b0807;
-  --flat-bg: rgb(255 255 255 / 0.07);
-  --flat-ring: transparent;
-  --flat-text: #f5f5f7;
-  --flat-hover: rgb(255 255 255 / 0.11);
+  --flat-bg: var(--btn-secondary);
+  --flat-text: #f5f5f5;
+  --flat-hover: var(--btn-round);
 }
+
+/* The library's own roles, mapped onto the direction's palette. This block is repeated for the derived theme because
+   Glaze's own tokens.css declares the same names under `[data-theme="dark"] .glaze`, which outranks the plain `.glaze`
+   block above: without the same specificity here, a dark page would keep the library's greys. */
+.glaze,
+.glaze[data-theme='dark'],
+.glaze[data-theme='light'],
+[data-theme='dark'] .glaze,
+[data-theme='light'] .glaze {
+  /* == The library's roles, mapped onto the direction's palette == */
+  --page: var(--bg-app);
+  --rail: var(--bg-sidebar);
+  --paper: var(--surface-1);
+  --shell: var(--surface-1);
+  --field: var(--surface-1);
+  --code-surface: var(--code-bg);
+  --ink: var(--ink-text-1);
+  --hover: color-mix(in srgb, var(--ink) 5%, transparent);
+  --hover-row: var(--surface-hover);
+  --pressed: var(--nav-active);
+  --scrim: var(--overlay);
+  --text-1: var(--ink-text-1);
+  --text-2: var(--ink-text-2);
+  --text-3: var(--ink-text-3);
+  --text-disabled: color-mix(in srgb, var(--ink-text-1) 40%, transparent);
+  --text-inverse: #ffffff;
+  --line-faint: var(--hairline-sidebar);
+  --line: var(--border-control);
+  --line-control: var(--border-control);
+  --line-focus: var(--border-composer-focus);
+  --line-strong: var(--icon-muted);
+  --focus: var(--accent-control);
+  --ok: #2c9a59;
+  --ok-text: #1a7640;
+  --ok-tint: #e6f4ea;
+  --warn: #a86a10;
+  --warn-text: #8f5b00;
+  --warn-tint: #fdf2dc;
+  --fail: var(--danger);
+  --fail-text: #b42328;
+  --fail-tint: var(--danger-bg);
+  /* No shadows but the composer's halo: the direction draws depth with a hairline. */
+  --raised-shadow: none;
+  --float-shadow: none;
+  --thumb: var(--segment-active);
+  --thumb-text: var(--text-1);
+  --glaze-sm-text: var(--ink-text-1);
+  --user-bubble: var(--bubble-user);
+  --switch-on: var(--accent-control);
+  --switch-off: var(--border-control);
+  --switch-knob: #ffffff;
+  --scrollbar-thumb: color-mix(in srgb, var(--ink) 18%, transparent);
+
+  /* The primary key: the ink itself, solid. Confirm is a true green, destructive the danger ink. */
+  --primary-bg: var(--ink-text-1);
+  --primary-text: var(--bg-app);
+  --confirm-bg: #2c9a59;
+  --confirm-text: #ffffff;
+  --danger-bg-button: var(--danger);
+  --danger-text: #ffffff;
+  --flat-bg: var(--btn-secondary);
+  --flat-ring: transparent;
+  --flat-text: var(--ink-text-1);
+  --flat-hover: var(--surface-hover);
+}
+
 
 /* ---------- Controls: solid, no glass ---------- */
 
@@ -195,7 +292,7 @@
   color: var(--confirm-text);
 }
 .glaze .glass.glass-coral {
-  background-color: var(--danger-bg);
+  background-color: var(--danger-bg-button);
   color: var(--danger-text);
 }
 .glaze .glass.glass-paper {
@@ -204,14 +301,14 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .glaze .glass:hover:not(:disabled, [data-disabled], [aria-busy='true']) {
-    background-image: linear-gradient(rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.1));
+    background-image: linear-gradient(rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.08));
   }
   .glaze[data-theme='dark'] .glass:hover:not(:disabled, [data-disabled], [aria-busy='true']) {
     background-image: linear-gradient(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.08));
   }
 }
 .glaze .glass:is(:disabled, [data-disabled], [aria-disabled='true']):not([aria-busy='true']) {
-  background-color: var(--field);
+  background-color: var(--surface-hover);
   color: var(--text-disabled);
 }
 
@@ -227,55 +324,76 @@
   }
 }
 
-/* Small glaze (checkbox tick, radio, segmented thumb, slider): a flat raised chip. */
+/* Small glaze (checkbox tick, radio, segmented thumb, slider): a flat chip on the segment's own surface. */
 .glaze .glaze-sm {
   background-image: none;
-  background-color: var(--thumb);
-  color: var(--thumb-text);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.18), 0 0 0 0.5px rgb(0 0 0 / 0.06);
+  background-color: var(--segment-active);
+  color: var(--glaze-sm-text);
+  box-shadow: none;
 }
-/* The switch is the one place on-state is a colour: green, the knob white. */
-.glaze [data-hui-part='switch'] {
+/* The switch is the one place on-state is a colour: the accent's track, the whole 16px knob white. 32 × 20 (spec §4). */
+.glaze [data-hui-part='switch'][data-size='default'] {
+  width: 32px;
+  height: 20px;
   background-color: var(--switch-off);
   border-color: transparent;
 }
 .glaze [data-hui-part='switch'][data-checked] {
   background-image: none;
-  background-color: var(--switch-on);
+  background-color: var(--accent-control);
   box-shadow: none;
 }
 .glaze [data-hui-part='switch-thumb'] {
   background-color: var(--switch-knob);
   border-color: transparent;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+  box-shadow: none;
+}
+.glaze [data-hui-part='switch'][data-size='default'] [data-hui-part='switch-thumb'] {
+  width: 16px;
+  height: 16px;
+}
+.glaze [data-hui-part='switch'][data-size='default'][data-checked] [data-hui-part='switch-thumb'] {
+  translate: 14px 0;
 }
 .glaze [data-hui-part='switch'][data-checked] [data-hui-part='switch-thumb'] {
   background-color: var(--switch-knob);
 }
-/* The segmented control: a sunken track with the raised thumb. */
+/* The segmented control: the direction's own pills — the track is the surface it sits on, the chosen one is a step up. */
 .glaze [data-hui-part='segmented-control'] {
-  background-color: var(--field);
+  background-color: transparent;
   box-shadow: none;
   border-color: transparent;
+  gap: 0;
+  padding: 0;
+}
+.glaze [data-hui-part='segmented-control-thumb'] {
+  background-color: var(--segment-active);
+  box-shadow: none;
+}
+.glaze [data-hui-part='segmented-control-item'] {
+  color: var(--text-2);
+}
+.glaze [data-hui-part='segmented-control-item'][data-checked] {
+  color: var(--text-1);
 }
 
 /* Fields: a soft fill, the line only on focus. */
 .glaze .field {
-  background-color: var(--field);
+  background-color: var(--surface-1);
   border-color: transparent;
 }
 .glaze .field:is(:focus-within, [data-force-focus], [data-force-focus-visible]) {
-  border-color: var(--line-focus);
-  background-color: var(--paper);
+  border-color: var(--border-composer-focus);
+  background-color: var(--surface-1);
 }
 
 /* ---------- Surfaces ---------- */
 
-/* A card: one raised surface. The library draws it as a grey frame holding a white panel 3px in; here the frame and
-   the panel are the same surface, so it reads as a single card with a hairline. */
+/* A card: one surface. The library draws it as a grey frame holding a white panel 3px in; here the frame and the panel
+   are the same surface, so it reads as a single card with a hairline. */
 .glaze .shell {
-  background-color: var(--paper);
-  border-color: var(--line-faint);
+  background-color: var(--surface-1);
+  border-color: var(--border-modal-card);
 }
 .glaze .shell > .panel,
 .glaze .shell .panel {
@@ -283,94 +401,135 @@
   background-color: transparent;
 }
 .glaze .panel {
-  border-color: var(--line-faint);
+  border-color: var(--border-modal-card);
 }
 
-/* What floats gets a real shadow: menus, popovers, selects, dialogs, the command list, tooltips. */
+/* Nothing casts a shadow: a menu is its surface and its 1px hairline (spec §4, last line). */
 .glaze .overlay,
 .glaze [data-hui-part='dropdown-menu-content'],
+.glaze [data-hui-part='dropdown-menu-sub-content'],
 .glaze [data-hui-part='popover-content'],
 .glaze [data-hui-part='dialog-content'],
 .glaze [data-hui-part='select-content'] {
-  border-color: transparent;
-  box-shadow: var(--float-shadow);
-  border-radius: var(--radius-overlay);
+  background-color: var(--surface-1);
+  border: 1px solid var(--border-menu);
+  box-shadow: none;
+  border-radius: var(--radius-card);
 }
 .glaze [data-hui-part='tooltip-content'] {
-  box-shadow: var(--float-shadow);
-  border-radius: 8px;
+  box-shadow: none;
+  border-radius: var(--radius-tag);
 }
-/* Menu rows: rounder, a step taller. */
+/* Menu rows: 34px, the label at 15, the glyph 13 at 15 from the edge. */
 .glaze [data-hui-part='dropdown-menu-item'],
 .glaze [data-hui-part='dropdown-menu-radio-item'],
-.glaze [data-hui-part='dropdown-menu-checkbox-item'] {
-  border-radius: 8px;
+.glaze [data-hui-part='dropdown-menu-checkbox-item'],
+.glaze [data-hui-part='dropdown-menu-link-item'] {
+  min-height: var(--menu-row);
+  border-radius: var(--radius-tag);
+  font-size: 15px;
+}
+.glaze [data-hui-part='dropdown-menu-item'] > svg,
+.glaze [data-hui-part='dropdown-menu-radio-item'] > svg,
+.glaze [data-hui-part='dropdown-menu-link-item'] > svg {
+  width: 13px;
+  height: 13px;
+}
+.glaze [data-hui-part='dropdown-menu-separator'] {
+  height: var(--hairline);
+  margin-inline: 13px;
+  background-color: var(--border-separator);
 }
 
-/* Code blocks and inline code: a quiet well, never a boxed outline. */
+/* Code: an inline run on its own well, a block on the code surface. */
 .glaze .code-surface {
-  border-color: transparent;
-  background-color: var(--code-surface);
+  border-color: var(--border-separator);
+  background-color: var(--code-bg);
 }
 .glaze :not(pre) > code {
-  padding: 0.1em 0.35em;
+  padding: 1px 5px;
   border-radius: 6px;
-  background-color: var(--hover);
-  font-size: 0.9em;
+  background-color: var(--code-bg);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: inherit;
 }
 
 /* ---------- The page's own pieces, on the new surfaces ---------- */
 
 .glaze .hui-rail {
-  --rail-ground: var(--rail);
+  --rail-ground: var(--bg-sidebar);
 }
 .glaze .hui-bubble {
-  background: var(--paper);
-  border-radius: 18px;
-  padding: 12px 16px;
+  padding: 7px 13px;
+  border-radius: var(--radius-bubble);
+  background: var(--bubble-bot-flat);
+  border: var(--hairline) solid #313131;
 }
 .glaze .hui-pill {
-  background: color-mix(in srgb, var(--paper) 88%, transparent);
-  -webkit-backdrop-filter: saturate(1.4) blur(16px);
-  backdrop-filter: saturate(1.4) blur(16px);
-  box-shadow: var(--float-shadow);
+  background: var(--surface-1);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
 }
 .glaze .hui-round {
-  background: var(--flat-bg);
+  background: var(--surface-1);
 }
 @media (hover: hover) and (pointer: fine) {
   .glaze .hui-round:hover {
-    background: var(--flat-hover);
+    background: var(--btn-round);
   }
 }
 .glaze .hui-composer [data-hui-part='prompt-input-panel'] {
-  background: var(--paper);
-  border-color: var(--line-faint);
-  border-radius: 26px;
-  box-shadow: var(--raised-shadow);
+  background: var(--surface-1);
+  border-color: var(--border-composer);
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px var(--halo-composer);
+}
+.glaze .hui-composer [data-hui-part='prompt-input-panel']:is(:focus-within, [data-force-focus]) {
+  border-color: var(--border-composer-focus);
 }
 .glaze .hui-aside {
-  background: var(--rail);
+  background: var(--bg-app);
 }
 .glaze .hui-aside-card {
-  background: var(--paper);
-  border-color: transparent;
+  background: var(--surface-1);
+  border-color: var(--border-control);
 }
 .glaze .hui-bot-row[aria-selected='true'],
 .glaze .hui-tile[aria-selected='true'] {
-  background: var(--pressed);
+  background: var(--tile-selected);
 }
 
-/* The person's own message keeps the look it had: a quieter surface than the bot's bubble, with a hairline — set
-   apart by tone, not by a colour. Only its corners follow the rounder shape. */
+/* The person's own message: the direction's grey, a hairline, the same 18px corner as the bot's. Set apart by tone. */
 .glaze [data-hui-part='message-bubble'] > [data-hui-part='message-bubble-content'] {
-  background-color: var(--user-bubble);
-  border-color: var(--line-faint);
-  border-radius: 18px;
-  padding: 10px 14px;
+  background-color: var(--bubble-user);
+  border: var(--hairline) solid #434343;
+  border-radius: var(--radius-bubble);
+  padding: 7px 13px;
+}
+
+/* A link in a reply: the direction's link ink, underlined, an offset that keeps the descender clear. */
+.glaze .hui-bubble a,
+.glaze .hui-prev-rendered a {
+  color: var(--text-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* The bubbles stop at 560 and the thread's column at the reading measure (spec §3). */
+.glaze [data-hui-part='message-bubble'] {
+  max-width: min(var(--w-bubble), 100%);
 }
 
 /* A thin scrollbar that only shows on the thumb. */
 .glaze * {
   scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/* Base UI draws a 1×1 form shell (radio, checkbox) beside the control it renders: aria-hidden, tabindex -1, never
+   pressed — the role=switch / role=radio element is the control. It carries no label because it has no reader, so it
+   is taken out of the drawing rather than left as an unlabelled field on the page. */
+.glaze input[aria-hidden='true'] {
+  display: none;
 }

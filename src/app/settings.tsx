@@ -48,7 +48,8 @@ const DENSITIES: Option[] = [
 const MEASURES: Option[] = [
   ['680', UI.settings.measureValue(680)],
   ['760', UI.settings.measureValue(760)],
-  ['840', UI.settings.measureValue(840)]
+  ['840', UI.settings.measureValue(840)],
+  ['960', UI.settings.measureValue(960)]
 ]
 const MOTIONS: Option[] = [
   ['on', UI.settings.animationsOn],

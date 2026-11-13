@@ -56,6 +56,18 @@
   }
 }
 
+/* The page's frame. Glaze's utilities are generated for descendants of `.glaze`, so the root element's own `absolute
+   inset-0` never applied: the page was a static block that grew past the window (44px at 390 wide) and the composer
+   was cut at the bottom edge. The frame is stated here, once, for the chat page only (the settings page is not
+   absolutely positioned). */
+.glaze.hui-app {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg-app);
+  color: var(--text-1);
+}
+
 /* Where the two entrances are applied. A data attribute rather than a class, so no utility has to be invented for a
    one-off motion the spec fixes by hand. */
 .glaze [data-enter='rail-bar'] {

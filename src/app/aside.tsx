@@ -40,6 +40,7 @@ import { botLabel, modelLabel } from '@/lib/labels'
 import { useStore } from '@/lib/store'
 import { BotAvatar } from './bot-avatar'
 import { botIdentity, botRole, sinceLabel } from './format'
+import { capsOf } from './keys'
 import { toggleAside } from './ui-state'
 import { WorkingDot } from './thread/working'
 import { UI } from './strings'
@@ -130,7 +131,7 @@ function AsideRow({ label, onClick, children }: { key?: string; label: string; o
       }}
       className="hui-aside-row focus-visible:focus-ring-row"
     >
-      <Item size="sm" className="gap-2 px-2">
+      <Item size="sm" role="presentation" className="gap-2 px-2">
         {children}
       </Item>
     </div>
@@ -306,7 +307,7 @@ export function Aside({ ctx }: { ctx: any }) {
       {ordered.length ? (
         shown.length ? (
           <div className="hui-aside-card">
-            <ItemGroup variant="plain" aria-label={UI.aside.filesLabel}>
+            <ItemGroup variant="plain" role="group" aria-label={UI.aside.filesLabel}>
               {shown.map(file => (
                 <AsideRow key={file.path} label={UI.aside.openFile(file.path)} onClick={() => openPreview(file.path)}>
                   <ItemMedia variant="icon">
@@ -353,15 +354,49 @@ export function Aside({ ctx }: { ctx: any }) {
           {/* The reference's bot card: settings and close on the top line, then the avatar, the name, what it runs
               on, and the two views of what it does. */}
           <div className="hui-aside-top">
-            <Button variant="ghost" size="icon-lg" className="hui-round" aria-label={UI.rail.profileSettings} title={UI.rail.profileSettings} onClick={() => open('nav.profiles')}>
-              <Icon icon={Settings} size={16} />
-            </Button>
-            <Button variant="ghost" size="icon-lg" className="hui-round" aria-label={UI.header.hideAside} title={UI.header.hideAside} onClick={() => toggleAside(ctx)}>
-              <Icon icon={Close} size={16} />
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-36"
+                      className="hui-round"
+                      aria-label={UI.rail.profileSettings}
+                      data-ui-tooltip="hui-tip-aside-settings"
+                      onClick={() => open('nav.profiles')}
+                    />
+                  }
+                >
+                  <Icon icon={Settings} size={12} />
+                </TooltipTrigger>
+                <TooltipContent id="hui-tip-aside-settings">{UI.rail.profileSettings}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-36"
+                      className="hui-round"
+                      aria-label={UI.header.hideAside}
+                      data-ui-tooltip="hui-tip-aside-close"
+                      onClick={() => toggleAside(ctx)}
+                    />
+                  }
+                >
+                  <Icon icon={Close} size={12} />
+                </TooltipTrigger>
+                <TooltipContent id="hui-tip-aside-close" shortcut={capsOf('hermes-ui.toggleAside')}>
+                  {UI.header.hideAside}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <div className="hui-aside-profile">
-            <BotAvatar size={76} colors={identity.colors} shape={identity.shape} label={name} />
+            <BotAvatar size={59} colors={identity.colors} shape={identity.shape} label={name} />
             <h2 className="hui-aside-name">{role ? `${name} · ${role}` : name}</h2>
             {facts ? <p className="hui-aside-facts">{facts}</p> : null}
             <SegmentedControl size="sm" value={tab} onValueChange={(value: any) => pickTab(value)} aria-label={UI.aside.views}>
@@ -380,7 +415,7 @@ export function Aside({ ctx }: { ctx: any }) {
                 <h3 className="hui-aside-h">{UI.aside.conversations}</h3>
                 {sessions.length ? (
                   <div className="hui-aside-card">
-                    <ItemGroup variant="plain" aria-label={UI.aside.conversations}>
+                    <ItemGroup variant="plain" role="group" aria-label={UI.aside.conversations}>
                       {sessions.slice(0, allConvs ? 20 : 5).map(conv => {
                         const running = Boolean(live) && conv.id === storedId
                         return (
@@ -419,13 +454,13 @@ export function Aside({ ctx }: { ctx: any }) {
                 </div>
                 {routines.length ? (
                   <div className="hui-aside-card">
-                    <ItemGroup variant="plain" aria-label={UI.aside.routinesLabel}>
+                    <ItemGroup variant="plain" role="group" aria-label={UI.aside.routinesLabel}>
                       {routines.slice(0, 12).map((job: any) => {
                         const on = isActive(job)
                         const key = String(job.id || job.job_id || routineName(job))
                         return (
                           <div key={key} className="hui-aside-row hui-aside-routine">
-                            <Item size="sm" className="gap-2 px-2">
+                            <Item size="sm" role="presentation" className="gap-2 px-2">
                               <ItemMedia variant="icon">
                                 <Icon icon={Time} size={16} />
                               </ItemMedia>

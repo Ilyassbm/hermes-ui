@@ -60,9 +60,13 @@ type MessageState = 'live' | 'waiting' | 'fail' | 'stopped' | 'done';
  * a person's is. A turn that failed or stopped draws the header so its word shows.
  */
 function AgentTurn({name, time, state = 'done', children, ...props}: Omit<React.ComponentProps<typeof Message>, 'from' | 'children'> & {name: string; time?: React.ReactNode; state?: MessageState; children?: React.ReactNode}) {
-  return <Message from="agent" {...props}>
+  // A running or finished turn draws no speaker line: the turn is the bot's, and the page already names it. The
+  // header is drawn only where its word matters (a failed or stopped turn), and the turn itself carries the name as a
+  // group label — one label, never a 1px box of hidden text whose lines are clipped by their own container.
+  const shown = state === 'fail' || state === 'stopped';
+  return <Message from="agent" role="group" aria-label={name} {...props}>
     <MessageContent>
-      <MessageHeader className={state === 'fail' || state === 'stopped' ? undefined : 'sr-only'}>{name}<MessageStatus state={state}/>{time && <MessageTime>{time}</MessageTime>}</MessageHeader>
+      {shown && <MessageHeader>{name}<MessageStatus state={state}/>{time && <MessageTime>{time}</MessageTime>}</MessageHeader>}
       {children}
     </MessageContent>
   </Message>;
@@ -241,6 +245,9 @@ function MessageBubbleContent({className, render, ...props}: useRender.Component
     defaultTagName: 'div',
     props: mergeProps<'div'>(
       {
+        // The bubble's inner box carries its part name, which is what the bubble's own variant classes (and the page's
+        // theme) paint: without it the person's message had no surface at all.
+        'data-hui-part': 'message-bubble-content',
         className: cn(
           'w-fit max-w-full min-w-0 self-end rounded-overlay border px-3 py-2 type-body break-words whitespace-pre-wrap text-text-1 [overflow-wrap:anywhere]',
           'forced-colors:border-[CanvasText]',

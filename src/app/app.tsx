@@ -23,7 +23,7 @@ import { loadSettings, settings } from './settings-state'
 import { initView, view } from './ui-state'
 import { useMediaQuery } from './use-media'
 
-const RAIL_W = 256
+const RAIL_W = 240
 const ASIDE_W = 320
 
 /** The native session sidebar duplicates the rail: fold it once per app session, and never toggle it back from a
@@ -119,7 +119,7 @@ export function App({ ctx }: { ctx: any }) {
   return (
     <div
       ref={root}
-      className="glaze absolute inset-0 bg-page text-text-1"
+      className="glaze hui-app absolute inset-0 bg-page text-text-1"
       data-theme={theme}
       data-density={prefs.density}
       data-motion={prefs.motion}

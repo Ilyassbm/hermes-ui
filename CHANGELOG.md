@@ -3,6 +3,43 @@
 All notable changes to this project are documented here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-11-13
+
+### Changed
+
+- **The page wears the direction the owner approved**: 240 rail, 960 column, 320 panel, 560 bubbles, a 44 composer,
+  one raised surface, hairlines instead of shadows. Every value is a token in `src/styles/theme.css` (dark is the
+  source, light is the imposed twin) — see `docs/` for the reference capture to come.
+- **Rail**: 240 wide with a 0.5px end hairline; two 36px round buttons 12 from the top and 16 from the edge; pinned
+  bots as 95 × 90 tiles (55 avatar, radius 10, `tile-selected`); section titles 13 in text-2 at 21 from the edge;
+  58px rows (33 avatar, name 15, preview 13); the foot 16 from the bottom with no rule above it.
+- **Header and thread**: the title pill floats at 10 on a 60px top fade — 40 high, surface-1, a 0.5px hairline, a
+  22 avatar, 14.5 text; the thread starts 64 under it; bot bubbles 560 max on surface-1 with a hairline, 18 radius,
+  7/13 padding, 15/22 text, 10 between paragraphs and 4 between bullets; the person's bubble is the direction's grey.
+- **Composer**: one 44px capsule on surface-1, a 0.5px composer hairline and its 1px halo (the only shadow anywhere),
+  8 of padding and 8 between controls, 28px round buttons with a 1px inset hairline, the send key in the ink; on a
+  phone the model's name gives way to its mark so the editor keeps the row.
+- **Panel**: 320 with a 0.5px start hairline, 36px round buttons 12 from the edges, a 59 avatar, the name at 18/500,
+  26px pill tabs (surface-hover for the chosen one), 288px cards (radius 10) with 36px file rows and no second line.
+- **Menus and overlays**: surface-1, a 1px `border-menu` hairline, radius 10, 34px rows at 15, separators 0.5 inset
+  13 — and no shadow anywhere.
+- **Settings page**: title 19, labels 14.5, hints 12.5; the switch is 32 × 20 on the accent track; the reading width
+  defaults to the direction's 960 and offers it.
+- **Type**: the platform's own faces (`-apple-system`/`SF Pro Text`, `ui-monospace`/`SF Mono`), one 15/22 reading
+  size, 13 for previews and section titles, 12.5 for dates; `ui-policy.json` declares the direction's sizes
+  (12.5, 14.5, 15, 18, 19, 23).
+- **Accessibility, in passing**: the activity line opens on the bot at 26 (the state dot moves to its corner); a
+  message's speaker and time are a group label instead of a 1px box of hidden text; the icon-only buttons of the rail,
+  the panel and the narrow header carry real tooltips; Base UI's 1×1 form shells are no longer drawn; the page root
+  states its own frame (its Tailwind utilities never applied to the `.glaze` element itself, which cut the composer at
+  390 wide).
+
+### Fixed
+
+- **The composer is no longer cut off on a phone.** The chat page's root element was a static block (Glaze's
+  utilities only reach descendants), so the page grew 44px past the window at 390 wide and the last row of the
+  composer sat under the edge.
+
 ## [1.5.4] - 2026-11-13
 
 ### Fixed

@@ -13,33 +13,33 @@ import skin from './native-skin.css'
 
 export const THEME_NAME = 'hermes-ui-glaze-noir'
 
-/** Glaze's dark tokens, by the role the app paints with each. No accent: Glaze has none. */
+/** The direction's dark tokens (spec §1), by the role the app paints with each. No accent but the signal blues. */
 const dark: DesktopThemeColors = {
-  background: '#0c0c0c', // --page
-  foreground: '#f4f4f3', // --text-1
-  card: '#1f1f1f', // --paper
-  cardForeground: '#f4f4f3',
-  muted: '#161616', // --shell
-  mutedForeground: 'rgba(244,244,243,0.60)', // --text-2
-  popover: '#1f1f1f', // --paper
-  popoverForeground: '#f4f4f3',
-  primary: '#f4f4f3',
-  primaryForeground: '#0c0c0c',
-  secondary: '#2a2a2a', // --field
-  secondaryForeground: '#f4f4f3',
-  accent: '#2a2a2a',
-  accentForeground: '#f4f4f3',
-  border: 'rgba(244,244,243,0.10)', // --line
-  input: 'rgba(244,244,243,0.15)', // --line-control
-  ring: 'rgba(244,244,243,0.45)',
-  midground: '#f4f4f3',
-  composerRing: 'rgba(244,244,243,0.32)',
-  destructive: '#ec6f5a', // --fail
-  destructiveForeground: '#0c0c0c',
-  sidebarBackground: '#0c0c0c',
-  sidebarBorder: 'rgba(244,244,243,0.06)', // --line-faint
-  userBubble: '#2a2a2a', // --field
-  userBubbleBorder: 'rgba(244,244,243,0.06)'
+  background: '#121212', // --bg-app
+  foreground: '#f5f5f5', // --text-1
+  card: '#1f1f1f', // --surface-1
+  cardForeground: '#f5f5f5',
+  muted: '#1b1b1b', // --surface-hover
+  mutedForeground: '#a8a8a8', // --text-2
+  popover: '#1f1f1f', // --surface-1
+  popoverForeground: '#f5f5f5',
+  primary: '#f5f5f5',
+  primaryForeground: '#121212',
+  secondary: '#272727', // --btn-secondary
+  secondaryForeground: '#f5f5f5',
+  accent: '#242424', // --nav-active
+  accentForeground: '#f5f5f5',
+  border: '#2c2c2c', // --border-control
+  input: '#353535', // --border-composer
+  ring: '#4e4e4e', // --border-composer-focus
+  midground: '#f5f5f5',
+  composerRing: '#4e4e4e',
+  destructive: '#ed6e69', // --danger
+  destructiveForeground: '#121212',
+  sidebarBackground: '#0e0e0e', // --bg-sidebar
+  sidebarBorder: '#1c1c1c', // --hairline-sidebar
+  userBubble: '#3c3c3c', // --bubble-user
+  userBubbleBorder: '#434343'
 }
 
 export const glazeNoir: DesktopTheme = {
@@ -50,9 +50,9 @@ export const glazeNoir: DesktopTheme = {
   colors: dark,
   darkColors: dark,
   typography: {
-    // Glaze Sans / Glaze Mono first, then Geist, then the platform: no `fontUrl`, so the theme loads nothing from a CDN.
-    fontSans: '"Glaze Sans", "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
-    fontMono: '"Glaze Mono", "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace'
+    // The platform's own faces, as the direction sets them: no `fontUrl`, so the theme loads nothing from a CDN.
+    fontSans: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif',
+    fontMono: 'ui-monospace, "SF Mono", Menlo, monospace'
   },
   // The native pages that stay native (Settings, Capabilities…) get Glaze's geometry; every rule excludes .glaze.
   customCSS: skin

@@ -1,5 +1,5 @@
 name: hermes-ui
-version: 1.5.4
+version: 1.6.0
 description: "A bespoke chat workspace for Hermes Desktop and the Webapp: bots rail, live activity, rich replies, slash commands, per-bot models and a settings page."
 author: "Ilyass Bm"
 license: MIT
