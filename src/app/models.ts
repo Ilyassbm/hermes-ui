@@ -54,15 +54,27 @@ export function foldSearch(value: unknown): string {
 }
 
 /**
+ * Whether the gateway can call this provider at all. `authenticated: false` is the gateway's own flag for "this profile
+ * has no key here": every model of that provider is a click that cannot land. The catalogue keeps the group — the menu
+ * names it, with "Key missing", instead of hiding a provider the person knows they use — and both the search and the
+ * settings page leave it out.
+ */
+export function providerReady(provider: Provider): boolean {
+  return provider.authenticated !== false
+}
+
+/**
  * What a typed search shows: one flat list, every provider at once. A model matches on its own label, and a provider
  * name matches everything it serves (typing "anthropic" lists Anthropic's models). An empty query answers no hits at
- * all — the menu then keeps its groups, which is the catalogue as it was.
+ * all — the menu then keeps its groups, which is the catalogue as it was. A provider without a key is never a hit: a
+ * model that cannot be applied must not be offered.
  */
 export function searchModels(providers: Provider[], query: string): ModelHit[] {
   const needle = foldSearch(query)
   if (!needle) return []
   const hits: ModelHit[] = []
   for (const provider of providers) {
+    if (!providerReady(provider)) continue
     const wholeProvider = foldSearch(provider.name).includes(needle) || foldSearch(provider.slug).includes(needle)
     for (const model of provider.models) {
       if (wholeProvider || foldSearch(modelLabel(model)).includes(needle)) hits.push({ provider, model })
@@ -97,8 +109,10 @@ export function loadCatalog(): Promise<Provider[]> {
       .request('model.options', {})
       .then((res: any) => {
         catalog = (Array.isArray(res?.providers) ? res.providers : []).filter(
-          // A provider the gateway is not authenticated for lists models it cannot call: it is left out of the menu.
-          (p: Provider) => p && p.authenticated !== false && Array.isArray(p.models) && p.models.length
+          // A provider with no model is dropped: an empty group is noise. A provider the gateway is not authenticated
+          // for is kept (1.5.4): the picker names it with "Key missing" and disables its rows, which says more than a
+          // provider that silently vanishes — `providerReady` is the one door for "can this apply".
+          (p: Provider) => p && Array.isArray(p.models) && p.models.length
         )
         return catalog as Provider[]
       })

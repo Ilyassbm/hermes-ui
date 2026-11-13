@@ -5,6 +5,7 @@ import { host } from '@hermes/plugin-sdk'
 import { askStep, emptyToolAdapter, replyStep, toolEventStep, turnEndStep } from '../app/thread/tool-events'
 import { UI } from '../app/strings'
 import { view } from '../app/ui-state'
+import { bindOsDoor, openLink } from './open-link'
 import { createStore } from './store'
 import { modelLabel, setChosenLooks } from './labels'
 
@@ -746,9 +747,10 @@ const prefsKey = prefs => `${prefs?.provider || ''}|${prefs?.model || ''}|${pref
 const applied = new Map()
 
 /**
- * One `slash.exec`, as a yes / no. The gateway answers `{success:false, error}` (or `{type:'error'}`) when it
- * refuses a command — an expensive model without the confirmation, a provider this profile is not authenticated for
- * — and that refusal is exactly what the picker has to show instead of pretending the model changed.
+ * One `slash.exec`, with the gateway's own words. The gateway answers `{success:false, error}` — or `{type:'error',
+ * detail}`, or a plain `message` — when it refuses a command: an expensive model without the confirmation, a provider
+ * this profile is not authenticated for. That sentence is the whole diagnosis, so it comes back here instead of being
+ * flattened into a boolean the picker could only turn into "it didn't work".
  */
 async function slashExec(sid, command, confirmExpensive = false) {
   try {
@@ -757,44 +759,61 @@ async function slashExec(sid, command, confirmExpensive = false) {
       command,
       ...(confirmExpensive ? { confirm_expensive_model: true } : {})
     })
-    if (!res || res.success === false || res.error || res.type === 'error') return false
-    return true
-  } catch {
-    return false
+    if (res && res.success !== false && !res.error && res.type !== 'error') return { ok: true, error: '' }
+    const reason = res?.error || res?.message || (res?.type === 'error' ? res?.detail : '')
+    return { ok: false, error: typeof reason === 'string' ? reason.trim() : '' }
+  } catch (e) {
+    return { ok: false, error: String(e?.message || e || '').trim() }
   }
 }
 
 /**
- * Makes `sid` run `next` (`{model, provider, effort}`). Answers whether the session took it: `true` also when the
- * session was already on those settings, and when it is a fresh session whose creation carried them.
+ * Makes `sid` run `next` (`{model, provider, effort}`). Answers `{ok, error}`: `ok` also when the session was already on
+ * those settings, and when it is a fresh session whose creation carried them; `error` is the gateway's last refusal.
  *
  * `force` is the picker's click: the person chose that model now, so the command goes out even when this page has no
  * record of what the session runs (a conversation resumed from storage).
  */
 export async function applyModel(sid, next = prefsFor(store.get().bot), { force = false } = {}) {
-  if (!sid) return false
+  if (!sid) return { ok: false, error: '' }
   const want = prefsKey(next)
   const prev = applied.get(sid)
-  if (prev === want) return true
+  if (prev === want) return { ok: true, error: '' }
   if (prev === undefined && !force) {
     // A resumed session: this page never named its model, and the next prompt must not re-send what it already had.
     applied.set(sid, want)
-    return true
+    return { ok: true, error: '' }
   }
   const [pp, pm, pe] = String(prev ?? '||').split('|')
-  let ok = true
+  let out = { ok: true, error: '' }
   if (next?.model && (next.model !== pm || (next.provider || '') !== pp)) {
-    ok = await slashExec(sid, `/model ${next.model}${next.provider ? ` --provider ${next.provider}` : ''}`, true)
+    out = await slashExec(sid, `/model ${next.model}${next.provider ? ` --provider ${next.provider}` : ''}`, true)
+    // The slug the picker read in `model.options` is not always the one `/model --provider` expects: the gateway's own
+    // provider is "nous" where the catalogue says "nousresearch", and a custom provider has no slug there at all. The
+    // gateway resolves the provider from the model id, so the same model is tried once more without it before giving up
+    // — what a person saw as "Couldn't switch to Step 3.7 Flash:free" was this refusal, one attempt too early.
+    if (!out.ok && next.provider) out = await slashExec(sid, `/model ${next.model}`, true)
   }
-  if (ok && next?.effort && next.effort !== pe) ok = await slashExec(sid, `/reasoning ${next.effort}`)
-  if (ok) applied.set(sid, want)
-  return ok
+  if (out.ok && next?.effort && next.effort !== pe) out = await slashExec(sid, `/reasoning ${next.effort}`)
+  if (out.ok) applied.set(sid, want)
+  return out
+}
+
+/**
+ * The sentence a refusal leaves: the translated line first, then the gateway's own words in brackets. Without them a
+ * report says only "it didn't work" and the next diagnosis costs a round trip. The gateway's text is folded to one line
+ * and capped — it is a sentence to read, never a payload in the thread.
+ */
+function refusalText(head, reason) {
+  const why = String(reason || '').replace(/\s+/g, ' ').trim()
+  if (!why) return head
+  return `${head} (${why.length > 200 ? `${why.slice(0, 200)}…` : why})`
 }
 
 /**
  * A model chosen in the picker, both levels of it: applied to the open session now, and written to the stored
  * preference only once the session took it. The trigger names what the session runs, never a model the gateway
- * refused — and a refusal says so instead of leaving the click looking ignored.
+ * refused — and a refusal says why instead of leaving the click looking ignored.
  */
 export async function chooseModel(bot, next, provider = '') {
   const name = bot || store.get().bot
@@ -807,9 +826,9 @@ export async function chooseModel(bot, next, provider = '') {
     store.set(s => ({ info: { ...s.info } }))
     return true
   }
-  const ok = await applyModel(sid, { ...prefsFor(name), model: next, provider }, { force: true })
-  if (!ok) {
-    notify(UI.model.applyFailed(modelLabel(next)))
+  const res = await applyModel(sid, { ...prefsFor(name), model: next, provider }, { force: true })
+  if (!res.ok) {
+    notify(refusalText(UI.model.applyFailed(modelLabel(next)), res.error))
     return false
   }
   savePrefs(name, { model: next, provider })
@@ -817,7 +836,7 @@ export async function chooseModel(bot, next, provider = '') {
   return true
 }
 
-/** The next prompt after a preference changed: the same command, and a failure that reverts and says so. */
+/** The next prompt after a preference changed: the same command, and a failure that reverts and says why. */
 async function applyPrefsToSession(sid) {
   const { bot } = store.get()
   if (!bot) return
@@ -829,12 +848,13 @@ async function applyPrefsToSession(sid) {
     return
   }
   if (prev === want) return
-  if (await applyModel(sid, prefs)) return
+  const res = await applyModel(sid, prefs)
+  if (res.ok) return
   // The gateway refused. The stored preference goes back to what the session really runs, so the next turn does not
-  // retry the same refusal in silence, and the person is told once.
+  // retry the same refusal in silence, and the person is told once, with the gateway's reason.
   const [provider, model, effort] = String(prev).split('|')
   savePrefs(bot, { provider, model, effort })
-  notify(UI.model.applyFailed(modelLabel(prefs.model)))
+  notify(refusalText(UI.model.applyFailed(modelLabel(prefs.model)), res.error))
 }
 
 export async function send(text, attachments = []) {
@@ -1368,22 +1388,20 @@ export async function toggleRoutine(job) {
 // ── boot ─────────────────────────────────────────────────────────────────────
 
 /**
- * Opens an https address the way the host knows how: the desktop app hands its `os.openExternal`, the browser a new
- * tab. Anything that is not https is refused here too, so a spec cannot smuggle a scheme through the action.
+ * Opens an https address the way the host knows how: `ctx.os.openExternal` (the desktop app), the browser's own
+ * `window.open` (the Webapp) — one door, `lib/open-link`. Anything that is not https is refused here too, so a spec
+ * cannot smuggle a scheme through the action; a response's links, which accept mailto as well, go through `followLink`.
  */
 export function openExternal(url) {
   const target = String(url || '')
   if (!/^https:\/\//i.test(target)) return
-  const os = ctxRef?.os
-  if (os && typeof os.openExternal === 'function') {
-    os.openExternal(target)
-    return
-  }
-  window.open(target, '_blank', 'noopener')
+  openLink(target)
 }
 
 export function bindContext(ctx) {
   ctxRef = ctx
+  // The page's links leave through the host's own door (see lib/open-link): the context is the only place that has it.
+  bindOsDoor(ctx)
 }
 
 /**

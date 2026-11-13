@@ -25,7 +25,7 @@ import { useStore } from '@/lib/store'
 import { useGlazeStyle } from './glaze-style'
 import { GlazePortalProvider } from '@/lib/glaze/portal'
 import { comboOf } from './keys'
-import { EFFORTS, loadCatalog, type Provider } from './models'
+import { EFFORTS, loadCatalog, providerReady, type Provider } from './models'
 import { openKeybindings } from './settings-link'
 import { loadSettings, saveSettings, settings, type DensityChoice, type MeasureChoice, type MotionChoice, type SendKeyChoice, type ThemeChoice } from './settings-state'
 import { UI } from './strings'
@@ -133,7 +133,9 @@ export function SettingsPage({ ctx }: { ctx: any }) {
   const models = useMemo(
     () => [
       { value: '__default', label: UI.settings.modelProfileDefault },
-      ...providers.flatMap(p => p.models.map(m => ({ value: `${p.slug}:${m}`, label: `${modelLabel(m)} — ${p.name}` })))
+      // A provider without a key cannot be the default either: it would be a choice the gateway refuses at the first
+      // turn (`providerReady`, the picker's own rule).
+      ...providers.filter(providerReady).flatMap(p => p.models.map(m => ({ value: `${p.slug}:${m}`, label: `${modelLabel(m)} — ${p.name}` })))
     ],
     [providers]
   )

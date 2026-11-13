@@ -3,6 +3,7 @@
 import {cva, type VariantProps} from 'class-variance-authority';
 import {Fragment, memo, useEffect, useMemo, useRef, useState} from 'react';
 import {cn} from '@/lib/glaze/utils';
+import {followLink, isOpenableLink} from '@/lib/open-link';
 import {CodeBlock, type Language} from '@/components/glaze/ui/code-block';
 import {Status} from '@/components/glaze/ui/status';
 
@@ -36,8 +37,9 @@ import {Status} from '@/components/glaze/ui/status';
 // without growing, or is still open when the stream ends, shows its opening line as text and the rest
 // of the answer parses as markdown again.
 //
-// It never writes raw HTML. Links accept http(s), mailto, same-site paths and anchors; anything else
-// (javascript:, data:) renders as its label only.
+// It never writes raw HTML. Links are http(s) and mailto only, and their click goes to the host's OS door
+// (lib/open-link) instead of the window: in the desktop app, following one leaves the hash router. Anything else
+// (javascript:, file:, data:, a relative path) renders as its label only.
 
 // ---------- Paced reveal ----------
 
@@ -310,7 +312,10 @@ function heal(text: string, inlineTags: InlineTag[]) {
   return out.replace(/(^|\s)[*_]$/, '$1');
 }
 
-const safeHref = (href: string) => /^(https?:\/\/|mailto:|\/(?!\/)|#)/i.test(href) ? href : undefined;
+// What a response may offer as a link: http(s) and mailto, the two the host's OS door can be asked for. Anything else
+// (`javascript:`, `file:`, `data:`, a relative path) renders as its label — a link the window must not follow is not a
+// link, and the desktop app's hash router would leave the app on the ones it could.
+const safeHref = (href: string) => (isOpenableLink(href) ? href : undefined)
 
 const builtins = [
   '`[^`]+`',
@@ -349,8 +354,11 @@ function Inline({text, tags = noTags, streaming = false}: {text: string; tags?: 
     else if (m[4]) {
       const [, label, href] = token.match(/^\[([^\]]+)\]\((.+)\)$/) ?? [];
       const safe = safeHref(href ?? '');
+      // A real <a href> (accessibility, right-click "copy link", hover), whose click is taken from the page: the
+      // desktop app's router is a hash router, so a link it followed would leave the app or do nothing. The address
+      // goes to the host's OS door instead (see lib/open-link).
       parts.push(safe
-        ? <a key={key++} href={safe} className="text-text-1 underline decoration-1 underline-offset-4 transition-[text-decoration-color,outline-color] duration-(--dur-state) hover:decoration-2 [overflow-wrap:anywhere]" {...(/^https?:/i.test(safe) ? {target: '_blank', rel: 'noreferrer noopener'} : {})}>{label}</a>
+        ? <a key={key++} href={safe} onClick={event => followLink(event, safe)} className="text-text-1 underline decoration-1 underline-offset-4 transition-[text-decoration-color,outline-color] duration-(--dur-state) hover:decoration-2 [overflow-wrap:anywhere]" {...(/^https?:/i.test(safe) ? {target: '_blank', rel: 'noreferrer noopener'} : {})}>{label}</a>
         : <Fragment key={key++}>{label}</Fragment>);
     } else {
       const i = whole.findIndex(re => re.test(token));

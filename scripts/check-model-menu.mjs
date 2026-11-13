@@ -25,6 +25,7 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..')
 const MODELS = join(ROOT, 'src/app/models.ts')
 const HEADER = join(ROOT, 'src/app/model-menu.tsx')
 const HERMES = join(ROOT, 'src/lib/hermes.js')
+const STRINGS = join(ROOT, 'src/app/strings.ts')
 
 /** The constant's documented ceiling. */
 export const MAX_TOP = 8
@@ -275,6 +276,28 @@ if (!changeOpen) {
   fail(header, changeOpen, 'changeOpen closes on an outside press that lands inside the portalled submenu: the row that was clicked never sees its click')
 }
 
+/* ------------------------------------------------- 1.5.4: the provider with no key -- */
+
+// A provider the profile has no key for cannot apply a model: its rows are disabled and the group says why
+// (`UI.model.needsKey`). A row that looks clickable and cannot land is the same lie as a trigger that never moves.
+const strings = parse(STRINGS)
+if (!/needsKey\s*:/.test(strings.text)) {
+  problems.push('src/app/strings.ts:1:1: UI.model.needsKey is gone: a provider without a key would offer rows with nothing to say')
+}
+if (!header.text.includes('needsKey')) {
+  fail(header, header.source, 'the model menu never prints UI.model.needsKey: a provider without a key would offer rows as if it had one')
+}
+if (!header.text.includes('providerReady(') && !header.text.includes('authenticated')) {
+  fail(header, header.source, 'the model menu never reads `authenticated` / providerReady: a provider without a key would offer clickable models')
+} else if (menu) {
+  const disabled = elements(menu, 'DropdownMenuRadioItem')
+    .filter(row => !elements(menu, 'DropdownMenuSubContent').some(sub => sub.pos <= row.pos && row.end <= sub.end))
+    .filter(row => attributeOf(row, 'disabled').includes('providerReady(') || attributeOf(row, 'disabled').includes('authenticated'))
+  if (!disabled.length) {
+    fail(header, menu, 'no provider row is disabled on `authenticated`: a provider without a key would list models that cannot be applied')
+  }
+}
+
 /* ------------------------------------------------------------------ hermes.js -- */
 
 const hermes = parse(HERMES)
@@ -469,7 +492,58 @@ check('sans session, la préférence est écrite sans appel', fresh === true && 
 store.set({ sid: 'session-1' })
 calls.length = 0
 const again = await applyModel('session-1', { model: 'gpt-6', provider: 'opencode-go' })
-check('applyModel ne renvoie pas une commande déjà appliquée', again === true && !calls.some(call => call.method === 'slash.exec'), `${calls.length} call(s)`)
+check('applyModel ne renvoie pas une commande déjà appliquée', again.ok === true && !calls.some(call => call.method === 'slash.exec'), `${calls.length} call(s)`)
+
+/* ---- 1.5.4, A2: the slug the menu read is not the slug /model wants ---- */
+
+// The gateway resolves the provider from the model id. So a refusal that named a provider is tried once more without
+// `--provider` before the picker gives up — that refusal is what a person saw on Step 3.7 Flash:free.
+store.set({ notice: null })
+memory.set('prefs', {})
+calls.length = 0
+slashAnswer = params => (/--provider /.test(params.command) ? { success: false, error: 'provider "opencode-go" is not authenticated' } : { success: true })
+const retried = await chooseModel('dex', 'stepfun/step-3.7-flash:free', 'opencode-go')
+const commands = calls.filter(call => call.method === 'slash.exec').map(call => call.params.command)
+check(
+  'un refus nommant un provider se retente sans --provider',
+  retried === true && commands.join(' then ') === '/model stepfun/step-3.7-flash:free --provider opencode-go then /model stepfun/step-3.7-flash:free',
+  commands.join(' then ') || 'aucune commande'
+)
+check(
+  'la seconde tentative passe : la préférence est écrite, rien n’est dit',
+  prefsFor('dex').model === 'stepfun/step-3.7-flash:free' && prefsFor('dex').provider === 'opencode-go' && !store.get().notice,
+  `${JSON.stringify(prefsFor('dex'))} notice=${JSON.stringify(store.get().notice)}`
+)
+
+/* ---- and when both fail: the gateway's own words, and the old model ---- */
+
+const kept = { ...prefsFor('dex') }
+store.set({ notice: null })
+calls.length = 0
+slashAnswer = () => ({ success: false, error: 'model not found: stepfun/ghost-1' })
+const twice = await chooseModel('dex', 'stepfun/ghost-1', 'opencode-go')
+const both = calls.filter(call => call.method === 'slash.exec').map(call => call.params.command)
+check('deux refus : rien n’est appliqué', twice === false && prefsFor('dex').model === kept.model && prefsFor('dex').provider === kept.provider, JSON.stringify(prefsFor('dex')))
+check(
+  'deux refus : deux essais, le second sans --provider',
+  both.join(' then ') === '/model stepfun/ghost-1 --provider opencode-go then /model stepfun/ghost-1',
+  both.join(' then ') || 'aucune commande'
+)
+const told = store.get().notice?.text || ''
+check(
+  'la notice dit la raison du gateway',
+  told.includes('model not found: stepfun/ghost-1'),
+  JSON.stringify(told || null)
+)
+check('la notice garde la copie traduite en tête', /^Couldn't switch to /.test(told), JSON.stringify(told.slice(0, 60)))
+check('la notice ne montre pas de JSON brut', !/[{}]/.test(told), JSON.stringify(told))
+
+/* ---- A2, the menu side: a provider with no key offers nothing ---- */
+
+const keyless = [...PROVIDERS, { slug: 'no-key-co', name: 'No Key Co', models: ['orphan-1'], authenticated: false }]
+check('un provider sans clé ne sort pas de la recherche par son modèle', searchModels(keyless, 'orphan').length === 0, JSON.stringify(searchModels(keyless, 'orphan')))
+check('ni par son nom', searchModels(keyless, 'no key').length === 0, JSON.stringify(searchModels(keyless, 'no key')))
+check('les providers avec clé restent cherchables', searchModels(keyless, 'anthropic').length === 3, String(searchModels(keyless, 'anthropic').length))
 
 /* ------------------------------------------------------------------- the report -- */
 

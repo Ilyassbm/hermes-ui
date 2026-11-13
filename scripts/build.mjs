@@ -96,6 +96,12 @@ if (resume.status !== 0) process.exit(resume.status ?? 1)
 const clarify = spawnSync(process.execPath, [resolve(root, 'scripts/check-clarify.mjs')], { stdio: 'inherit' })
 if (clarify.status !== 0) process.exit(clarify.status ?? 1)
 
+// 0l. The link gate (1.5.4): a `[site](https://…)` of a response goes through the host's OS door (`ctx.os.openExternal`),
+//     never through the window — the desktop app's router is a hash router, so a followed link left the app or did
+//     nothing — and only http(s) and mailto are links at all. The anchor's click is exercised on the real renderer.
+const links = spawnSync(process.execPath, [resolve(root, 'scripts/check-links.mjs')], { stdio: 'inherit' })
+if (links.status !== 0) process.exit(links.status ?? 1)
+
 // 1. Tailwind v4 → one stylesheet. app.css pulls `tailwindcss/theme` + `tailwindcss/utilities` in (never the full
 //    `tailwindcss`, whose Preflight is a global reset) and Glaze's own scoped entry.
 const compiled = await postcss([tailwind()]).process(readFileSync(from, 'utf8'), { from, to: cssOut })

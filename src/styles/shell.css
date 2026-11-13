@@ -170,6 +170,14 @@
 .glaze .hui-model-provider svg {
   color: var(--text-2);
 }
+/* The provider the profile has no key for (1.5.4): the group still names it — the person knows they use it — and this
+   small print says why every row under it is disabled. */
+.glaze .hui-model-provider-key {
+  margin-inline-start: auto;
+  padding-inline-end: 4px;
+  color: var(--text-3);
+  font-size: 11px;
+}
 /* The real mark's box follows its viewBox (Meta's wordmark is wider than it is tall): 18px tall in the group label,
    14px beside the model that is currently chosen. */
 .glaze .hui-model-provider .hui-provider-mark {
