@@ -64,14 +64,15 @@ reads as the several messages it was, each with its own folded reasoning — not
 - **Floating bot pill** above the thread: the open bot and conversation, and every conversation of the bot one click away.
 - **Live activity line** — thinking, working, delegating — that folds into “Worked for 12s” when the turn ends.
 - **Reasoning** folded under the reply as “Thought for 8s”, opened on demand.
-- **Approval cards** for the commands and tools that ask before they run.
+- **Approval cards** for the commands and tools that ask before they run, and **question cards** for the choices a
+  bot asks mid-turn (free text when it offers none, and its own countdown).
 - **Streaming replies**, with the thread fading under the bot's badge instead of being cut off.
 - **Rich replies**: tables, code blocks, images.
 - **Slash commands** that execute — `/help`, `/model`, `/new` and the profile's own — from the composer.
-- **Per-bot model and effort** in the composer, with provider logos and the full catalogue behind a submenu.
+- **Per-bot model and effort** in the composer, with provider logos, a search field that names a model from any
+  provider, and the full catalogue behind a submenu.
 - **Bot panel**: the bot's card, its conversations, its routines (pause and resume in place) and the files the
   conversation touched, with a preview.
-- **Usage meters** for the subscriptions the gateway knows about.
 - **Light / dark / system**, density, reading width and reduced motion, in Settings.
 
 ## Design
@@ -144,8 +145,8 @@ licence, what the plugin reaches on the network).
 
 The plugin uses the Desktop plugin SDK only: `ctx.registerRoute` for `/hui`, `ctx.registerPaletteCommand` for the
 palette entries, `ctx.registerKeybind` for the shortcuts, `ctx.registerSettingsPage` for **Settings ▸ Plugins**, and
-`host.request` / `host.onEvent` for the gateway — a small dashboard backend served through the plugin host (`/usage`,
-`/bots`) on top. The contributions go through the SDK's own areas (`ctx.registerMany`), so an older desktop ignores
+`host.request` / `host.onEvent` for the gateway — a small dashboard backend served through the plugin host (`/bots`,
+plus the panel's read-only `/file` and `/blob`) on top. The contributions go through the SDK's own areas (`ctx.registerMany`), so an older desktop ignores
 what it does not know. There is no DOM reach into the app, no core override and no monkey-patching.
 
 The interface is **Glaze** (design.how), with the components vendored in `src/components/glaze` and locked by lint —
@@ -156,13 +157,8 @@ escaped `.glaze`.
 
 No telemetry. The page talks to your own Hermes gateway and to nothing else.
 
-`GET /api/plugins/hermes-ui/usage` reads your Anthropic subscription usage through Hermes's own reader and, **only if
-the calling profile has `OPENCODE_GO_API_KEY`**, calls `https://opencode.ai/zen/go/v1/usage`. The key is read only
-through `agent.secret_scope.get_secret`, under that profile's scope (`?profile=`, which every desktop `ctx.rest` call
-carries); there is no `os.environ` or `.env` fallback, so a gateway serving several profiles never lends one profile's
-key to another, and a missing or unscoped key reads as "not connected". The key never leaves the gateway and is never
-returned to the page. `GET /bots` reads each profile's `state.db` read-only to show
-the last line each bot said.
+`GET /api/plugins/hermes-ui/bots` reads each profile's `state.db` read-only to show the last line each bot said.
+No credential is read, held or returned by the backend.
 
 The right panel's preview, and the thread's media blocks, are served by two read-only routes, `GET /file?path=…` (UTF-8 text, 1 MiB cap) and
 `GET /blob?path=…` (base64, 8 MiB cap). Both resolve the path with `expanduser().resolve()` and refuse it (HTTP 400,
@@ -186,7 +182,6 @@ over the cap is `413 {"error": "too_large", "size": …}`. No traceback is ever 
   before the page takes over; the sidebar entry **Hermes UI** always opens it.
 - The desktop half is a single `plugin.js`; older shells that read plugin sources through the 512 KiB preview path
   refuse anything larger. Update Hermes Desktop, or use the Webapp.
-- The usage meters read what the gateway exposes; a provider the gateway does not know about shows no meter.
 
 ## Compatibility
 

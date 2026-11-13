@@ -9,7 +9,7 @@
 // Tailwind and variables are never touched.
 import { useEffect, useRef, type CSSProperties } from 'react'
 import { host, useValue } from '@hermes/plugin-sdk'
-import { Toaster } from '@/components/glaze/ui/toast'
+import { Toaster, toast } from '@/components/glaze/ui/toast'
 import { GlazePortalProvider } from '@/lib/glaze/portal'
 import { boot, store } from '@/lib/hermes'
 import { useStore } from '@/lib/store'
@@ -102,6 +102,13 @@ export function App({ ctx }: { ctx: any }) {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
+
+  // The page's one-shot notices (a model the session refused, an answer that did not go): the store carries them so
+  // `src/lib/hermes.js` stays free of the toast component, and each one is shown once, when its id arrives.
+  const notice = useStore(store, s => s.notice)
+  useEffect(() => {
+    if (notice?.text) toast(notice.text)
+  }, [notice])
 
   // The column widths switch without animating: the centre widens at once, and only the panel's content moves in.
   const columns = `${narrowRail ? 0 : RAIL_W}px minmax(0, 1fr) ${asideOpen && !narrowAside ? ASIDE_W : 0}px`

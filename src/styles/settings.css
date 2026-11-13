@@ -148,9 +148,6 @@
 .glaze[data-density='compact'] .hui-tile {
   height: 88px;
 }
-.glaze[data-density='compact'] .hui-usage-row {
-  height: 30px;
-}
 .glaze[data-density='compact'] .hui-composer [data-hui-part='prompt-input'] {
   min-height: 80px;
   padding: 8px;

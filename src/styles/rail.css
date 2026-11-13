@@ -513,12 +513,9 @@
   box-shadow: 0 0 0 2px var(--paper);
 }
 
-/* ---------- The foot: one compact meter per subscription (lot 14) ---------- */
+/* ---------- The foot: the app's own menu ---------- */
 
-/* Two 34px rows, 8px apart, and the foot's 8 + 10 of padding: 94px with both panels shut, against the ~350px the two
-   cards took (each card: 10px of padding top and bottom, a 16px title, a 12px gap and three windows of a 18px label +
-   16px reset + 6px gap + 4px track, plus the old 10px gap between cards). The detail is one click away, in the popover.
-   Lot 17: the 8px between the two rows is the control gap lintapple reads. */
+/* One 36px line: the workspace's name, the gear and the app menu. */
 .glaze .hui-rail-foot {
   flex: none;
   display: flex;
@@ -527,7 +524,7 @@
   padding: 8px 12px 12px;
 }
 
-/* The gear, alone on a 28px line at the inline end, above the two meters (which keep their 34px rows). */
+/* The gear and the menu, at the inline end of the line, 8px apart (the control gap lintapple reads). */
 .glaze .hui-rail-foot-actions {
   display: flex;
   align-items: center;
@@ -540,168 +537,4 @@
   padding-inline-start: 4px;
   font-size: 14px;
   color: var(--text-1);
-}
-
-.glaze .hui-usage {
-  display: flex;
-  flex-direction: column;
-  /* Two 34px rows and 8px between them: the foot measures 94px with both panels shut (2 × 34 + 8 + the foot's
-     8 + 10 of padding). The gap is what lintapple reads between two adjacent controls. */
-  gap: 8px;
-}
-
-/* One row per provider: the mark, the name, the binding window in tabular figures at the inline end, and the 2px bar
-   under the line (the row's own bottom edge, so the whole row is the 34px the spec pins). */
-.glaze .hui-usage-row {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  height: 34px;
-  /* 8px at each end: the 12px mark and the value that closes the row both clear the row's edge by 8 (they measured
-     2px before lot 17). */
-  padding: 0 8px 2px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  font: inherit;
-  text-align: start;
-  color: var(--text-1);
-  cursor: default;
-  transition: background-color var(--dur-state) var(--ease-out);
-}
-@media (hover: hover) and (pointer: fine) {
-  .glaze .hui-usage-row:hover {
-    background: var(--hover);
-  }
-}
-.glaze .hui-usage-row:focus-visible {
-  outline: 2px solid var(--line-focus);
-  outline-offset: -2px;
-}
-.glaze .hui-usage-row svg {
-  width: 12px;
-  height: 12px;
-  flex: none;
-  display: block;
-  color: var(--text-2);
-}
-
-.glaze .hui-usage-name {
-  min-width: 0;
-  flex: 1;
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--text-1);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* "5h · 100 %": tabular figures, flush with the row's inline end, so the two rows' numbers line up. */
-.glaze .hui-usage-value {
-  flex: none;
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--text-2);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.glaze .hui-usage-bar {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: 2px;
-  border-radius: 1px;
-  background: var(--field);
-  overflow: hidden;
-}
-.glaze .hui-usage-bar-fill {
-  display: block;
-  width: var(--pct, 0%);
-  height: 100%;
-  border-radius: 1px;
-  background: var(--ink-80);
-  /* motion:data-bar — a percentage, not a layout. */
-  transition: width 300ms var(--ease-out);
-}
-.glaze .hui-usage-bar-fill.hui-fill-warn {
-  background: var(--warn);
-}
-.glaze .hui-usage-bar-fill.hui-fill-fail {
-  background: var(--fail);
-}
-
-/* ---------- The usage panel: the detail the compact row cannot hold ---------- */
-
-.glaze .hui-usage-pop {
-  gap: 10px;
-}
-.glaze .hui-usage-pop-title {
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 16px;
-  color: var(--text-2);
-  overflow-wrap: anywhere;
-}
-
-.glaze .hui-usage-window {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* The label owns the first line, whole: it wraps rather than ellipsising, whatever the panel's width. */
-.glaze .hui-usage-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.glaze .hui-usage-label {
-  min-width: 0;
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--text-1);
-  overflow-wrap: anywhere;
-}
-/* The reset and the percentage share the second line, flush with the panel's inline end. */
-.glaze .hui-usage-reset {
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--text-2);
-  font-variant-numeric: tabular-nums;
-  text-align: end;
-  white-space: nowrap;
-}
-
-/* The panel's bar: 4px, a pill, the field's track, the fill animating its width. */
-.glaze .hui-usage-track {
-  width: 100%;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--field);
-  overflow: hidden;
-}
-.glaze .hui-usage-fill {
-  width: var(--pct, 0%);
-  height: 100%;
-  border-radius: 999px;
-  background: var(--ink-80);
-  /* motion:data-bar — a percentage, not a layout. */
-  transition: width 300ms var(--ease-out);
-}
-.glaze .hui-usage-fill.hui-fill-warn {
-  background: var(--warn);
-}
-.glaze .hui-usage-fill.hui-fill-fail {
-  background: var(--fail);
-}
-@media (prefers-reduced-motion: reduce) {
-  .glaze .hui-usage-bar-fill,
-  .glaze .hui-usage-fill {
-    transition: none;
-  }
 }

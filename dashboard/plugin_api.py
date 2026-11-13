@@ -1,23 +1,19 @@
-"""hermes-ui backend: subscription usage and the bots' last output, for the chat rail.
-
-GET /api/plugins/hermes-ui/usage
-  Claude  -> Hermes' own Anthropic OAuth usage reader (agent.account_usage), no credential handled here.
-  OpenCode Go -> https://opencode.ai/zen/go/v1/usage with OPENCODE_GO_API_KEY, read only through
-                 agent.secret_scope under the calling profile (``?profile=``, sent by every desktop
-                 ``ctx.rest`` call). A missing or unscoped key reads as not connected.
+"""hermes-ui backend: the bots' last output, and the panel's read-only file previews.
 
 GET /api/plugins/hermes-ui/bots
   One row per Hermes profile (`default` plus every `<root>/profiles/<name>/` holding a config.yaml): the last open
   session and the last thing its assistant said, read from that profile's state.db in read-only mode.
 
-Both cached, no credential returned, and errors reduced to null fields per row: the rail never waits on a broken
+GET /api/plugins/hermes-ui/file and /blob
+  The right panel's preview: a text file, or an image as a data URL, refused wherever Hermes itself refuses to read.
+
+Cached, no credential handled, and errors reduced to null fields per row: the rail never waits on a broken
 profile, and a bad database can never fail the whole request.
 """
 from __future__ import annotations
 
 import asyncio
 import base64
-import contextlib
 import json
 import mimetypes
 import os
@@ -25,7 +21,7 @@ import re
 import sqlite3
 import time
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
@@ -43,161 +39,6 @@ _SECRET_NAMES = (
 _SECRET_PREFIXES = ("google_",)  # google_token.json, google_oauth.json, google_client_secret.json…
 _SECRET_SUFFIXES = (".pem", ".key")
 _SECRET_PARTS = (".ssh", "secrets", "mcp-tokens", "pairing", ".aws", ".gnupg")
-
-_TTL_S = 60.0
-_cache: dict[str, dict[str, Any]] = {}  # per profile: {"at", "body"}
-_lock = asyncio.Lock()
-
-
-def _iso(dt: Any) -> str | None:
-    try:
-        return dt.isoformat() if dt else None
-    except Exception:
-        return None
-
-
-def _claude() -> dict:
-    out: dict = {"id": "claude", "label": "Claude", "windows": []}
-    try:
-        from agent.account_usage import fetch_account_usage
-
-        snap = fetch_account_usage("anthropic")
-    except Exception as exc:  # pragma: no cover - depends on host auth
-        out["error"] = type(exc).__name__
-        return out
-    if snap is None:
-        out["error"] = "not_connected"
-        return out
-    if snap.unavailable_reason:
-        out["error"] = "unavailable"
-    for w in snap.windows:
-        if w.used_percent is None:
-            continue
-        label = str(w.label or "")
-        low = label.lower()
-        wid = "session" if "session" in low or "5" in low else ("week" if "week" in low else low or "window")
-        out["windows"].append({
-            "id": wid,
-            "label": "5 h" if wid == "session" else ("Semaine" if wid == "week" else label),
-            "used": float(w.used_percent),
-            "resetsAt": _iso(w.reset_at),
-            "scope": w.scope,
-        })
-    return out
-
-
-def _profile_home(profile: str) -> Path | None:
-    """The calling profile's home, or None. The name comes from the query string, so it is
-    matched against the profiles directory instead of joined: ``..``, a slash or a deleted
-    profile resolve to nothing."""
-    root = _hermes_root()
-    raw = (profile or "").strip()
-    if not raw or raw == "default":
-        return root
-    if raw.startswith(".") or "/" in raw or "\\" in raw:
-        return None
-    candidate = root / "profiles" / raw
-    if not candidate.is_dir() or (root / "profiles" / ".deleted" / raw).exists():
-        return None
-    return candidate
-
-
-@contextlib.contextmanager
-def _profile_scope(profile: str) -> Iterator[bool]:
-    """Install the calling profile's credential scope for one request; yields False when
-    there is no such profile or no scope can be built (the caller then reads nothing)."""
-    home = _profile_home(profile)
-    if home is None:
-        yield False
-        return
-    try:
-        from agent.secret_scope import build_profile_secret_scope, reset_secret_scope, set_secret_scope
-
-        token = set_secret_scope(build_profile_secret_scope(home), profile_home=str(home))
-    except Exception:
-        yield False
-        return
-    try:
-        yield True
-    finally:
-        reset_secret_scope(token)
-
-
-def _opencode_key() -> str:
-    """OPENCODE_GO_API_KEY through ``agent.secret_scope.get_secret`` only (catalog rule 11).
-
-    No ``get_env_value`` and no ``os.environ`` fallback: on a gateway serving several
-    profiles either can return another profile's key. A missing key, an unscoped read
-    (``UnscopedSecretError``) or any scope failure all mean "not connected".
-    """
-    try:
-        from agent.secret_scope import get_secret
-
-        return (get_secret("OPENCODE_GO_API_KEY") or "").strip()
-    except Exception:
-        return ""
-
-
-def _opencode(profile: str = "") -> dict:
-    out: dict = {"id": "opencode_go", "label": "OpenCode Go", "windows": []}
-    with _profile_scope(profile) as scoped:
-        key = _opencode_key() if scoped else ""
-    if not key:
-        out["error"] = "not_connected"
-        return out
-    try:
-        import httpx
-
-        resp = httpx.get(
-            "https://opencode.ai/zen/go/v1/usage",
-            headers={"Authorization": f"Bearer {key}", "Accept": "application/json"},
-            timeout=8.0,
-        )
-    except Exception as exc:
-        out["error"] = type(exc).__name__
-        return out
-    if resp.status_code in (401, 403):
-        out["error"] = "key_rejected"
-        return out
-    if resp.status_code != 200:
-        out["error"] = f"http_{resp.status_code}"
-        return out
-    try:
-        body = resp.json()
-    except Exception:
-        out["error"] = "bad_json"
-        return out
-    usage: dict = {}
-    if isinstance(body, dict) and isinstance(body.get("usage"), dict):
-        usage = body["usage"]
-    for wid, label in (("rolling", "5 h"), ("weekly", "Semaine"), ("monthly", "Mois")):
-        raw = usage.get(wid)
-        if not isinstance(raw, dict) or not isinstance(raw.get("percent"), (int, float)):
-            continue
-        reset = raw.get("resetsAt")
-        out["windows"].append({
-            "id": "session" if wid == "rolling" else wid,
-            "label": label,
-            "used": float(raw["percent"]),
-            "resetsAt": reset if isinstance(reset, str) else None,
-        })
-    return out
-
-
-@router.get("/usage")
-async def usage(fresh: int = 0, profile: str = "") -> dict:
-    key = (profile or "").strip() or "default"
-    async with _lock:
-        now = time.monotonic()
-        entry = _cache.get(key)
-        if not fresh and entry and now - entry["at"] < _TTL_S:
-            return {**entry["body"], "cached": True}
-        claude, opencode = await asyncio.gather(
-            asyncio.to_thread(_claude), asyncio.to_thread(_opencode, profile))
-        body = {"providers": [claude, opencode], "fetchedAt": time.time()}
-        _cache[key] = {"at": now, "body": body}
-        return body
-
 
 @router.get("/health")
 async def health() -> dict:
