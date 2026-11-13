@@ -3,6 +3,15 @@
 All notable changes to this project are documented here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2026-11-13
+
+### Fixed
+
+- **A model picked in the menu now really switches the conversation**: the click goes out as
+  `config.set {key:'model', value:'<id> --provider <slug>', confirm_expensive_model:true}` — and an effort as
+  `{key:'reasoning'}` — instead of a `slash.exec` whose strict schema refused the confirmation, so the
+  "client and backend are out of sync" error on every click is gone and a refusal says why.
+
 ## [1.6.0] - 2026-11-13
 
 ### Changed

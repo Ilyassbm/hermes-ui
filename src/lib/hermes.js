@@ -736,9 +736,11 @@ export async function ensureSession() {
 
 // ── the session's model ──────────────────────────────────────────────────────
 //
-// A model / effort picked after the session started is applied with the same slash commands the native composer
-// runs. One door for both paths — the click in the picker, and the next prompt after a stored preference changed —
-// so the two can never disagree about what the session runs.
+// A model / effort picked after the session started is applied through `config.set`, the RPC that owns both keys — not
+// through `slash.exec`, whose schema is strict and refuses `confirm_expensive_model` (the client and the backend would
+// then be reported "out of sync" for a click that never reached the switch). One door for both paths — the click in
+// the picker, and the next prompt after a stored preference changed — so the two can never disagree about what the
+// session runs.
 
 /** `provider|model|effort`: the shape a session's applied state is remembered in. */
 const prefsKey = prefs => `${prefs?.provider || ''}|${prefs?.model || ''}|${prefs?.effort || ''}`
@@ -747,21 +749,35 @@ const prefsKey = prefs => `${prefs?.provider || ''}|${prefs?.model || ''}|${pref
 const applied = new Map()
 
 /**
- * One `slash.exec`, with the gateway's own words. The gateway answers `{success:false, error}` — or `{type:'error',
- * detail}`, or a plain `message` — when it refuses a command: an expensive model without the confirmation, a provider
- * this profile is not authenticated for. That sentence is the whole diagnosis, so it comes back here instead of being
- * flattened into a boolean the picker could only turn into "it didn't work".
+ * One `config.set`, with the gateway's own words. The model and the effort live on this RPC: `slash.exec` has a strict
+ * schema and refuses any key beyond its own contract — `confirm_expensive_model` included — so the click's confirmation
+ * never reached the switch. The gateway answers `{error}`, `{message}` or `{type:'error', detail}` when it refuses: a
+ * provider this profile is not authenticated for, a model it does not know. That sentence is the whole diagnosis, so it
+ * comes back here instead of being flattened into a boolean the picker could only turn into "it didn't work".
+ *
+ * `confirm_required` after the click already sent `confirm_expensive_model: true` is a refusal, not a success: the
+ * session kept its model, and saying otherwise would leave the trigger naming a model that is not running. A non-empty
+ * `warning` on a success is something the gateway wanted heard (an expensive model, a degraded provider), so the notice
+ * carries it.
  */
-async function slashExec(sid, command, confirmExpensive = false) {
+async function configSet(sid, key, value, { confirm = false } = {}) {
   try {
-    const res = await host.request('slash.exec', {
+    const res = await host.request('config.set', {
+      key,
+      value,
       session_id: sid,
-      command,
-      ...(confirmExpensive ? { confirm_expensive_model: true } : {})
+      ...(confirm ? { confirm_expensive_model: true } : {})
     })
-    if (res && res.success !== false && !res.error && res.type !== 'error') return { ok: true, error: '' }
+    if (res?.confirm_required === true) {
+      const asked = typeof res?.confirm_message === 'string' ? res.confirm_message.trim() : ''
+      return { ok: false, error: asked }
+    }
     const reason = res?.error || res?.message || (res?.type === 'error' ? res?.detail : '')
-    return { ok: false, error: typeof reason === 'string' ? reason.trim() : '' }
+    if (reason) return { ok: false, error: typeof reason === 'string' ? reason.trim() : '' }
+    const warning = typeof res?.warning === 'string' ? res.warning.trim() : ''
+    if (!warning) return { ok: true, error: '' }
+    notify(warning)
+    return { ok: true, error: '', warning }
   } catch (e) {
     return { ok: false, error: String(e?.message || e || '').trim() }
   }
@@ -771,7 +787,7 @@ async function slashExec(sid, command, confirmExpensive = false) {
  * Makes `sid` run `next` (`{model, provider, effort}`). Answers `{ok, error}`: `ok` also when the session was already on
  * those settings, and when it is a fresh session whose creation carried them; `error` is the gateway's last refusal.
  *
- * `force` is the picker's click: the person chose that model now, so the command goes out even when this page has no
+ * `force` is the picker's click: the person chose that model now, so the switch goes out even when this page has no
  * record of what the session runs (a conversation resumed from storage).
  */
 export async function applyModel(sid, next = prefsFor(store.get().bot), { force = false } = {}) {
@@ -787,14 +803,15 @@ export async function applyModel(sid, next = prefsFor(store.get().bot), { force 
   const [pp, pm, pe] = String(prev ?? '||').split('|')
   let out = { ok: true, error: '' }
   if (next?.model && (next.model !== pm || (next.provider || '') !== pp)) {
-    out = await slashExec(sid, `/model ${next.model}${next.provider ? ` --provider ${next.provider}` : ''}`, true)
-    // The slug the picker read in `model.options` is not always the one `/model --provider` expects: the gateway's own
+    // The click is the confirmation: `config.set` owns the expensive-model check, and its schema accepts it.
+    out = await configSet(sid, 'model', `${next.model}${next.provider ? ` --provider ${next.provider}` : ''}`, { confirm: true })
+    // The slug the picker read in `model.options` is not always the one `--provider` expects: the gateway's own
     // provider is "nous" where the catalogue says "nousresearch", and a custom provider has no slug there at all. The
     // gateway resolves the provider from the model id, so the same model is tried once more without it before giving up
     // — what a person saw as "Couldn't switch to Step 3.7 Flash:free" was this refusal, one attempt too early.
-    if (!out.ok && next.provider) out = await slashExec(sid, `/model ${next.model}`, true)
+    if (!out.ok && next.provider) out = await configSet(sid, 'model', next.model, { confirm: true })
   }
-  if (out.ok && next?.effort && next.effort !== pe) out = await slashExec(sid, `/reasoning ${next.effort}`)
+  if (out.ok && next?.effort && next.effort !== pe) out = await configSet(sid, 'reasoning', next.effort)
   if (out.ok) applied.set(sid, want)
   return out
 }
