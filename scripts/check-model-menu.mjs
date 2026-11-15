@@ -338,12 +338,12 @@ mkdirSync(scratch, { recursive: true })
 const outfile = join(scratch, 'hui-model-menu.bundle.mjs')
 
 const ENTRY = `
-import { applyModel, bindContext, chooseModel, prefsFor, store } from '@/lib/hermes'
+import { answerConfirm, applyModel, bindContext, chooseModel, prefsFor, store } from '@/lib/hermes'
 import { chosenModel, foldSearch, searchModels } from '@/app/models'
 import { ModelHits } from '@/app/model-menu'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-export { applyModel, bindContext, chooseModel, prefsFor, store, chosenModel, foldSearch, searchModels, ModelHits, React, renderToStaticMarkup }
+export { answerConfirm, applyModel, bindContext, chooseModel, prefsFor, store, chosenModel, foldSearch, searchModels, ModelHits, React, renderToStaticMarkup }
 `
 
 let runtime
@@ -376,7 +376,7 @@ try {
   process.exit(1)
 }
 
-const { applyModel, bindContext, chooseModel, prefsFor, store, chosenModel, foldSearch, searchModels, ModelHits, React, renderToStaticMarkup } = runtime
+const { answerConfirm, applyModel, bindContext, chooseModel, prefsFor, store, chosenModel, foldSearch, searchModels, ModelHits, React, renderToStaticMarkup } = runtime
 
 const calls = []
 /** Every RPC method this run sent, never reset: `slash.exec` must not appear for a model or an effort. */
@@ -449,13 +449,13 @@ configAnswer = params => ({ key: params.key, value: params.value, confirm_requir
 const firstLevel = await chooseModel('dex', 'claude-sonnet-5', 'opencode-go')
 const first = lastConfig()
 check(
-  '(a) un clic émet config.set {key:"model", value:"<id> --provider <slug>", session_id, confirm_expensive_model:true}',
-  first.key === 'model' && first.value === 'claude-sonnet-5 --provider opencode-go' && first.session_id === 'session-1' && first.confirm_expensive_model === true,
+  '(a) un clic émet config.set {key:"model", value:"<id> --provider <slug>", session_id} SANS confirm_expensive_model',
+  first.key === 'model' && first.value === 'claude-sonnet-5 --provider opencode-go' && first.session_id === 'session-1' && !('confirm_expensive_model' in first),
   JSON.stringify(first)
 )
 check(
   '(a) le payload du modèle ne porte aucune clé en plus',
-  keysOf(first) === 'confirm_expensive_model,key,session_id,value',
+  keysOf(first) === 'key,session_id,value',
   keysOf(first)
 )
 check(
@@ -481,27 +481,65 @@ check(
   JSON.stringify(lastConfig())
 )
 
-/* ---- (c) the refusal: back to the old model, and said ---- */
+/* ---- (c) the gateway's guard: the person is asked, and only a yes sends the flag ---- */
 
+const GUARD = 'claude-opus-5-5 is an expensive model: confirm the switch'
 const before = { ...prefsFor('dex') }
-store.set({ notice: null })
+const tick = () => new Promise(resolve => setTimeout(resolve, 5))
+/** A gateway that guards the model: no flag → confirm_required, flag → the switch. */
+const guarded = params =>
+  params.confirm_expensive_model === true
+    ? { key: params.key, value: params.value, confirm_required: false }
+    : { confirm_required: true, confirm_message: GUARD }
+
+// (c1) the question reaches the person, with the gateway's own sentence, and nothing is switched while it is open
+store.set({ notice: null, confirm: null })
 calls.length = 0
-// The click already sent `confirm_expensive_model: true`: a gateway that still asks is refusing, not accepting.
-configAnswer = () => ({ confirm_required: true, confirm_message: 'claude-opus-5-5 is an expensive model: confirm the switch' })
-const refused = await chooseModel('dex', 'claude-opus-5-5', 'anthropic')
-check('(c) confirm_required:true n’est jamais un succès silencieux', refused === false, String(refused))
-check(
-  '(c) le déclencheur revient à l’ancienne valeur',
-  prefsFor('dex').model === before.model && prefsFor('dex').provider === before.provider && chosenModel(prefsFor('dex'), { model: '' }) === before.model,
-  `${JSON.stringify(prefsFor('dex'))} vs ${JSON.stringify(before)}`
-)
+configAnswer = guarded
+const pending = chooseModel('dex', 'claude-opus-5-5', 'anthropic')
+await tick()
+const question = store.get().confirm
+check('(c) confirm_required ouvre la question, avec le confirm_message du gateway', Boolean(question?.id) && question.text === GUARD, JSON.stringify(question))
+check('(c) tant que la question est ouverte, un seul config.set, sans flag', configCalls().length === 1 && !('confirm_expensive_model' in lastConfig()), JSON.stringify(configCalls().map(call => call.params)))
+check('(c) tant que la question est ouverte, la préférence ne bouge pas', prefsFor('dex').model === before.model, JSON.stringify(prefsFor('dex')))
+
+// (c2) "Switch": the same request again, now with the flag, and the preference follows
+answerConfirm(question.id, true)
+const accepted = await pending
+check('(c) « Switch » renvoie la même requête avec confirm_expensive_model:true', accepted === true && configCalls().length === 2 && configCalls()[1].params.confirm_expensive_model === true && configCalls()[1].params.value === 'claude-opus-5-5 --provider anthropic', JSON.stringify(configCalls().map(call => call.params)))
+check('(c) « Switch » écrit la préférence, sans notice', prefsFor('dex').model === 'claude-opus-5-5' && !store.get().notice && store.get().confirm === null, `${JSON.stringify(prefsFor('dex'))} notice=${JSON.stringify(store.get().notice)}`)
+
+// (c3) "Keep current": nothing sent beyond the first request, the old model stays, and nothing is said
+memory.set('prefs', { dex: { model: before.model, provider: before.provider } })
+store.set({ notice: null, confirm: null })
+calls.length = 0
+const declinedRun = chooseModel('dex', 'claude-opus-5-6', 'anthropic')
+await tick()
+answerConfirm(store.get().confirm.id, false)
+const declined = await declinedRun
+check('(c) « Keep current » ne renvoie rien et garde l’ancien modèle', declined === false && configCalls().length === 1 && prefsFor('dex').model === before.model, `${configCalls().length} call(s) ${JSON.stringify(prefsFor('dex'))}`)
+check('(c) « Keep current » est une réponse, pas un échec : aucune notice', !store.get().notice, JSON.stringify(store.get().notice))
+
+// (c4) a gateway that still asks after the yes is refusing: reverted and said, with its sentence
+store.set({ notice: null, confirm: null })
+calls.length = 0
+configAnswer = () => ({ confirm_required: true, confirm_message: GUARD })
+const stubbornRun = chooseModel('dex', 'claude-opus-5-7', 'anthropic')
+await tick()
+answerConfirm(store.get().confirm.id, true)
+const stubborn = await stubbornRun
 const confirmTold = store.get().notice?.text || ''
-check(
-  '(c) la notice porte le confirm_message du gateway',
-  confirmTold.includes('claude-opus-5-5 is an expensive model: confirm the switch'),
-  JSON.stringify(confirmTold || null)
-)
-check('(c) la notice garde la copie traduite en tête', /^Couldn't switch to /.test(confirmTold), JSON.stringify(confirmTold.slice(0, 60)))
+check('(c) un gateway qui redemande après le oui refuse : retour à l’ancien modèle', stubborn === false && prefsFor('dex').model === before.model, String(stubborn))
+check('(c) … et la notice porte le confirm_message', /^Couldn't switch to /.test(confirmTold) && confirmTold.includes(GUARD), JSON.stringify(confirmTold || null))
+
+// (c5) the next-prompt re-apply never sends the flag, and never asks: it reverts and says why
+store.set({ bot: 'dex', sid: 'session-reapply', notice: null, confirm: null })
+calls.length = 0
+configAnswer = guarded
+const reapply = await applyModel('session-reapply', { model: 'claude-opus-5-5', provider: 'anthropic' }, { force: true })
+check('(c) la réapplication automatique n’envoie jamais le flag', configCalls().length === 1 && !configCalls().some(call => 'confirm_expensive_model' in call.params), JSON.stringify(configCalls().map(call => call.params)))
+check('(c) … elle n’ouvre aucune question et le dit', reapply.ok === false && reapply.needsConfirm === true && reapply.error === GUARD && store.get().confirm == null, JSON.stringify(reapply))
+check('(c) … et le chemin « prompt suivant » ne fait pas la tentative sans --provider', configCalls().length === 1, String(configCalls().length))
 
 /* ---- a plain refusal: the gateway's error, back to the old model ---- */
 
@@ -535,6 +573,7 @@ check('sans session, la préférence est écrite sans appel', fresh === true && 
 /* ---- one application per change: the next prompt does not re-send it ---- */
 
 store.set({ sid: 'session-1' })
+await applyModel('session-1', { model: 'gpt-6', provider: 'opencode-go' }, { force: true })
 calls.length = 0
 const again = await applyModel('session-1', { model: 'gpt-6', provider: 'opencode-go' })
 check('applyModel ne renvoie pas une commande déjà appliquée', again.ok === true && !calls.some(call => call.method === 'config.set'), `${calls.length} call(s)`)

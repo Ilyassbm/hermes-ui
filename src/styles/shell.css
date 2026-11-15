@@ -486,6 +486,12 @@
   translate: -50% 0;
 }
 
+/* The model switch the gateway guards: a question, 420px wide, centred. The shell's own width token is not defined
+   on this page, which left it the width of the window. */
+.glaze [data-hui-part='dialog-content'].hui-confirm {
+  max-width: 420px;
+}
+
 .glaze .hui-picker-form {
   padding: 12px 16px 8px;
   border-bottom: var(--hairline) solid var(--border-separator);

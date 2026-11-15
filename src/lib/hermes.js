@@ -61,6 +61,35 @@ export function notify(text) {
   store.set({ notice: { id: ++noticeSeq, text: body } })
 }
 
+// ── a question for the person: the gateway's guard on a model switch ────────
+
+let confirmSeq = 0
+/** The resolver of the question on screen: one at a time, a new question declines the one it replaces. */
+let pendingConfirm = null
+
+/**
+ * Puts `text` (the gateway's own `confirm_message`) in front of the person and answers true on "Switch", false on
+ * "Keep current", Escape or a replaced question. `app.tsx` draws `store.confirm`; this module stays free of the dialog.
+ */
+export function askConfirm(text) {
+  if (pendingConfirm) answerConfirm(pendingConfirm.id, false)
+  const body = String(text || '').trim()
+  return new Promise(resolve => {
+    const id = ++confirmSeq
+    pendingConfirm = { id, resolve }
+    store.set({ confirm: { id, text: body } })
+  })
+}
+
+/** The dialog's buttons. A stale id (an answer to a question already replaced) does nothing. */
+export function answerConfirm(id, accepted) {
+  if (!pendingConfirm || pendingConfirm.id !== id) return
+  const { resolve } = pendingConfirm
+  pendingConfirm = null
+  store.set({ confirm: null })
+  resolve(Boolean(accepted))
+}
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function textOf(content) {
@@ -741,6 +770,11 @@ export async function ensureSession() {
 // then be reported "out of sync" for a click that never reached the switch). One door for both paths — the click in
 // the picker, and the next prompt after a stored preference changed — so the two can never disagree about what the
 // session runs.
+//
+// The guard is the person's, never the page's: `config.set` is sent WITHOUT `confirm_expensive_model`, and when the
+// gateway answers `confirm_required` the page shows its `confirm_message` in a dialog and resends with the flag only
+// after the click on "Switch". The automatic re-apply of a stored preference on the next prompt has no one to ask at
+// that moment, so it never carries the flag: it reverts and says why.
 
 /** `provider|model|effort`: the shape a session's applied state is remembered in. */
 const prefsKey = prefs => `${prefs?.provider || ''}|${prefs?.model || ''}|${prefs?.effort || ''}`
@@ -755,8 +789,9 @@ const applied = new Map()
  * provider this profile is not authenticated for, a model it does not know. That sentence is the whole diagnosis, so it
  * comes back here instead of being flattened into a boolean the picker could only turn into "it didn't work".
  *
- * `confirm_required` after the click already sent `confirm_expensive_model: true` is a refusal, not a success: the
- * session kept its model, and saying otherwise would leave the trigger naming a model that is not running. A non-empty
+ * `confirm_required` is never a success: the session kept its model until the person says yes, and saying otherwise
+ * would leave the trigger naming a model that is not running. A `confirm_required` that still comes back after the
+ * person said yes is a refusal like any other. A non-empty
  * `warning` on a success is something the gateway wanted heard (an expensive model, a degraded provider), so the notice
  * carries it.
  */
@@ -769,8 +804,9 @@ async function configSet(sid, key, value, { confirm = false } = {}) {
       ...(confirm ? { confirm_expensive_model: true } : {})
     })
     if (res?.confirm_required === true) {
+      // The gateway is asking the person. Not a success, and not a refusal either: the caller decides who answers.
       const asked = typeof res?.confirm_message === 'string' ? res.confirm_message.trim() : ''
-      return { ok: false, error: asked }
+      return { ok: false, confirmRequired: true, error: asked }
     }
     const reason = res?.error || res?.message || (res?.type === 'error' ? res?.detail : '')
     if (reason) return { ok: false, error: typeof reason === 'string' ? reason.trim() : '' }
@@ -784,13 +820,29 @@ async function configSet(sid, key, value, { confirm = false } = {}) {
 }
 
 /**
+ * One model switch, the gateway's guards included. First attempt: no flag. `confirm_required` → `ask(message)` puts the
+ * gateway's own sentence in front of the person; only a yes resends with `confirm_expensive_model: true`. With no `ask`
+ * (the next-prompt re-apply) nobody can answer, so the flag is never sent and the caller reverts.
+ */
+async function setModel(sid, value, ask) {
+  let out = await configSet(sid, 'model', value)
+  if (!out.confirmRequired) return out
+  if (typeof ask !== 'function') return { ok: false, needsConfirm: true, error: out.error }
+  const accepted = await ask(out.error)
+  if (!accepted) return { ok: false, declined: true, error: '' }
+  out = await configSet(sid, 'model', value, { confirm: true })
+  // Asked and answered: a gateway that asks again is refusing.
+  return out.confirmRequired ? { ok: false, refused: true, error: out.error } : out
+}
+
+/**
  * Makes `sid` run `next` (`{model, provider, effort}`). Answers `{ok, error}`: `ok` also when the session was already on
  * those settings, and when it is a fresh session whose creation carried them; `error` is the gateway's last refusal.
  *
  * `force` is the picker's click: the person chose that model now, so the switch goes out even when this page has no
  * record of what the session runs (a conversation resumed from storage).
  */
-export async function applyModel(sid, next = prefsFor(store.get().bot), { force = false } = {}) {
+export async function applyModel(sid, next = prefsFor(store.get().bot), { force = false, ask = null } = {}) {
   if (!sid) return { ok: false, error: '' }
   const want = prefsKey(next)
   const prev = applied.get(sid)
@@ -803,13 +855,14 @@ export async function applyModel(sid, next = prefsFor(store.get().bot), { force 
   const [pp, pm, pe] = String(prev ?? '||').split('|')
   let out = { ok: true, error: '' }
   if (next?.model && (next.model !== pm || (next.provider || '') !== pp)) {
-    // The click is the confirmation: `config.set` owns the expensive-model check, and its schema accepts it.
-    out = await configSet(sid, 'model', `${next.model}${next.provider ? ` --provider ${next.provider}` : ''}`, { confirm: true })
+    out = await setModel(sid, `${next.model}${next.provider ? ` --provider ${next.provider}` : ''}`, ask)
     // The slug the picker read in `model.options` is not always the one `--provider` expects: the gateway's own
     // provider is "nous" where the catalogue says "nousresearch", and a custom provider has no slug there at all. The
     // gateway resolves the provider from the model id, so the same model is tried once more without it before giving up
     // — what a person saw as "Couldn't switch to Step 3.7 Flash:free" was this refusal, one attempt too early.
-    if (!out.ok && next.provider) out = await configSet(sid, 'model', next.model, { confirm: true })
+    // (Not after a "no", a question nobody could answer, or a gateway that asked again after a yes: those are not a
+    // wrong slug, and a second question would be the same question twice.)
+    if (!out.ok && !out.declined && !out.needsConfirm && !out.refused && next.provider) out = await setModel(sid, next.model, ask)
   }
   if (out.ok && next?.effort && next.effort !== pe) out = await configSet(sid, 'reasoning', next.effort)
   if (out.ok) applied.set(sid, want)
@@ -843,9 +896,10 @@ export async function chooseModel(bot, next, provider = '') {
     store.set(s => ({ info: { ...s.info } }))
     return true
   }
-  const res = await applyModel(sid, { ...prefsFor(name), model: next, provider }, { force: true })
+  const res = await applyModel(sid, { ...prefsFor(name), model: next, provider }, { force: true, ask: askConfirm })
   if (!res.ok) {
-    notify(refusalText(UI.model.applyFailed(modelLabel(next)), res.error))
+    // "Keep current" is an answer, not a failure: the trigger stays where it was and nothing is said.
+    if (!res.declined) notify(refusalText(UI.model.applyFailed(modelLabel(next)), res.error))
     return false
   }
   savePrefs(name, { model: next, provider })

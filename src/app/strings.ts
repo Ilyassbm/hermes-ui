@@ -82,7 +82,12 @@ export const UI = {
     /** A provider the profile has no key for: its rows are there, disabled, and this is why. */
     needsKey: 'Key missing',
     /** The picker's own refusal: the gateway did not take the model, so the conversation kept the one it ran. */
-    applyFailed: (model: string) => `Couldn't switch to ${model} — the conversation kept its model.`
+    applyFailed: (model: string) => `Couldn't switch to ${model} — the conversation kept its model.`,
+    /** The gateway guards some switches (cost, data policy, context cache): its own sentence goes in this dialog. */
+    confirmTitle: 'Switch model?',
+    confirmFallback: 'Hermes asks you to confirm this model switch.',
+    confirmSwitch: 'Switch',
+    confirmKeep: 'Keep current'
   },
 
   /** The settings page registered in Settings ▸ Plugins. */

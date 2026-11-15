@@ -16,6 +16,7 @@ import { useStore } from '@/lib/store'
 import { Aside } from './aside'
 import { BotPicker } from './bot-picker'
 import { Center } from './center'
+import { ModelConfirm } from './model-confirm'
 import { typeSlash } from './editor'
 import { useGlazeStyle } from './glaze-style'
 import { Rail } from './rail'
@@ -167,6 +168,7 @@ export function App({ ctx }: { ctx: any }) {
         ) : null}
 
         <Toaster />
+        <ModelConfirm />
         <BotPicker ctx={ctx} />
       </GlazePortalProvider>
     </div>

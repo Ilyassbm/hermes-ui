@@ -3,6 +3,25 @@
 All notable changes to this project are documented here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.3] - 2026-11-15
+
+### Fixed
+
+- **The gateway's model guards reach the person.** A model switch sends `config.set` **without**
+  `confirm_expensive_model`. When the gateway answers `confirm_required`, its own `confirm_message` (cost, data policy,
+  context cache) is shown in a dialog, and only a click on **Switch** resends the request with the flag; **Keep current**,
+  Escape and the scrim decline, silently. 1.6.0–1.6.2 hard-set the flag on the first attempt, so those warnings never
+  appeared — including on the automatic re-apply of a stored preference.
+- **The next-prompt re-apply never sends the flag and never asks.** A stored preference the gateway guards is reverted and
+  the person is told why, with the gateway's sentence; picking the model again in the menu opens the dialog.
+- A gateway that asks again after a yes is a refusal, not a second question, and is not retried without `--provider`.
+
+### Tests
+
+- `check-model-menu` covers the question, **Switch**, **Keep current**, a gateway that insists, and the re-apply; it
+  fails on 1.6.2. Also proven in the real page: first request without the flag, dialog with the gateway's sentence,
+  flag only after the click.
+
 ## [1.6.2] - 2026-11-13
 
 The page, drawn as the validated reference (`mock-grok-direction.html`, 1440×900). Lot 7 had the tokens and the layout
