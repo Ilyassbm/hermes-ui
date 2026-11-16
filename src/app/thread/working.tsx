@@ -99,7 +99,7 @@ export function WorkingLine({
       {/* The bot at 26, and the state dot on its corner: the direction's avatar, the pulse the line already had. */}
       {identity ? (
         <span className="hui-avatar hui-working-avatar">
-          <BotAvatar size={26} look={identity} label={name || ''} />
+          <BotAvatar size={26} look={identity} label={name || ''} activity={live ? 'working' : 'idle'} />
           <WorkingDot done={!live} className="hui-working-mark" />
         </span>
       ) : (

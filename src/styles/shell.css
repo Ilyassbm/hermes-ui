@@ -116,9 +116,8 @@
 }
 
 .glaze .hui-model-trigger {
-  /* A real <button>: the UA chrome is dropped and the class owns the box. In the composer it reads as the model's own
-     name in small print, not as a control in a box (spec §5, lot 8): 13px, the muted ink, no mark, no caret. It stays
-     a button because it is the way into the model menu. */
+  /* A real <button>: the UA chrome is dropped and the class owns the box, so it reads as the model's name with its
+     house's mark and the effort, not as a control in a box. It stays a button because it is the way into the menu. */
   appearance: none;
   margin: 0;
   border: 0;
@@ -132,11 +131,11 @@
   /* 8px inside each end: the content inset a control's words keep, measured by the page's audit (lot 19). */
   padding: 0 8px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-2);
   cursor: default;
   white-space: nowrap;
-  max-width: 240px;
+  max-width: 300px;
   transition: color var(--dur-state) var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -149,34 +148,36 @@
   outline: 2px solid var(--line-focus);
   outline-offset: -2px;
 }
-/* The house's mark and the caret are for the narrow composer, where the name does not fit (see the query below). */
-.glaze .hui-composer .hui-model-trigger .hui-model-logo,
-.glaze .hui-composer .hui-model-trigger > svg:last-child {
-  display: none;
-}
+/* The trigger, as the reference draws it: the mark of the house that serves the model, the model's name in the page's
+   own ink, then "· High" and the caret in the muted one. The provider stays visible whichever model is chosen. */
 .glaze .hui-model-trigger svg {
   color: var(--text-2);
 }
 .glaze .hui-model-trigger .hui-model-logo {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   flex: none;
   display: block;
-  color: var(--text-2);
+  margin-inline-end: 8px;
+}
+.glaze .hui-model-trigger > svg:last-child {
+  flex: none;
+  margin-inline-start: 6px;
 }
 .glaze .hui-model-name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 14px;
+  font-weight: 500;
   line-height: 20px;
+  color: var(--text-1);
 }
 .glaze .hui-model-effort-tag {
   flex: none;
-  margin-inline-start: 4px;
-  font-size: 13px;
-  line-height: 16px;
+  margin-inline-start: 6px;
+  font-size: 14px;
+  line-height: 20px;
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }

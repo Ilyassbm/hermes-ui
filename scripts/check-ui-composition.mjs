@@ -160,17 +160,19 @@ check('4. the panel says who can see it, and draws 288 cards of 36px rows', () =
   return `"${key[1]}"`
 })
 
-// 5. The composer: the model as small print, the mic while the field is empty, the ink send key with the first word.
-check('5. the composer is 44 high, with the model in small print and the mic in place of Send', () => {
+// 5. The composer: the model with its provider's mark, the mic while the field is empty, the ink send key with the first word.
+check('5. the composer is 44 high, with the model and its provider and the mic in place of Send', () => {
   token('--h-composer', '44px')
   declares(source.shell, ".glaze .hui-composer [data-hui-part='prompt-input-body'] {", 'min-height', 'var\\(--h-composer\\)')
-  declares(source.shell, '.glaze .hui-model-trigger {', 'font-size', '13px')
+  declares(source.shell, '.glaze .hui-model-trigger {', 'font-size', '14px')
   declares(source.shell, '.glaze .hui-model-trigger {', 'background', 'transparent')
+  // The provider stays on the trigger whichever model is chosen: nothing hides its mark in the composer.
+  if (/\.hui-composer \.hui-model-trigger \.hui-model-logo,[^{]*\{[^}]*display:\s*none/.test(source.shell)) throw new Error('the composer hides the provider mark of the model trigger')
   declares(source.shell, ".glaze .hui-composer[data-idle] [data-hui-part='send-button'] {", 'display', 'none')
   declares(source.shell, ".glaze .hui-composer [data-hui-part='prompt-input-mic'] {", 'width', '28px')
   if (!/voice=\{idle \?/.test(source.composer)) throw new Error('the composer does not hand the mic to the field')
   if (!/data-idle=/.test(source.composer)) throw new Error('the composer does not mark its empty state')
-  return '44 capsule, 13px model, mic while empty'
+  return '44 capsule, 14px model with its provider, mic while empty'
 })
 
 // 6. The veil: 60 over a 64 step.
@@ -425,6 +427,7 @@ if (browser) try {
       const font = await trigger.evaluate(n => getComputedStyle(n).fontSize)
       const flat = await trigger.evaluate(n => getComputedStyle(n).backgroundColor)
       const marks = await trigger.evaluate(n => [...n.querySelectorAll('svg')].filter(s => getComputedStyle(s).display !== 'none').length)
+      if (marks < 2) throw new Error(`the model trigger shows ${marks} mark(s): the provider's mark and the caret are both expected`)
 
       await page.locator('.hui-composer [data-hui-part="prompt-input-editor"]').click()
       await page.keyboard.type('Hello')

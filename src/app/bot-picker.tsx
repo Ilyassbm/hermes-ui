@@ -26,7 +26,7 @@ import { botLabel } from '@/lib/labels'
 import { useStore } from '@/lib/store'
 import { BotAvatar } from './bot-avatar'
 import { focusEditor } from './editor'
-import { botIdentity, botRole, sinceLabel } from './format'
+import { botIdentity, sinceLabel } from './format'
 import { UI } from './strings'
 import { openPicker, view } from './ui-state'
 
@@ -35,7 +35,6 @@ type BotChoice = {
   key: string
   name: string
   label: string
-  role: string
   identity: ReturnType<typeof botIdentity>
   digit?: number
 }
@@ -140,11 +139,10 @@ export function BotPicker({ ctx }: { ctx: any }) {
       key: `bot:${bot.name}`,
       name: bot.name,
       label: botLabel(bot),
-      role: botRole(bot.name, bot.description),
       identity: botIdentity(bot.name),
       digit: digit <= 9 ? digit : undefined
     })
-    const keep = (row: BotChoice) => !needle || `${row.label} ${row.role}`.toLowerCase().includes(needle)
+    const keep = (row: BotChoice) => !needle || row.label.toLowerCase().includes(needle)
     const pinnedList = head.map((bot, i) => shown(bot, i + 1))
     const teamList = tail.map((bot, i) => shown(bot, head.length + i + 1))
     // A search shows one list: the sections only frame the whole roster.
@@ -268,7 +266,6 @@ export function BotPicker({ ctx }: { ctx: any }) {
         <BotAvatar size={24} look={row.identity} label={row.label} />
         <span className="hui-picker-text">
           <span className="hui-picker-name">{row.label}</span>
-          {row.role ? <span className="hui-picker-detail">{row.role}</span> : null}
         </span>
         {row.digit ? <Kbd>{String(row.digit)}</Kbd> : null}
       </div>

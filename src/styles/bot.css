@@ -24,28 +24,82 @@
   transform-origin: center;
 }
 
-/* A bot at work breathes (body) and blinks (eyes). Slow and small: it is a sign of life, not an animation to watch. */
-.glaze .hui-bot[data-activity='working'] .hui-mark-body {
-  animation: hui-mark-breathe 2.4s ease-in-out infinite;
-}
-.glaze .hui-bot[data-activity='working'] .hui-mark-eye {
+/* A mark is never quite still. At rest it floats, looks around and blinks now and then (slow, small); at work it
+   breathes, bobs and blinks faster. Movement is in percentages of the shape's own box, so a 22 px tab mark and a 88 px
+   preview move in proportion. */
+.hui-bot .hui-mark-eye {
   transform-box: fill-box;
   transform-origin: center;
-  animation: hui-mark-blink 4.2s ease-in-out infinite;
+}
+.glaze .hui-bot .hui-mark-body {
+  animation: hui-mark-float 5.6s ease-in-out infinite;
+}
+.glaze .hui-bot .hui-mark-face {
+  animation: hui-mark-look 7.4s ease-in-out infinite;
+}
+.glaze .hui-bot .hui-mark-eye {
+  animation: hui-mark-blink 5.2s ease-in-out infinite;
+}
+.glaze .hui-bot[data-activity='working'] .hui-mark-body {
+  animation: hui-mark-breathe 1.2s ease-in-out infinite;
+}
+.glaze .hui-bot[data-activity='working'] .hui-mark-face {
+  animation: hui-mark-busy 1.2s ease-in-out infinite;
+}
+.glaze .hui-bot[data-activity='working'] .hui-mark-eye {
+  animation: hui-mark-blink 2.2s ease-in-out infinite;
+}
+@keyframes hui-mark-float {
+  0%,
+  100% {
+    translate: 0 3%;
+    scale: 1;
+  }
+  50% {
+    translate: 0 -5.5%;
+    scale: 1.055;
+  }
+}
+@keyframes hui-mark-look {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  30% {
+    translate: 9% -3.5%;
+  }
+  65% {
+    translate: -9% 2.5%;
+  }
 }
 @keyframes hui-mark-breathe {
+  0%,
+  100% {
+    scale: 1;
+    translate: 0 2%;
+  }
   50% {
-    transform: scale(1.045);
+    scale: 1.15;
+    translate: 0 -9%;
+  }
+}
+@keyframes hui-mark-busy {
+  0%,
+  100% {
+    translate: -8% 1%;
+  }
+  50% {
+    translate: 8% -5%;
   }
 }
 @keyframes hui-mark-blink {
   0%,
-  92%,
+  90%,
   100% {
     scale: 1 1;
   }
-  96% {
-    scale: 1 0.12;
+  94% {
+    scale: 1 0.1;
   }
 }
 
@@ -54,22 +108,24 @@
   .glaze .hui-bot .hui-mark-face {
     transition: transform 160ms var(--ease-out);
   }
-  .glaze :is(.hui-bot-row, .hui-tile, .hui-pill):hover .hui-bot .hui-mark-face {
+  .glaze :is(.hui-bot-row, .hui-tile, .hui-pill, .hui-aside-avatar):hover .hui-bot .hui-mark-face {
     transform: translate(1.5px, -2px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .glaze .hui-bot[data-activity='working'] .hui-mark-body,
-  .glaze .hui-bot[data-activity='working'] .hui-mark-eye {
+  .glaze .hui-bot .hui-mark-body,
+  .glaze .hui-bot .hui-mark-face,
+  .glaze .hui-bot .hui-mark-eye {
     animation: none;
   }
   .glaze .hui-bot .hui-mark-face {
     transition: none;
   }
 }
-.glaze[data-motion='reduced'] .hui-bot[data-activity='working'] .hui-mark-body,
-.glaze[data-motion='reduced'] .hui-bot[data-activity='working'] .hui-mark-eye {
+.glaze[data-motion='reduced'] .hui-bot .hui-mark-body,
+.glaze[data-motion='reduced'] .hui-bot .hui-mark-face,
+.glaze[data-motion='reduced'] .hui-bot .hui-mark-eye {
   animation: none;
 }
 .glaze[data-motion='reduced'] .hui-bot .hui-mark-face {

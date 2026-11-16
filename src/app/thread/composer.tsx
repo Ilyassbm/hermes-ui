@@ -9,8 +9,8 @@
 // (src/app/slash-run.ts). The send key follows the settings page (Enter, or ⌘/Ctrl+Enter).
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { host } from '@hermes/plugin-sdk'
-import { PromptInput, type Attachment, type CommandItem, type MicState, type PromptInputHandle } from '@/components/glaze/ai/prompt-input'
-import { send, stop, store } from '@/lib/hermes'
+import { PromptInput, PromptQueue, type Attachment, type CommandItem, type MicState, type PromptInputHandle } from '@/components/glaze/ai/prompt-input'
+import { queueEdit, queueMove, queueRemove, queueRetry, queueSendNow, send, stop, store } from '@/lib/hermes'
 import { useStore } from '@/lib/store'
 import { TooltipProvider } from '@/components/glaze/ui/tooltip'
 import { ModelMenu } from '../model-menu'
@@ -64,6 +64,9 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
   const listening = useRef<Speech | null>(null)
   const asked = useRef<ReturnType<typeof setTimeout> | null>(null)
   const submitKey = useStore(settings, s => s.sendKey)
+  // Follow-ups written while the bot works: they wait here, in order, and go when its turn ends.
+  const queued = useStore(store, s => s.queue || [])
+  const [editing, setEditing] = useState<string | null>(null)
 
   // Nothing to send yet: the mic's place, as in the reference. A file alone is something to send, and a turn on its
   // way keeps the Stop key whatever the field holds.
@@ -203,6 +206,30 @@ export function Composer({ bot, name, input, sid, status, generation, onSent }: 
               })
             }}
             commands={commands}
+            queue={
+              queued.length ? (
+                <PromptQueue
+                  items={queued}
+                  editingId={editing}
+                  onEditingChange={setEditing}
+                  onEdit={queueEdit}
+                  onRemove={queueRemove}
+                  onMove={queueMove}
+                  onRetry={queueRetry}
+                  onSendNow={id => void queueSendNow(id)}
+                  returnFocus={() => input.current?.focus?.()}
+                />
+              ) : undefined
+            }
+            onEditQueued={() => {
+              const last = queued[queued.length - 1]
+              if (!last) return false
+              setEditing(last.id)
+              return true
+            }}
+            onSendQueuedNow={() => {
+              if (queued[0]) void queueSendNow(queued[0].id)
+            }}
             attachments={attachments}
             onAttach={list =>
               setFiles(fs => [

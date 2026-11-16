@@ -39,7 +39,7 @@ import { loadRoutines, openConversation, openPreview, rest, store, toggleRoutine
 import { botLabel } from '@/lib/labels'
 import { useStore } from '@/lib/store'
 import { BotAvatar } from './bot-avatar'
-import { botIdentity, botRole, sinceLabel } from './format'
+import { botIdentity, sinceLabel } from './format'
 import { capsOf } from './keys'
 import { openMarkEditor, toggleAside } from './ui-state'
 import { WorkingDot } from './thread/working'
@@ -172,7 +172,6 @@ export function Aside({ ctx }: { ctx: any }) {
   const live = useStore(store, s => s.live)
   const meta = bots.find((b: any) => b.name === bot)
   const name = botLabel(meta || bot)
-  const role = botRole(bot || undefined, meta?.description)
   const identity = botIdentity(bot || 'default')
   const sessions = (bot && sessionsByBot[bot]) || []
   const [tab, setTab] = useState<'activity' | 'files'>(() => read(ctx, 'asideTab', 'activity'))
@@ -412,9 +411,9 @@ export function Aside({ ctx }: { ctx: any }) {
               aria-label={`${UI.mark.edit}: ${name}`}
               onClick={() => openMarkEditor(bot || 'default')}
             >
-              <BotAvatar size={59} look={identity} label={name} />
+              <BotAvatar size={59} look={identity} label={name} activity={live ? 'working' : 'idle'} />
             </Button>
-            <h2 className="hui-aside-name">{role ? `${name} · ${role}` : name}</h2>
+            <h2 className="hui-aside-name">{name}</h2>
             <SegmentedControl size="sm" value={tab} onValueChange={(value: any) => pickTab(value)} aria-label={UI.aside.views}>
               <SegmentedControlItem value="activity">{UI.aside.activity}</SegmentedControlItem>
               <SegmentedControlItem value="files">

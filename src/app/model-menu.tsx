@@ -228,10 +228,9 @@ export function ModelMenu() {
         }}
       >
         {/* The mark of the house that serves the model — OpenCode Go, Anthropic — not of the family it runs: a
-            DeepSeek served by OpenCode Go is billed and rate-limited by OpenCode Go. The composer draws the trigger
-            as the reference's small print (the name and the effort, 13px); the mark stays in the DOM for the narrow
-            composer, where the name would not fit and the mark is the only thing left to press (shell.css). */}
-        <ProviderLogo provider={logoFor(prefs.provider || meta?.provider || model)} size={16} className="hui-model-logo" />
+            DeepSeek served by OpenCode Go is billed and rate-limited by OpenCode Go. It is always on the trigger, next
+            to the name: the provider is part of what is chosen (shell.css keeps it alone on a phone). */}
+        <ProviderLogo provider={logoFor(prefs.provider || meta?.provider || reported?.provider || model)} size={18} className="hui-model-logo" />
         <span className="hui-model-name">{label}</span>
         <span className="hui-model-effort-tag">{`· ${effortShort(effort)}`}</span>
         <Icon icon={ChevronDown} size={12} />

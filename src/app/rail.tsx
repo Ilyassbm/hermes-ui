@@ -29,7 +29,7 @@ import { useStore } from '@/lib/store'
 import { toast } from '@/components/glaze/ui/toast'
 import { setReplaceNative } from './native-takeover'
 import { BotAvatar } from './bot-avatar'
-import { botIdentity, botRole } from './format'
+import { botIdentity } from './format'
 import { capsOf } from './keys'
 import { openSettings } from './settings-link'
 import { UI } from './strings'
@@ -39,7 +39,6 @@ import { useBots } from './use-bots'
 type Row = {
   name: string
   label: string
-  role: string
   output: string
   section: string
   active: number | null
@@ -69,7 +68,6 @@ export function Rail({ ctx }: { ctx: any }) {
       return {
         name: b.name,
         label: botLabel(b),
-        role: botRole(b.name, b.description),
         output: row?.last_output || '',
         section: String((b as any).section || ''),
         active,
@@ -198,7 +196,7 @@ export function Rail({ ctx }: { ctx: any }) {
                   tabIndex={0}
                   className="hui-tile"
                   aria-selected={row.name === current}
-                  aria-label={row.role ? `${row.label}, ${row.role}` : row.label}
+                  aria-label={row.label}
                   onClick={() => selectBot(row.name)}
                   onKeyDown={enter(() => selectBot(row.name))}
                 >
@@ -258,7 +256,7 @@ export function Rail({ ctx }: { ctx: any }) {
                         <span className="hui-row-text">
                           <span className="hui-row-line">
                             {/* "Forge · Engineering": the name and the role on one line, the way the reference titles a row. */}
-                            <span className="hui-row-name">{row.role ? `${row.label} · ${row.role}` : row.label}</span>
+                            <span className="hui-row-name">{row.label}</span>
                             {waiting(row.name) ? (
                               <Badge variant="warn" size="sm" className="ms-auto">
                                 <Icon icon={Time} size={12} />

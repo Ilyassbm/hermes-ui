@@ -20,6 +20,7 @@ export const store = createStore({
   loading: false,
   messages: [], // [{ id, role, text, reasoning, toolActions, model, at, status, thinkStart, thinkEnd, gen }]
   live: null, // { phase, verb, subagents, startedAt, reasoning } while a turn runs
+  queue: [], // follow-ups written while a turn runs: [{ id, text, files, status: 'queued'|'sending'|'failed', error }]
   /** The last turn that Stop ended: `{ startedAt, endedAt }`, so the line can fold into "Worked for 12s". */
   worked: null,
   approval: null, // { requestId, command, description, allowPermanent }
@@ -480,6 +481,7 @@ function blankConversation() {
     storedId: null,
     messages: [],
     live: null,
+    queue: [],
     worked: null,
     approval: null,
     files: [],
@@ -993,11 +995,76 @@ async function applyPrefsToSession(sid) {
   notify(refusalText(UI.model.applyFailed(modelLabel(prefs.model)), res.error))
 }
 
+/**
+ * Send what the composer holds. While a turn runs the message does not go (the gateway takes one turn at a time) and is
+ * not lost either: it joins the queue under the composer, and `flushQueue` sends it, in order, when the turn ends.
+ */
 export async function send(text, attachments = []) {
   const body = String(text || '').trim()
   if (!body && !attachments.length) return
-  const s = store.get()
-  if (s.live) return
+  if (store.get().live) {
+    store.set(st => ({ queue: [...st.queue, { id: nid('q'), text: body, files: attachments, status: 'queued', error: '' }] }))
+    return
+  }
+  return dispatch(body, attachments)
+}
+
+/** The queue, as the page edits it. Every change is a new array, so the composer redraws. */
+function patchQueue(fn) {
+  store.set(st => ({ queue: fn(st.queue || []) }))
+}
+export const queueEdit = (id, text) => patchQueue(q => q.map(m => (m.id === id && text.trim() ? { ...m, text: text.trim() } : m)))
+export const queueRemove = id => patchQueue(q => q.filter(m => m.id !== id))
+export function queueMove(id, index) {
+  patchQueue(q => {
+    const at = q.findIndex(m => m.id === id)
+    if (at < 0) return q
+    const next = q.slice()
+    const [item] = next.splice(at, 1)
+    next.splice(Math.max(0, Math.min(index, next.length)), 0, item)
+    return next
+  })
+}
+/** Retry the failed head: it is queued again, and goes out at once when no turn is running. */
+export function queueRetry(id) {
+  patchQueue(q => q.map(m => (m.id === id ? { ...m, status: 'queued', error: '' } : m)))
+  void flushQueue()
+}
+/** Send now: the message goes to the head and the running turn is stopped, so it is the next thing the bot reads. */
+export async function queueSendNow(id) {
+  patchQueue(q => {
+    const item = q.find(m => m.id === id)
+    return item ? [item, ...q.filter(m => m.id !== id)] : q
+  })
+  if (!store.get().live) return flushQueue()
+  // A refused stop leaves the turn running and the message at the head of the queue: it still goes when the turn ends.
+  await stop()
+}
+
+let flushing = false
+/**
+ * Send the head of the queue when no turn is running. A head that fails stays, marked, and holds the rest: the person
+ * retries, edits or removes it (the order they wrote the messages in is not a thing to reshuffle on their behalf).
+ */
+export async function flushQueue() {
+  if (flushing) return
+  flushing = true
+  try {
+    const st = store.get()
+    if (st.live) return
+    const head = (st.queue || [])[0]
+    if (!head || head.status === 'failed') return
+    patchQueue(q => q.map(m => (m.id === head.id ? { ...m, status: 'sending' } : m)))
+    const ok = await dispatch(head.text, head.files || [])
+    if (ok) queueRemove(head.id)
+    else patchQueue(q => q.map(m => (m.id === head.id ? { ...m, status: 'failed', error: store.get().error || '' } : m)))
+  } finally {
+    flushing = false
+  }
+}
+
+/** One prompt, now: the thread draws it, the session is ensured, the files are attached, the gateway takes it. */
+async function dispatch(body, attachments) {
   // The thread draws what leaves the composer before any gateway call: same File, a blob URL of its own.
   const files = attachments.map(localAttachment)
   store.set(st => ({
@@ -1045,8 +1112,10 @@ export async function send(text, attachments = []) {
     await longRequest('prompt.submit', { session_id: sid, text: full })
     armTurnWatchdog(sentAt)
     startApprovalPoll()
+    return true
   } catch (e) {
     failTurn(e?.message || String(e))
+    return false
   }
 }
 
@@ -1084,6 +1153,7 @@ export async function stop() {
   }))
   dropClarify(sid)
   stopApprovalPoll()
+  void flushQueue()
   return true
 }
 
@@ -1617,6 +1687,7 @@ export function handleEvent(ev) {
       dropClarify(s.sid)
       stopApprovalPoll()
       if (s.bot) void loadSessions(s.bot)
+      void flushQueue()
       return
     }
     case 'error':

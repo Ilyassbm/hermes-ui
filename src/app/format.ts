@@ -1,18 +1,7 @@
-// Copy and numbers the rail turns into words: a bot's role, its last activity as a distance from now.
+// Copy and numbers the rail turns into words: a bot's look, its last activity as a distance from now.
 import { botLabel, botLook } from '@/lib/labels'
 import type { Look } from '@/lib/mark'
 import { UI } from './strings'
-
-/** The role a bot plays is what its profile says about it (`description`), or nothing. */
-export function botRole(_name?: string, description?: string): string {
-  return (description || '').trim()
-}
-
-/** "Name · Role", or just the name when the profile says nothing about its role. */
-export function botHeading(name: string | undefined, description?: string): string {
-  const role = botRole(name, description)
-  return role ? `${botLabel(name)} · ${role}` : botLabel(name)
-}
 
 /** Shape, eyes and colour of a bot: what was saved for it, else the roster's, else drawn from its name (`labels.js`). */
 export function botIdentity(name?: string): Look {

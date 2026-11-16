@@ -96,6 +96,16 @@ if (resume.status !== 0) process.exit(resume.status ?? 1)
 const clarify = spawnSync(process.execPath, [resolve(root, 'scripts/check-clarify.mjs')], { stdio: 'inherit' })
 if (clarify.status !== 0) process.exit(clarify.status ?? 1)
 
+// 0n. The queue gate (1.8.0): a message written while the bot works waits under the composer and goes, in order, when
+//     the turn ends. It used to be dropped without a word.
+const queueGate = spawnSync(process.execPath, [resolve(root, 'scripts/check-queue.mjs')], { stdio: 'inherit' })
+if (queueGate.status !== 0) process.exit(queueGate.status ?? 1)
+
+// 0o. The clean-thread gate (1.8.0): a turn's tool calls are not drawn — the working line says what the bot is doing —
+//     but a call waiting on the person's permission is, or the turn would never end.
+const toolsHidden = spawnSync(process.execPath, [resolve(root, 'scripts/check-tools-hidden.mjs')], { stdio: 'inherit' })
+if (toolsHidden.status !== 0) process.exit(toolsHidden.status ?? 1)
+
 // 0l. The link gate (1.5.4): a `[site](https://…)` of a response goes through the host's OS door (`ctx.os.openExternal`),
 //     never through the window — the desktop app's router is a hash router, so a followed link left the app or did
 //     nothing — and only http(s) and mailto are links at all. The anchor's click is exercised on the real renderer.

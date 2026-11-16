@@ -3,6 +3,32 @@
 All notable changes to this project are documented here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-11-16
+
+### Added
+
+- **Messages queue while the bot works.** A message written during a turn used to be dropped without a word. It now waits
+  in a panel above the composer — edit, move, remove, **Send now** — and goes, one per turn and in order, when the turn
+  ends. A message the gateway refuses stays at the head, marked, and holds the rest until **Retry**. Enter on an empty
+  field sends the head now; the up arrow edits the last one. A new conversation leaves no queue behind.
+
+### Changed
+
+- **The thread no longer lists tool calls.** The working line under the thread says what the bot is doing, in a few words
+  ("reads a file", "searches the web", "delegates 3 tasks"), and that is all the page shows of the work. A call waiting
+  on the person's permission still shows its card and its answers.
+- **The model trigger keeps its provider.** The mark of the house serving the model, the model's name, "· High" and the
+  caret are always on the trigger, in the composer too (14 px, the page's ink for the name, the muted one for the rest).
+- **The mark is never still.** At rest it floats, looks around and blinks now and then; at work it breathes harder, bobs
+  and blinks faster. The rail, the header, the panel and the working line all pass the bot's state to its mark.
+- The bot's role (the profile's description, "Head of SEO") is no longer printed next to its name in the rail, the bot
+  picker, the panel or the header.
+
+### Tests
+
+- `check-queue` (25 checks) and `check-tools-hidden` (5 checks), both wired into `npm run build`; the composition check
+  now asks for the provider's mark on the trigger.
+
 ## [1.7.1] - 2026-11-16
 
 ### Added

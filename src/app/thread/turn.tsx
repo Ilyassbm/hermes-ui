@@ -1,7 +1,7 @@
 // One assistant turn: what the bot is doing, what it called, then what it answered.
 //
-// The order is Glaze's fixed one — reasoning, tool calls, the answer, the footer — and every section but the answer is
-// optional. The turn owns its own tool-call list: the store appends the actions (`tool-events`), this component replays
+// The order is Glaze's fixed one — reasoning, the calls that wait on the person, the answer, the footer — and every
+// section but the answer is optional. The other tool calls are hidden: the working line says what the bot is doing. The turn owns its own tool-call list: the store appends the actions (`tool-events`), this component replays
 // them through Glaze's reducer, so a finished call folds away without a state machine of its own.
 import { useEffect, useReducer, useRef } from 'react'
 import type { Look } from '@/lib/mark'
@@ -43,6 +43,7 @@ type TurnProps = {
 
 export function AssistantTurn({ message, name }: TurnProps) {
   const calls = useTurnCalls(message.toolActions || [])
+  const asking = calls.filter(call => call.status === 'awaiting-permission')
   const approval = useStore(store, s => s.approval)
   const streaming = message.status === 'streaming'
   const failed = message.status === 'failed'
@@ -75,9 +76,12 @@ export function AssistantTurn({ message, name }: TurnProps) {
         />
       ) : null}
 
-      {calls.length ? (
+      {/* The calls themselves are not drawn: the working line under the thread says what the bot is doing, in a few words,
+          and that is all the page shows of the work. The one call that stays is a call waiting on the person — a
+          permission nobody sees is a turn that never ends. */}
+      {asking.length ? (
         <ToolCallList
-          calls={calls}
+          calls={asking}
           live={streaming}
           labels={TOOL_LABELS}
           actions={call =>

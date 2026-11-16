@@ -18,7 +18,7 @@ import { newConversation, openConversation, store } from '@/lib/hermes'
 import { botLabel, convGroup, CONV_GROUPS } from '@/lib/labels'
 import { useStore } from '@/lib/store'
 import { BotAvatar } from './bot-avatar'
-import { botIdentity, botRole, sinceLabel } from './format'
+import { botIdentity, sinceLabel } from './format'
 import { capsOf } from './keys'
 import { UI } from './strings'
 import { toggleAside, view } from './ui-state'
@@ -42,8 +42,8 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
 
   const meta = bots.find(b => b.name === bot)
   const name = botLabel(meta || bot)
-  const role = botRole(bot || undefined, meta?.description)
   const identity = botIdentity(bot || 'default')
+  const working = useStore(store, st => Boolean(st.live))
   const sessions = (bot && sessionsByBot[bot]) || []
   const open = storedId ? sessions.find(s => s.id === storedId) : null
 
@@ -94,11 +94,11 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
               variant="ghost"
               className="hui-pill"
               title={open?.title || UI.header.allConversations}
-              aria-label={role ? `${name}, ${role}` : name}
+              aria-label={name}
             />
           }
         >
-          <BotAvatar size={22} look={identity} label={name} />
+          <BotAvatar size={22} look={identity} label={name} activity={working ? 'working' : 'idle'} />
           <span className="hui-pill-name">{name}</span>
           {live ? <WorkingDot className="hui-tab-dot" /> : null}
           <Icon icon={ChevronDown} size={12} />
