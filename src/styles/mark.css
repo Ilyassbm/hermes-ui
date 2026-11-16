@@ -78,3 +78,9 @@
 .glaze .hui-mark-group input[aria-invalid='true'] {
   border-color: var(--text-3);
 }
+/* The settings row: the bot drawn small, then the button that opens the editor. */
+.glaze .hui-set-look {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}

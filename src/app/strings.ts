@@ -130,6 +130,8 @@ export const UI = {
     chat: 'Chat',
     chatDefaults: (name: string) => `Defaults for ${name}`,
     chatDefaultsHint: 'The model and the effort the composer starts with for the bot that is open in the rail.',
+    look: 'Look',
+    lookHint: (name: string) => `The shape, eyes and colour ${name} is drawn with.`,
     model: 'Default model',
     modelHint: 'Follow the profile, or pin one model for this bot.',
     modelProfileDefault: 'Bot default',

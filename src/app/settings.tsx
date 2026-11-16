@@ -25,6 +25,10 @@ import { useStore } from '@/lib/store'
 import { useGlazeStyle } from './glaze-style'
 import { GlazePortalProvider } from '@/lib/glaze/portal'
 import { comboOf } from './keys'
+import { BotAvatar } from './bot-avatar'
+import { botIdentity } from './format'
+import { MarkEditor } from './mark-editor'
+import { openMarkEditor } from './ui-state'
 import { EFFORTS, loadCatalog, providerReady, type Provider } from './models'
 import { openKeybindings } from './settings-link'
 import { loadSettings, saveSettings, settings, type DensityChoice, type MeasureChoice, type MotionChoice, type SendKeyChoice, type ThemeChoice } from './settings-state'
@@ -208,6 +212,18 @@ export function SettingsPage({ ctx }: { ctx: any }) {
           </h2>
           <Row label={UI.settings.chatDefaults(name)} hint={UI.settings.chatDefaultsHint} control={<span className="hui-set-value">{name}</span>} />
           <Row
+            label={UI.settings.look}
+            hint={UI.settings.lookHint(name)}
+            control={
+              <span className="hui-set-look">
+                <BotAvatar look={botIdentity(current || 'default')} size={28} label={UI.mark.preview(name)} />
+                <Button variant="secondary" size="sm" onClick={() => openMarkEditor(current || 'default')}>
+                  {UI.mark.edit}
+                </Button>
+              </span>
+            }
+          />
+          <Row
             label={UI.settings.model}
             hint={UI.settings.modelHint}
             control={
@@ -289,6 +305,7 @@ export function SettingsPage({ ctx }: { ctx: any }) {
           <Row label={UI.settings.network} hint={UI.settings.networkBody} control={null} />
         </section>
         </div>
+        <MarkEditor />
       </GlazePortalProvider>
     </div>
   )
