@@ -132,6 +132,18 @@ check('à l’encre lisible sur le corps', markup.includes(`fill="${mark.inkFor(
 check('la taille est celle demandée', /--bot-size:\s*40px/.test(markup), (markup.match(/style="[^"]*"/) || [''])[0])
 check('un bot qui travaille le dit (pour l’animation)', /data-activity="working"/.test(render({ look, activity: 'working' })))
 
+// The eyes blink through CSS (`transform-box: fill-box`, `transform-origin: center` on `.hui-mark-eye`). On an element
+// that ALSO carries an SVG `transform="rotate(a cx cy)"` that box re-bases the rotation, and a tilted eye (happy, sad,
+// stern, curious) is thrown to the edge of the body. The lean therefore sits on a wrapper, never on the animated rect.
+for (const eyes of mark.MARK_EYES) {
+  const html = render({ look: { shape: 'circle', eyes, color: '#ffffff' } })
+  const rects = html.match(/<rect[^>]*class="hui-mark-eye"[^>]*>/g) || []
+  const bad = rects.filter(r => /\btransform=/.test(r))
+  check(`yeux « ${eyes} » : l'inclinaison n'est pas sur le rect animé`, rects.length === 2 && bad.length === 0, bad[0] || `${rects.length} rect`)
+}
+const tilted = render({ look: { shape: 'circle', eyes: 'sad', color: '#ffffff' } })
+check('un œil incliné reste incliné (sur son enveloppe)', (tilted.match(/<g[^>]*transform="rotate\(/g) || []).length === 2, (tilted.match(/<g[^>]*transform="[^"]*"/g) || []).join(' ').slice(0, 120))
+
 /* ------------------------------------------------- 4. where a look comes from -- */
 
 setChosenLooks([])

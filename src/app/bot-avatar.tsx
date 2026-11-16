@@ -35,18 +35,21 @@ export function BotAvatar({ look, size = 24, label = 'Agent', activity = 'idle',
       <svg viewBox="0 0 100 100" aria-hidden="true">
         <path className="hui-mark-body" d={shapePath(look.shape)} fill={look.color} />
         <g className="hui-mark-face">
+          {/* The lean sits on a wrapper: the blink animates the rect through `transform-box: fill-box`, and on an element
+              that also carries `transform="rotate(a cx cy)"` that box re-bases the rotation and throws the eye to the
+              edge of the body. */}
           {eyes.map((eye, index) => (
-            <rect
-              key={index}
-              className="hui-mark-eye"
-              x={eye.x - eye.w / 2}
-              y={eye.y - eye.h / 2}
-              width={eye.w}
-              height={eye.h}
-              rx={Math.min(eye.w, eye.h) / 2}
-              fill={ink}
-              transform={eye.tilt ? `rotate(${eye.tilt} ${eye.x} ${eye.y})` : undefined}
-            />
+            <g key={index} transform={eye.tilt ? `rotate(${eye.tilt} ${eye.x} ${eye.y})` : undefined}>
+              <rect
+                className="hui-mark-eye"
+                x={eye.x - eye.w / 2}
+                y={eye.y - eye.h / 2}
+                width={eye.w}
+                height={eye.h}
+                rx={Math.min(eye.w, eye.h) / 2}
+                fill={ink}
+              />
+            </g>
           ))}
         </g>
       </svg>

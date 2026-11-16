@@ -3,6 +3,20 @@
 All notable changes to this project are documented here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-11-16
+
+### Fixed
+
+- **Tilted eyes were thrown to the edge of the avatar.** Since 1.8.0 the eyes blink through `transform-box: fill-box`,
+  and on an eye that also carried the SVG `rotate(…)` of its lean (happy, sad, stern, curious) that box re-based the
+  rotation: the two eyes ended up on a diagonal, against the rim of the body. The lean now sits on a wrapper `<g>` and
+  the animated `<rect>` is bare. Measured in a real browser, the eye centres of the four tilted sets moved from e.g.
+  (19, 63) and (88, 26) % of the avatar to (34, 47) and (66, 47).
+
+### Tests
+
+- `check-mark` (62 checks): no eye `<rect>` carries a `transform`, and a tilted set keeps its lean on a `<g>`.
+
 ## [1.8.0] - 2026-11-16
 
 ### Added
