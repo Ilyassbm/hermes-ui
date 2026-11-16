@@ -11,29 +11,28 @@ the bots rail, the conversation, the right panel — and leaves the rest of the 
 
 ## Screenshots
 
-Every screenshot is a real conversation in the Webapp, answered live by DeepSeek V4.1 Flash through the gateway —
-nothing is mocked.
+Every screenshot is a real conversation in the Webapp, answered live by Claude Haiku 5.5 through the gateway —
+nothing is mocked. Four demo bots, a throwaway profile, no account or usage data on screen.
 
 ![A release-status card drawn by the bot: a checklist with states, details and a primary button](docs/screenshots/01-intelligent-ui.jpg)
 
 *Intelligent UI. The bot answers with a `<hui-ui>` block and the thread draws it as Glaze components — here a status
-card with a checklist and a button that sends its own follow-up. The bot floats as a pill above the thread; the pill
-opens all of its conversations.*
+card with a checklist and a button that sends its own follow-up. The bot's name above the thread opens all of its
+conversations.*
 
-![A comparison table with wrapped cells, under the folded reasoning and work rows](docs/screenshots/02-table.jpg)
+![A comparison table with wrapped cells](docs/screenshots/02-table.jpg)
 
-*A comparison as a table. Reasoning folds into “Thought for …”, the tools into “Worked for 46s”; long cells wrap
-instead of being cut at the edge.*
+*A comparison as a table: long cells wrap instead of being cut at the edge.*
 
-![The bot panel: avatar, model and skills, then its conversations and routines](docs/screenshots/03-tools-files.jpg)
+![The bot panel: its mark and name, then its conversations and routines](docs/screenshots/03-tools-files.jpg)
 
-*The bot panel. The open bot's card — model, skills — then two views: Activity (its conversations, the running one
-marked live, and its routines with a switch that pauses or resumes them) and Files (what the conversation read,
-wrote or ran).*
+*The bot panel. The open bot's mark and name, then two views: Activity (its conversations, the running one marked
+live, and its routines with a switch that pauses or resumes them) and Files (what the conversation read, wrote or
+ran).*
 
 ![An approval card: the command, why it was flagged, and Always allow / Refuse / Allow](docs/screenshots/04-approval.jpg)
 
-*Approvals inline. The reasoning streams above, the card says why Hermes stopped (“recursive delete”) and answers in
+*Approvals inline. The card says why Hermes stopped (“recursive delete”) and answers in
 one click — Always allow, Refuse, or the green Allow; the working line under the thread keeps the clock.*
 
 ![The model menu: effort on top, then the provider's models](docs/screenshots/05-model.jpg)
@@ -48,22 +47,20 @@ one click — Always allow, Refuse, or the green Allow; the working line under t
 
 *Light theme (Settings ▸ Hermes UI ▸ Theme: System, Dark or Light).*
 
-![A turn split into the messages it really was: a short note, then the answer](docs/screenshots/08-messages.jpg)
-
-*Each assistant message keeps its own bubble. An agentic turn that narrates before a tool call and answers after it
-reads as the several messages it was, each with its own folded reasoning — not one run-on block.*
-
 ![The Hermes UI settings page](docs/screenshots/09-settings.jpg)
 
-*Settings ▸ Plugins ▸ Hermes UI: appearance, the chat defaults for the open bot, and the plugin's shortcuts.*
+*Settings ▸ Plugins ▸ Hermes UI: appearance, the chat defaults and the look of the open bot, and the plugin's shortcuts.*
 
 ## What you get
 
-- **Bots rail** with the pinned bots as tiles, then the team in the roster's own sections: one row per bot, its name,
-  role and last line.
+- **Bots rail** with the pinned bots as tiles, then the team in the roster's own sections: one row per bot, its name
+  and last line.
 - **Floating bot pill** above the thread: the open bot and conversation, and every conversation of the bot one click away.
 - **Live activity line** — thinking, working, delegating — that folds into “Worked for 12s” when the turn ends.
-- **Reasoning** folded under the reply as “Thought for 8s”, opened on demand.
+- **Reasoning** folded under the reply as “Thought for 8s”, opened on demand. Tool calls are not listed in the thread:
+  the activity line says what the bot is doing, and only a call waiting for your permission shows its card.
+- **Queued messages**: what you write while the bot works waits above the composer and goes, in order, when its turn
+  ends (edit, reorder, remove, or send now).
 - **Approval cards** for the commands and tools that ask before they run, and **question cards** for the choices a
   bot asks mid-turn (free text when it offers none, and its own countdown).
 - **Streaming replies**, with the thread fading under the bot's badge instead of being cut off.
