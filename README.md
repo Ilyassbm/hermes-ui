@@ -9,47 +9,13 @@ the bots rail, the conversation, the right panel — and leaves the rest of the 
   <code>hermes plugins validate: passing</code>
 </p>
 
-## Screenshots
+## Demo
 
-Every screenshot is a real conversation in the Webapp, answered live by Claude Haiku 5.5 through the gateway —
-nothing is mocked. Four demo bots, a throwaway profile, no account or usage data on screen.
+[![Hermes UI: a 28-second recording of the desktop app](docs/hermes-ui-demo.jpg)](docs/hermes-ui-demo.mp4)
 
-![A release-status card drawn by the bot: a checklist with states, details and a primary button](docs/screenshots/01-intelligent-ui.jpg)
-
-*Intelligent UI. The bot answers with a `<hui-ui>` block and the thread draws it as Glaze components — here a status
-card with a checklist and a button that sends its own follow-up. The bot's name above the thread opens all of its
-conversations.*
-
-![A comparison table with wrapped cells](docs/screenshots/02-table.jpg)
-
-*A comparison as a table: long cells wrap instead of being cut at the edge.*
-
-![The bot panel: its mark and name, then its conversations and routines](docs/screenshots/03-tools-files.jpg)
-
-*The bot panel. The open bot's mark and name, then two views: Activity (its conversations, the running one marked
-live, and its routines with a switch that pauses or resumes them) and Files (what the conversation read, wrote or
-ran).*
-
-![An approval card: the command, why it was flagged, and Always allow / Refuse / Allow](docs/screenshots/04-approval.jpg)
-
-*Approvals inline. The card says why Hermes stopped (“recursive delete”) and answers in
-one click — Always allow, Refuse, or the green Allow; the working line under the thread keeps the clock.*
-
-![The model menu: effort on top, then the provider's models](docs/screenshots/05-model.jpg)
-
-*The model menu, opened from the composer: Low / Medium / High effort, then each provider with its logo.*
-
-![The slash command list with a description under each command](docs/screenshots/06-slash.jpg)
-
-*`/` opens the profile's own commands, with the gateway's description of each.*
-
-![The same thread in the light theme](docs/screenshots/07-light.jpg)
-
-*Light theme (Settings ▸ Hermes UI ▸ Theme: System, Dark or Light).*
-
-![The Hermes UI settings page](docs/screenshots/09-settings.jpg)
-
-*Settings ▸ Plugins ▸ Hermes UI: appearance, the chat defaults and the look of the open bot, and the plugin's shortcuts.*
+*A 28-second recording of the desktop app (click the image to play it): a bot answers with a chart, tables and status
+cards drawn from `<hui-ui>` blocks, the bot's look is changed from the editor, and a form comes back as controls in
+the thread.*
 
 ## What you get
 
