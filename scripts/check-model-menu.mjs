@@ -339,11 +339,11 @@ const outfile = join(scratch, 'hui-model-menu.bundle.mjs')
 
 const ENTRY = `
 import { answerConfirm, applyModel, bindContext, chooseModel, prefsFor, store } from '@/lib/hermes'
-import { chosenModel, foldSearch, searchModels } from '@/app/models'
+import { catalogCurrent, chosenModel, foldSearch, loadCatalog, searchModels } from '@/app/models'
 import { ModelHits } from '@/app/model-menu'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-export { answerConfirm, applyModel, bindContext, chooseModel, prefsFor, store, chosenModel, foldSearch, searchModels, ModelHits, React, renderToStaticMarkup }
+export { answerConfirm, applyModel, bindContext, catalogCurrent, chooseModel, prefsFor, store, chosenModel, foldSearch, loadCatalog, searchModels, ModelHits, React, renderToStaticMarkup }
 `
 
 let runtime
@@ -660,6 +660,39 @@ const keyless = [...PROVIDERS, { slug: 'no-key-co', name: 'No Key Co', models: [
 check('un provider sans clé ne sort pas de la recherche par son modèle', searchModels(keyless, 'orphan').length === 0, JSON.stringify(searchModels(keyless, 'orphan')))
 check('ni par son nom', searchModels(keyless, 'no key').length === 0, JSON.stringify(searchModels(keyless, 'no key')))
 check('les providers avec clé restent cherchables', searchModels(keyless, 'anthropic').length === 3, String(searchModels(keyless, 'anthropic').length))
+
+/* ---- the catalogue is per bot, and so is the model it says is running ---- */
+//
+// `profiles.list` names a bot's model only for the profiles the answering gateway serves; the others come back with
+// `model: ''`, so the trigger said "Model" and nothing else. `model.options {profile}` answers the profile's own
+// providers (their keys differ per profile) and `model`/`provider`, the one it runs. The page used to ask once, for
+// no profile, keep the answer for good — a failure included — and show the first bot's providers on every bot.
+
+const catalogCalls = []
+const gatewayProviders = name => [{ slug: 'custom', name: 'Custom', models: [`${name}-model`], authenticated: true }]
+let flaky = true
+globalThis.__hostRequest = (method, params) => {
+  catalogCalls.push({ method, params })
+  if (method !== 'model.options') return Promise.resolve({})
+  if (params?.profile === 'flaky' && flaky) {
+    flaky = false
+    return Promise.reject(new Error('gateway not ready'))
+  }
+  return Promise.resolve({ providers: gatewayProviders(params?.profile || 'default'), model: `${params?.profile || 'default'}-model`, provider: 'custom' })
+}
+const labProviders = await runtime.loadCatalog('lab-bot')
+check('le catalogue est demandé pour le profil du bot', catalogCalls[0]?.method === 'model.options' && catalogCalls[0]?.params?.profile === 'lab-bot', JSON.stringify(catalogCalls[0]?.params ?? null))
+check('ce sont les providers de ce profil', labProviders[0]?.models?.[0] === 'lab-bot-model', JSON.stringify(labProviders[0]?.models ?? null))
+await runtime.loadCatalog('other-bot')
+check('un autre bot a son propre catalogue (aucune réutilisation entre bots)', catalogCalls.length === 2 && catalogCalls[1]?.params?.profile === 'other-bot', `${catalogCalls.length} call(s)`)
+await runtime.loadCatalog('lab-bot')
+check('un même bot ne redemande rien', catalogCalls.length === 2, `${catalogCalls.length} call(s)`)
+check('le modèle que le gateway dit courant est gardé', runtime.catalogCurrent('lab-bot')?.model === 'lab-bot-model' && runtime.catalogCurrent('lab-bot')?.provider === 'custom', JSON.stringify(runtime.catalogCurrent('lab-bot')))
+check('le déclencheur nomme ce modèle quand ni préférence ni roster n’en donnent', runtime.chosenModel({}, { model: '' }, runtime.catalogCurrent('lab-bot')) === 'lab-bot-model', runtime.chosenModel({}, { model: '' }, runtime.catalogCurrent('lab-bot')))
+check('la préférence du bot passe avant, puis le roster, puis le gateway', runtime.chosenModel({ model: 'a' }, { model: 'b' }, { model: 'c' }) === 'a' && runtime.chosenModel({}, { model: 'b' }, { model: 'c' }) === 'b', '')
+const failedOnce = await runtime.loadCatalog('flaky')
+const retriedCatalog = await runtime.loadCatalog('flaky')
+check('un échec du gateway n’est pas gardé pour toute la page', failedOnce.length === 0 && retriedCatalog.length === 1, `${failedOnce.length} then ${retriedCatalog.length}`)
 
 /* ------------------------------------------------------------------- the report -- */
 

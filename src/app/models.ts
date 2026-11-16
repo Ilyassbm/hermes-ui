@@ -2,7 +2,7 @@
 //
 // `model.options` answers `{providers:[{slug, name, models[]}]}`; a provider with no models is dropped, so the menu
 // never shows an empty group. The request is memoised: opening the picker twice asks the gateway once.
-import { host } from '@hermes/plugin-sdk'
+import { requestReady } from '../lib/hermes'
 import { modelLabel } from '../lib/labels'
 
 export type Provider = {
@@ -34,11 +34,16 @@ export function topModels(provider: Provider, current: string): string[] {
 
 /**
  * The model the picker's trigger names, and the model a click would really replace: the bot's stored preference
- * first, then the profile's own default. `chooseModel` writes the preference only once the session took the choice,
+ * first, then the profile's own default, then the one its gateway reports (`catalogCurrent`) — the roster leaves the
+ * default empty for a bot it does not serve. `chooseModel` writes the preference only once the session took the choice,
  * so this value moves on success and stays put on a refusal.
  */
-export function chosenModel(prefs?: { model?: string } | null, meta?: { model?: string } | null): string {
-  return prefs?.model || meta?.model || ''
+export function chosenModel(
+  prefs?: { model?: string } | null,
+  meta?: { model?: string } | null,
+  current?: { model?: string } | null
+): string {
+  return prefs?.model || meta?.model || current?.model || ''
 }
 
 /** One model the flat search lists, with the provider that serves it. */
@@ -98,28 +103,49 @@ export function effortLabel(value?: string | null): string {
   return EFFORT_LABELS[value] || value
 }
 
-let catalog: Provider[] | null = null
-let loading: Promise<Provider[]> | null = null
+/** What the gateway says a profile runs right now: `model.options` answers it next to the providers. */
+export type Current = { model: string; provider: string }
 
-/** The models the gateway offers, read once per page. */
-export function loadCatalog(): Promise<Provider[]> {
-  if (catalog) return Promise.resolve(catalog)
-  if (!loading) {
-    loading = host
-      .request('model.options', {})
-      .then((res: any) => {
-        catalog = (Array.isArray(res?.providers) ? res.providers : []).filter(
-          // A provider with no model is dropped: an empty group is noise. A provider the gateway is not authenticated
-          // for is kept (1.5.4): the picker names it with "Key missing" and disables its rows, which says more than a
-          // provider that silently vanishes — `providerReady` is the one door for "can this apply".
-          (p: Provider) => p && Array.isArray(p.models) && p.models.length
-        )
-        return catalog as Provider[]
-      })
-      .catch(() => {
-        catalog = []
-        return [] as Provider[]
-      })
-  }
-  return loading
+const catalogs = new Map<string, Provider[]>()
+const currents = new Map<string, Current>()
+const loading = new Map<string, Promise<Provider[]>>()
+
+/**
+ * The models one bot's gateway offers, read once per bot and per page.
+ *
+ * `model.options {profile}`: the providers a profile can call differ with its keys, so the catalogue is the bot's own,
+ * never the first bot's. The same answer names the model the profile runs (`model`, `provider`), which the roster does
+ * not for a profile the answering gateway does not serve (`profiles.list` sends `model: ''`): `catalogCurrent` hands it
+ * to the trigger. A failure is not remembered — the picker would stay empty until the page was reloaded — and the
+ * next ask goes to the gateway again.
+ */
+export function loadCatalog(profile = ''): Promise<Provider[]> {
+  const key = profile || ''
+  const known = catalogs.get(key)
+  if (known) return Promise.resolve(known)
+  const pending = loading.get(key)
+  if (pending) return pending
+  const ask = requestReady('model.options', key ? { profile: key } : {}, { long: Boolean(key), bot: key })
+    .then((res: any) => {
+      // A provider with no model is dropped: an empty group is noise. A provider the gateway is not authenticated
+      // for is kept (1.5.4): the picker names it with "Key missing" and disables its rows, which says more than a
+      // provider that silently vanishes — `providerReady` is the one door for "can this apply".
+      const list = (Array.isArray(res?.providers) ? res.providers : []).filter(
+        (p: Provider) => p && Array.isArray(p.models) && p.models.length
+      ) as Provider[]
+      catalogs.set(key, list)
+      currents.set(key, { model: typeof res?.model === 'string' ? res.model : '', provider: typeof res?.provider === 'string' ? res.provider : '' })
+      return list
+    })
+    .catch(() => [] as Provider[])
+    .finally(() => {
+      loading.delete(key)
+    })
+  loading.set(key, ask)
+  return ask
+}
+
+/** The model the gateway reported for `profile` with its catalogue, or an empty answer before it has. */
+export function catalogCurrent(profile = ''): Current {
+  return currents.get(profile || '') || { model: '', provider: '' }
 }

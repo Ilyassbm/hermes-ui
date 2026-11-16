@@ -121,8 +121,17 @@ export function SettingsPage({ ctx }: { ctx: any }) {
   // The page reads the stored object once; `prefs` is the live copy every control writes through `saveSettings`.
   useEffect(() => {
     loadSettings(ctx)
-    void loadCatalog().then(setProviders)
   }, [ctx])
+  // The choices are the open bot's own catalogue, and follow the bot when it changes.
+  useEffect(() => {
+    let alive = true
+    void loadCatalog(current).then(list => {
+      if (alive) setProviders(list)
+    })
+    return () => {
+      alive = false
+    }
+  }, [current])
 
   const meta = bots.find(b => b.name === current)
   const name = botLabel(meta || current)

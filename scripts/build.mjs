@@ -102,6 +102,11 @@ if (clarify.status !== 0) process.exit(clarify.status ?? 1)
 const links = spawnSync(process.execPath, [resolve(root, 'scripts/check-links.mjs')], { stdio: 'inherit' })
 if (links.status !== 0) process.exit(links.status ?? 1)
 
+// 0m. The picture gate (1.6.4): a markdown image, a `file://` one, a web one and a `MEDIA:` dropped into a sentence all
+//     have to become pictures in the thread — the markdown renderer has no image rule and printed `!alt`.
+const media = spawnSync(process.execPath, [resolve(root, 'scripts/check-media.mjs')], { stdio: 'inherit' })
+if (media.status !== 0) process.exit(media.status ?? 1)
+
 // 1. Tailwind v4 → one stylesheet. app.css pulls `tailwindcss/theme` + `tailwindcss/utilities` in (never the full
 //    `tailwindcss`, whose Preflight is a global reset) and Glaze's own scoped entry.
 const compiled = await postcss([tailwind()]).process(readFileSync(from, 'utf8'), { from, to: cssOut })

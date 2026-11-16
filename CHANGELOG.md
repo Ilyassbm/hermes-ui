@@ -3,6 +3,30 @@
 All notable changes to this project are documented here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.4] - 2026-11-16
+
+### Fixed
+
+- **The agent's questions reach the page.** Hermes core publishes a local viewer's question as a `clarify` server request
+  (one to five questions), which a plugin never receives; the page only listened for a `clarify.request` event, so the
+  agent waited on a question that was never shown. The page now reads the gateway's open questions back
+  (`session.events.since` → `open_requests`) when the agent starts a `clarify` call and when a running conversation is
+  resumed, shows them one at a time ("Question 1 of 2"), and answers with one `clarify.lock` per question, in order. The
+  old `clarify.request` event still works. A question the gateway withdrew (`request.cancel`) takes its card away.
+- **The model picker is per bot.** The catalogue was asked once, for no profile, and kept for good, a failure included, so
+  every bot showed the first bot's providers and a gateway that was late left the picker empty until a reload. It is now
+  asked with `model.options {profile}`, kept per bot, never kept on failure, and asked again when the menu opens empty.
+  The trigger names the model the gateway reports when neither a preference nor the roster does (it read "Model").
+- **Pictures show up.** Only a `MEDIA:/path` alone on its line became a picture; `![alt](/path)`, `file://…`, a web
+  address and a `MEDIA:` inside a sentence printed `!alt` or raw text. They are now drawn by the same blocks as a
+  `MEDIA:` line. A web image is an `<img>` with `referrerpolicy="no-referrer"`; one that fails to load becomes the quiet
+  refusal. Code (fences, inline spans) is untouched.
+
+### Tests
+
+- `check-clarify` adds the server-request path (18 checks); `check-model-menu` adds the per-bot catalogue (8);
+  new `check-media` (17), wired into `npm run build`. All three fail on 1.6.3.
+
 ## [1.6.3] - 2026-11-15
 
 ### Fixed

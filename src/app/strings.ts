@@ -459,6 +459,8 @@ export const UI = {
     skip: 'Skip',
     send: 'Send',
     other: 'Or type an answer',
+    /** Several questions at once: where the person is in the list. */
+    step: (n: number, of: number) => `Question ${n} of ${of}`,
     /** The countdown, in the corner of the card. */
     remaining: (seconds: number) => `${seconds}s left`,
     expired: 'The question timed out',

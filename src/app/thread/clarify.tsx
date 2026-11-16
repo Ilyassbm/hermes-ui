@@ -69,7 +69,16 @@ export function ClarifyCard() {
   /** The checked choices, and the typed one when there is one: the JSON array the native clarify decodes. */
   const chosen = () => (typed.trim() ? [...picked, typed.trim()] : picked)
 
-  const note = asked.error || (asked.done ? UI.clarify.youSaid(asked.sent) : asked.sending ? UI.clarify.answered : '')
+  const several = Array.isArray(asked.questions) && asked.questions.length > 1
+  const note =
+    asked.error ||
+    (asked.done
+      ? UI.clarify.youSaid(asked.sent)
+      : asked.sending
+        ? UI.clarify.answered
+        : several
+          ? UI.clarify.step(asked.step + 1, asked.questions.length)
+          : '')
 
   return (
     <section

@@ -623,6 +623,9 @@ export async function openConversation(storedId) {
       live: res?.running ? { phase: 'thinking', verb: '', subagents: 0, startedAt: Date.now(), reasoning: '' } : null
     })
     if (res?.running) startApprovalPoll()
+    // A question the agent asked while this page was closed is still open on the gateway.
+    if (Array.isArray(res?.open_requests) && ingestOpenRequests(res?.session_id || storedId, res.open_requests, bot)) return true
+    if (res?.running) void watchClarify(res?.session_id || storedId, bot)
     return true
   } catch (e) {
     // The banner says what happened, and its Retry replays this very call (see `retryOpen` in the store).
@@ -1061,6 +1064,14 @@ function failTurn(reason) {
 // prompt_id, answer}`. An extra key is refused as `invalid_params`, and an empty answer means "skipped".
 // `clarify.settled` `{prompt_id, execution_generation}` is what takes the card away.
 //
+// That is the protocol of a gateway that talks to a viewer that cannot be handed the request. Hermes core's own
+// desktop is handed something else when it is attached locally: one JSON-RPC server request, `clarify`, carrying one to
+// five questions (`qid`, `question`, `choices`, `multi_select`). A plugin never sees it — the core's handler takes it
+// first — but the gateway keeps it open (`open_requests`, readable through `session.events.since`) until every
+// question holds a locked answer, and `clarify.lock {request_id, question_id, answer}` locks one; the lock that empties
+// the list resolves the agent's wait. `watchClarify` reads it back when the agent starts a `clarify` tool call and the
+// answer goes out as locks, so a question reaches the person whichever of the two the gateway used.
+//
 // The questions are held per session, not for the open one only: a question asked in a conversation the person is not
 // looking at is still there, in its own thread, when they come back to it.
 
@@ -1086,6 +1097,94 @@ function askedClarify(ev) {
     sent: '',
     error: ''
   }
+}
+
+/** The questions of one open `clarify` server request, minus those whose answer the gateway already holds. */
+function questionsOf(params) {
+  const locked = params?.answers && typeof params.answers === 'object' ? params.answers : {}
+  const rows = Array.isArray(params?.questions) ? params.questions : []
+  const out = []
+  for (const row of rows) {
+    const qid = typeof row?.qid === 'string' ? row.qid.trim() : ''
+    const question = typeof row?.question === 'string' ? row.question.trim() : ''
+    if (!qid || !question || qid in locked) continue
+    const choices = Array.isArray(row.choices) ? row.choices.filter(c => typeof c === 'string' && c.trim()) : []
+    out.push({ qid, question, choices, multiSelect: row.multi_select === true && choices.length > 0 })
+  }
+  return out
+}
+
+/** What the card reads for question `step` of a server request. */
+const stepOf = (questions, step) => ({
+  step,
+  question: questions[step].question,
+  choices: questions[step].choices,
+  multiSelect: questions[step].multiSelect
+})
+
+/** Open `clarify` server requests (`open_requests` of a resume or of `session.events.since`) → cards. Answers how many it added. */
+function ingestOpenRequests(sessionId, list, bot) {
+  if (!sessionId || !Array.isArray(list)) return 0
+  let added = 0
+  for (const entry of list) {
+    if (entry?.method !== 'clarify' || typeof entry.id !== 'string' || !entry.id) continue
+    const questions = questionsOf(entry.params)
+    if (!questions.length) continue
+    if ((store.get().clarifyBySession?.[sessionId] || []).some(row => row.promptId === entry.id)) continue
+    const timeout = Number(entry.params?.timeout_s)
+    const asked = {
+      sessionId,
+      promptId: entry.id,
+      requestId: entry.id,
+      bot: bot || '',
+      generation: 0,
+      questions,
+      answers: {},
+      ...stepOf(questions, 0),
+      timeoutS: Number.isFinite(timeout) && timeout > 0 ? timeout : null,
+      at: Date.now(),
+      sending: false,
+      done: false,
+      sent: '',
+      error: ''
+    }
+    store.set(s => ({ clarifyBySession: { ...(s.clarifyBySession || {}), [sessionId]: [...(s.clarifyBySession?.[sessionId] || []), asked] } }))
+    added += 1
+  }
+  return added
+}
+
+/** A watch per session: a newer one (or the end of the turn) retires the older. */
+const clarifyWatch = new Map()
+/** Waits, in ms, between two reads of the gateway's open questions: the request trails `tool.start` by a tick. */
+const CLARIFY_WATCH_WAITS = [0, 250, 600, 1200, 2500, 4000, 6000, 9000]
+
+/**
+ * The agent started a `clarify` call: read the gateway's open questions back until one shows up. The same read a
+ * resumed conversation does, so a question a reconnect would have replayed is not lost to a page that was not there.
+ */
+export async function watchClarify(sessionId, bot) {
+  if (!sessionId) return 0
+  const token = {}
+  clarifyWatch.set(sessionId, token)
+  for (const wait of CLARIFY_WATCH_WAITS) {
+    if (wait) await sleep(wait)
+    if (clarifyWatch.get(sessionId) !== token) return 0
+    if ((store.get().clarifyBySession?.[sessionId] || []).length) return 0
+    try {
+      const res = await requestReady(
+        'session.events.since',
+        { session_id: sessionId, last_seen: Number.MAX_SAFE_INTEGER, ...(bot ? { profile: bot } : {}) },
+        { long: true, bot }
+      )
+      if (clarifyWatch.get(sessionId) !== token) return 0
+      const added = ingestOpenRequests(sessionId, res?.open_requests, bot)
+      if (added) return added
+    } catch {
+      // An older gateway, a dropped socket: the next read tries again, and the legacy event still lands on its own.
+    }
+  }
+  return 0
 }
 
 /** The question the open conversation is waiting on: the first of its own list, in arrival order. */
@@ -1133,6 +1232,7 @@ function settleClarify(ev) {
 /** Whatever a session asked and nobody answered goes when its turn ends: a card under a finished turn is a lie. */
 function dropClarify(sessionId = store.get().sid) {
   if (!sessionId) return
+  clarifyWatch.delete(sessionId)
   store.set(s => {
     if (!s.clarifyBySession?.[sessionId]) return null
     const map = { ...s.clarifyBySession }
@@ -1153,6 +1253,7 @@ export async function answerClarify(answer) {
   const asked = pendingClarify(store.get())
   if (!asked || asked.sending || asked.done) return false
   const text = typeof answer === 'string' ? answer : String(answer ?? '')
+  if (asked.requestId) return answerServerClarify(asked, text)
   patchClarify(asked.sessionId, asked.promptId, { sending: true, error: '' })
   try {
     // The four keys the gateway's schema names, and nothing else: a fifth is `invalid_params`.
@@ -1166,6 +1267,41 @@ export async function answerClarify(answer) {
     return true
   } catch {
     patchClarify(asked.sessionId, asked.promptId, { sending: false, error: UI.clarify.failed })
+    return false
+  }
+}
+
+/** How long a fully answered card stays on screen when the gateway does not say `clarify.settled` first. */
+const CLARIFY_SETTLE_MS = 1500
+
+/**
+ * One answer to a question of a core server request. A question that is not the last is only kept: the locks go out
+ * together, in order, on the last one, because the lock that empties the list resolves the agent's wait and every
+ * earlier answer has to be in by then.
+ */
+async function answerServerClarify(asked, text) {
+  const { sessionId, promptId, questions, step } = asked
+  const answers = { ...asked.answers, [questions[step].qid]: text }
+  if (step + 1 < questions.length) {
+    patchClarify(sessionId, promptId, { answers, ...stepOf(questions, step + 1), error: '' })
+    return true
+  }
+  patchClarify(sessionId, promptId, { answers, sending: true, error: '' })
+  try {
+    for (const q of questions) {
+      const res = await requestReady(
+        'clarify.lock',
+        { request_id: asked.requestId, question_id: q.qid, answer: answers[q.qid] ?? '', ...(asked.bot ? { profile: asked.bot } : {}) },
+        { long: true, bot: asked.bot }
+      )
+      // `expired`: the wait already ended (timeout, Stop). Nothing is left to lock.
+      if (res?.status === 'expired') break
+    }
+    patchClarify(sessionId, promptId, { sending: false, done: true, sent: text })
+    setTimeout(() => patchClarify(sessionId, promptId, null), CLARIFY_SETTLE_MS)
+    return true
+  } catch {
+    patchClarify(sessionId, promptId, { sending: false, error: UI.clarify.failed })
     return false
   }
 }
@@ -1330,6 +1466,13 @@ export function handleEvent(ev) {
     settleClarify(ev)
     return
   }
+  // The core's own server request, withdrawn (timeout, Stop, answered elsewhere): its card goes with it.
+  if (ev.type === 'request.cancel' && ev.session_id && typeof p.id === 'string') {
+    if ((s.clarifyBySession?.[ev.session_id] || []).some(row => row.promptId === p.id)) {
+      patchClarify(String(ev.session_id), p.id, null)
+      return
+    }
+  }
   if (!s.sid || ev.session_id !== s.sid) return
   // Any event of the open session tells the watchdog the submitted prompt did reach a turn.
   lastEventAt = Date.now()
@@ -1360,6 +1503,8 @@ export function handleEvent(ev) {
       const name = p.tool_name || p.name
       const args = p.args || {}
       stepTools(ev)
+      // The agent is asking: the question itself is a server request this page is not handed, so it is read back.
+      if (name === 'clarify') void watchClarify(s.sid, s.bot)
       // A read leaves no produced file behind; its path is known when the call starts, so the panel takes it here.
       addFiles(filesFromTool(name, args))
       patchDraft(d => ({ ...d, thinkEnd: d.thinkEnd || Date.now() }))

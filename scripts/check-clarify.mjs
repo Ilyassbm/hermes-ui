@@ -194,6 +194,78 @@ await answerClarify(JSON.stringify([CHOICES[0], CHOICES[1]]))
 const multiAnswer = requests.find(call => call.method === 'clarify.respond')?.params?.answer
 check('une réponse multi_select part en tableau JSON', multiAnswer === JSON.stringify(CHOICES), String(multiAnswer))
 
+/* -------------------------- 7. the core's own protocol: a server request, not an event -- */
+//
+// Hermes core publishes a local viewer's question as a JSON-RPC server request (`clarify`: 1–5 questions with
+// `qid`s) that a plugin's event stream never carries. The question stays open on the gateway (`open_requests`, read
+// back through `session.events.since`) and is answered one question at a time with `clarify.lock`; the lock that
+// empties the list resolves the agent's wait.
+
+const REQ_ID = 'srv-req-1'
+const batch = {
+  id: REQ_ID,
+  method: 'clarify',
+  params: {
+    session_id: SID,
+    timeout_s: 60,
+    questions: [
+      { qid: 'q1', question: 'Which environment?', choices: ['staging', 'production'], multi_select: false },
+      { qid: 'q2', question: 'Anything else I should know?' }
+    ]
+  }
+}
+newConversation()
+store.set({ bot: 'dex', sid: SID, clarifyBySession: {} })
+requests.length = 0
+globalThis.__hostRequest = (method, params) => {
+  requests.push({ method, params })
+  if (method === 'session.events.since') return Promise.resolve({ events: [], open_requests: [batch] })
+  if (method === 'clarify.lock') return Promise.resolve({ status: 'ok', remaining: params.question_id === 'q1' ? ['q2'] : [] })
+  return Promise.resolve({})
+}
+handleEvent({ type: 'tool.start', session_id: SID, payload: { tool_name: 'clarify', args: {} } })
+for (let i = 0; i < 40 && !pendingClarify(store.get()); i += 1) await new Promise(resolve => setTimeout(resolve, 25))
+
+const first = pendingClarify(store.get())
+check(
+  'une question du cœur (requête serveur) devient une carte',
+  first?.question === 'Which environment?',
+  `${requests.map(c => c.method).join(', ') || 'no call'} → ${JSON.stringify(first?.question ?? null)}`
+)
+check('ses choix sont portés tels quels', JSON.stringify(first?.choices) === JSON.stringify(['staging', 'production']), JSON.stringify(first?.choices ?? null))
+check('la carte annonce « question 1 sur 2 »', /1 of 2/.test(card()), (card().match(/\d of \d/) || [])[0] || 'none')
+
+requests.length = 0
+await answerClarify('production')
+check('une réponse intermédiaire ne part pas encore', !requests.some(c => c.method === 'clarify.lock'), requests.map(c => c.method).join(', ') || 'no call')
+check('la seconde question s’affiche', pendingClarify(store.get())?.question === 'Anything else I should know?', JSON.stringify(pendingClarify(store.get())?.question ?? null))
+check('une question sans choix ouvre la saisie libre', card().includes('aria-label="Or type an answer"'))
+
+await answerClarify('use the blue-green deploy')
+const locks = requests.filter(c => c.method === 'clarify.lock')
+check('la dernière réponse envoie un clarify.lock par question', locks.length === 2, `${locks.length} lock(s)`)
+check('dans l’ordre des questions', locks.map(c => c.params.question_id).join(',') === 'q1,q2', locks.map(c => c.params.question_id).join(','))
+check('avec l’identifiant de la requête du cœur', locks.every(c => c.params.request_id === REQ_ID), JSON.stringify(locks.map(c => c.params.request_id)))
+check('et les réponses saisies', locks[0]?.params?.answer === 'production' && locks[1]?.params?.answer === 'use the blue-green deploy', JSON.stringify(locks.map(c => c.params.answer)))
+check('sans clarify.respond (protocole des anciennes versions)', !requests.some(c => c.method === 'clarify.respond'))
+
+handleEvent({ type: 'clarify.settled', session_id: SID, payload: { prompt_id: REQ_ID } })
+check('clarify.settled du cœur retire la carte', pendingClarify(store.get()) === null, JSON.stringify(pendingClarify(store.get())?.question ?? null))
+
+// A reconnect (`session.resume`) hands the still-open question back: it comes back as a card too, minus what was locked.
+newConversation()
+store.set({ bot: 'dex', sid: SID, clarifyBySession: {} })
+globalThis.__hostRequest = (method, params) => {
+  requests.push({ method, params })
+  if (method === 'session.events.since') {
+    return Promise.resolve({ events: [], open_requests: [{ ...batch, params: { ...batch.params, answers: { q1: 'staging' } } }] })
+  }
+  return Promise.resolve({})
+}
+handleEvent({ type: 'tool.start', session_id: SID, payload: { tool_name: 'clarify', args: {} } })
+for (let i = 0; i < 40 && !pendingClarify(store.get()); i += 1) await new Promise(resolve => setTimeout(resolve, 25))
+check('une question déjà verrouillée n’est pas reposée', pendingClarify(store.get())?.question === 'Anything else I should know?', JSON.stringify(pendingClarify(store.get())?.question ?? null))
+
 /* ------------------------------------------------------------------- the report -- */
 
 let failed = 0

@@ -31,7 +31,7 @@ import { SegmentedControl, SegmentedControlItem } from '@/components/glaze/ui/se
 import { chooseModel, prefsFor, savePrefs, store } from '@/lib/hermes'
 import { modelLabel } from '@/lib/labels'
 import { useStore } from '@/lib/store'
-import { chosenModel, EFFORTS, effortLabel, foldSearch, loadCatalog, MODEL_MENU_TOP, providerReady, searchModels, topModels, type ModelHit, type Provider } from './models'
+import { catalogCurrent, chosenModel, EFFORTS, effortLabel, foldSearch, loadCatalog, MODEL_MENU_TOP, providerReady, searchModels, topModels, type ModelHit, type Provider } from './models'
 import { ProviderLogo, logoFor } from './provider-logo'
 import { UI } from './strings'
 import { view } from './ui-state'
@@ -47,7 +47,10 @@ export function ModelMenu() {
   const prefs = prefsFor(bot)
   // The same model the trigger names: the bot's preference first, then the profile's own default, so the check mark sits
   // on the model a send would really use. It only moves once the session took the choice (`chooseModel`).
-  const model = chosenModel(prefs, meta)
+  // What the bot's gateway says it runs, read with its catalogue: the roster leaves a bot's model empty when another
+  // gateway answered, and the trigger would read "Model" — a button that names nothing.
+  const [reported, setReported] = useState(() => catalogCurrent(bot))
+  const model = chosenModel(prefs, meta, reported)
   const effort = prefs.effort || 'medium'
   const label = model ? modelLabel(model) : UI.header.model
   const [providers, setProviders] = useState<Provider[]>([])
@@ -74,15 +77,34 @@ export function ModelMenu() {
 
   // The catalogue is asked for when the composer mounts, not when the menu opens: a first open that also waits on the
   // gateway would be a second reason for the menu to arrive after the click.
+  // The catalogue is the bot's own (its keys, its providers): a new bot asks again, a known one answers from memory.
   useEffect(() => {
     let alive = true
-    void loadCatalog().then(list => {
-      if (alive) setProviders(list)
+    setProviders([])
+    setReported(catalogCurrent(bot))
+    void loadCatalog(bot).then(list => {
+      if (!alive) return
+      setProviders(list)
+      setReported(catalogCurrent(bot))
     })
     return () => {
       alive = false
     }
-  }, [])
+  }, [bot])
+
+  // A catalogue that failed to load (gateway late) is asked for again when the menu opens, not at the next reload.
+  useEffect(() => {
+    if (!open || providers.length) return undefined
+    let alive = true
+    void loadCatalog(bot).then(list => {
+      if (!alive || !list.length) return
+      setProviders(list)
+      setReported(catalogCurrent(bot))
+    })
+    return () => {
+      alive = false
+    }
+  }, [open, bot, providers.length])
 
   useEffect(() => {
     if (asked > 0) setOpen(true)
