@@ -98,7 +98,7 @@ export function Header({ ctx, narrowRail }: HeaderProps) {
             />
           }
         >
-          <BotAvatar size={22} colors={identity.colors} shape={identity.shape} label={name} hoverGiggle={false} />
+          <BotAvatar size={22} look={identity} label={name} />
           <span className="hui-pill-name">{name}</span>
           {live ? <WorkingDot className="hui-tab-dot" /> : null}
           <Icon icon={ChevronDown} size={12} />

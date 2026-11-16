@@ -265,7 +265,7 @@ export function BotPicker({ ctx }: { ctx: any }) {
         onMouseEnter={() => setIndex(at)}
         onClick={() => pick(row)}
       >
-        <BotAvatar size={24} colors={row.identity.colors} shape={row.identity.shape} label={row.label} hoverGiggle={false} />
+        <BotAvatar size={24} look={row.identity} label={row.label} />
         <span className="hui-picker-text">
           <span className="hui-picker-name">{row.label}</span>
           {row.role ? <span className="hui-picker-detail">{row.role}</span> : null}

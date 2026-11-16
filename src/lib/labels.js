@@ -1,3 +1,4 @@
+import { AUTO_COLORS, AUTO_EYES, MARK_SHAPES, normalizeHex, sanitizeMark } from './mark'
 // English copy for the live activity line, bot identity helpers, time formats.
 //
 // Lot 13: every word here lives in UI.activity / UI.time (src/app/strings.ts); this module only maps a tool name to
@@ -79,19 +80,10 @@ export function botLabel(bot) {
   return cap(String(name || 'hermes').replace(/[-_]+/g, ' '))
 }
 
-// Stable per-bot identity: hue + aicss avatar shape, from the profile name.
-const HUES = [
-  ['#ff9b80', '#e2583a'], // coral
-  ['#8fc2ff', '#2f6fe0'], // blue
-  ['#c4b3ff', '#7c4ddb'], // violet
-  ['#7ee8c4', '#0f9d74'], // green
-  ['#ffd47a', '#d48a06'], // amber
-  ['#ff9fd0', '#d63c8c'], // pink
-  ['#86eadc', '#0f8a7e'], // teal
-  ['#c3ccd8', '#5b6b80'] // slate
-]
-const SHAPES = ['pebble', 'circle', 'squircle', 'flower', 'blob']
-
+// Stable per-bot identity: shape, eyes and colour. Read in this order, field by field:
+//   1. what the person saved for the bot in this page  (`ui_meta['hermes-ui'].mark`, see `src/lib/mark.ts`),
+//   2. what Hermes' own Bots roster says               (`ui_meta['hermes-bots'].color` / `.shape`),
+//   3. the profile name, hashed — the same name always draws the same bot.
 function hash(s) {
   let h = 2166136261
   for (const ch of String(s || '')) {
@@ -107,33 +99,37 @@ function hash(s) {
   return h >>> 0
 }
 
-/** The look each bot was given in Hermes' own Bots roster (`ui_meta['hermes-bots'].color` / `.shape`), by profile. */
+/** The look each bot was given, by profile: the roster's colour and shape, and this page's own mark. */
 const CHOSEN = new Map()
 
-/** Called with the roster: a colour or a shape the person picked in Hermes wins over everything below. */
+/** Called with the roster: anything the person picked wins over the name; a mark wins over the roster. */
 export function setChosenLooks(bots) {
   CHOSEN.clear()
   for (const b of bots || []) {
-    const color = typeof b?.color === 'string' && b.color.trim() ? b.color.trim() : ''
-    const shape = SHAPES.includes(b?.shape) ? b.shape : ''
-    if (color || shape) CHOSEN.set(b.name, { color, shape })
+    const color = normalizeHex(b?.color)
+    const shape = MARK_SHAPES.includes(b?.shape) ? b.shape : ''
+    const mark = sanitizeMark(b?.mark)
+    if (color || shape || Object.keys(mark).length) CHOSEN.set(b.name, { color, shape, mark })
   }
 }
 
-/** The vivid hues only: slate is a fallback colour, and two unknown bots hashed onto it read as the same bot. */
-const VIVID = HUES.slice(0, -1)
-
-export function botLook(name) {
+/** The look a bot has with no mark of its own: the roster's colour and shape where it names them, else its name's. */
+export function autoLook(name) {
   const key = name || 'default'
-  const chosen = CHOSEN.get(key)
   const h = hash(key)
-  const base = { colors: VIVID[h % VIVID.length], shape: SHAPES[(h >>> 5) % SHAPES.length] }
-  if (!chosen) return base
+  const chosen = CHOSEN.get(key)
   return {
-    // One picked colour becomes the avatar's two stops: the colour lifted for the light side, deepened for the dark.
-    colors: chosen.color ? [`color-mix(in srgb, ${chosen.color} 78%, white)`, `color-mix(in srgb, ${chosen.color} 82%, black)`] : base.colors,
-    shape: chosen.shape || base.shape
+    shape: chosen?.shape || MARK_SHAPES[(h >>> 5) % MARK_SHAPES.length],
+    eyes: AUTO_EYES[(h >>> 9) % AUTO_EYES.length],
+    color: chosen?.color || AUTO_COLORS[h % AUTO_COLORS.length]
   }
+}
+
+/** What is drawn for a bot: its saved mark where it sets a field, the automatic look for the rest. */
+export function botLook(name) {
+  const mark = CHOSEN.get(name || 'default')?.mark || {}
+  const auto = autoLook(name)
+  return { shape: mark.shape || auto.shape, eyes: mark.eyes || auto.eyes, color: mark.color || auto.color }
 }
 
 export function shortModel(model) {

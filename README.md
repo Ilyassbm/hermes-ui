@@ -212,12 +212,24 @@ npm run lint:ui -- --url http://localhost:3000 --viewport 390x844 --scheme light
 `--out` writes the JSON report (default `cache/lint-ui.json`), `--keep` saves the screenshot beside it, `--ready` sets
 the selector that marks the page ready (default `.glaze`). Exit codes: 0 passed, 1 findings, 2 did not finish.
 
+## A look of its own
+
+Every bot is drawn as a flat body with two capsule eyes: eight shapes, eight pairs of eyes, thirteen colours or any hex.
+Change it from the bot's right-click menu in the rail (**Change look**) or by clicking its avatar in the panel; **Auto**
+leaves a field to the bot's own (its colour and shape in Hermes' Bots roster, else drawn from its name), **Shuffle** tries
+one, **Back to automatic** takes the look back.
+
+The look is saved in the profile, under `ui_meta['hermes-ui'].mark` in `profile.yaml`, through `profiles.configure` with
+the per-key revision Hermes uses for its own roster — so it follows the profile, and it never touches the `hermes-bots`
+key Hermes writes. A mark is checked on the way in: an unknown shape, or a colour that is not hex, reads as "not set".
+
 ## Credits
 
 - Glaze design system by design.how (MIT).
-- aicss avatar engine (MIT, vendored with its LICENSE in `src/vendor/aicss`).
-- thinking-state and thinking-reasoning motion adapted from aicss (MIT).
-- Layout inspiration from OpenBot (no code copied, PolyForm Noncommercial).
+- thinking-state and thinking-reasoning motion adapted from aicss (MIT, vendored with its LICENSE in `src/vendor/aicss`).
+- The bot's mark (one flat body, two capsule eyes) is drawn from scratch; the idea of a body, a pair of eyes and a colour to
+  choose from is after bloub (MIT).
+- Layout and editor inspiration from OpenBot (no code, no asset copied; PolyForm Noncommercial).
 
 ## License
 

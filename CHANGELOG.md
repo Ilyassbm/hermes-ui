@@ -3,6 +3,30 @@
 All notable changes to this project are documented here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-11-16
+
+### Added
+
+- **A look of its own.** Bots are drawn as a flat body with two capsule eyes, replacing the 3D avatar: eight shapes, eight
+  pairs of eyes (calm, happy, wide, sleepy, stern, sad, wink, curious), thirteen colours or any hex, drawn from a few
+  formulas (no asset, no gradient). A bot at work breathes and blinks; a bot you point at looks up; both stop under reduced
+  motion.
+- **Change look.** From the rail's context menu or the panel's avatar: a dialog with the bot drawn large, a grid for each
+  of shape, eyes and colour, **Auto** per field, **Shuffle**, **Back to automatic**, and a custom hex field.
+- The look is saved in the profile (`ui_meta['hermes-ui'].mark`) through `profiles.configure`, with the per-key revision
+  Hermes uses for its roster, retried once on a conflict. Where a field is not set, the bot keeps Hermes' roster colour and
+  shape, else the look its name gives it. A mark read from a profile is validated field by field.
+
+### Changed
+
+- The vendored aicss avatar engine is gone (the thinking motion adapted from aicss stays, with its license).
+- The panel's avatar is a button; the composition check measures `.hui-aside-profile .hui-bot` accordingly.
+
+### Tests
+
+- `check-mark` (53 checks, wired into `npm run build`): the drawing of every shape and pair of eyes, validation, the flat
+  avatar, the order mark > roster > name, and the `profiles.configure` payload of a save, a reset, a conflict and a refusal.
+
 ## [1.6.4] - 2026-11-16
 
 ### Fixed

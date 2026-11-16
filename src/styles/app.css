@@ -24,8 +24,9 @@
 @import "./working.css";
 /* Lot 27: the motion pass — message entrance, tab entrance, press feedback. */
 @import "./motion.css";
-/* The vendored aicss avatar: its identity colours, scoped to .hui-bot. */
+/* The bot's mark: its box and its two small motions, then the editor that changes it. */
 @import "./bot.css";
+@import "./mark.css";
 /* Hermes UI's own visual language, last: the library keeps its structure, this decides the look. */
 @import "./theme.css";
 

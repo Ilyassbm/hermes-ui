@@ -327,7 +327,7 @@
   padding: 6.5px 0 0;
   flex: none;
 }
-.glaze .hui-aside-profile > .hui-bot {
+.glaze .hui-aside-profile .hui-bot {
   width: 59px;
   height: 59px;
 }

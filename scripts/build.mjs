@@ -107,6 +107,11 @@ if (links.status !== 0) process.exit(links.status ?? 1)
 const media = spawnSync(process.execPath, [resolve(root, 'scripts/check-media.mjs')], { stdio: 'inherit' })
 if (media.status !== 0) process.exit(media.status ?? 1)
 
+// 0n. The mark gate (1.7.0): a bot's look is drawn from three words, ordered mark > roster > name, and saved through
+//     `profiles.configure` into the key this plugin owns, with the revision it was read at.
+const markGate = spawnSync(process.execPath, [resolve(root, 'scripts/check-mark.mjs')], { stdio: 'inherit' })
+if (markGate.status !== 0) process.exit(markGate.status ?? 1)
+
 // 1. Tailwind v4 → one stylesheet. app.css pulls `tailwindcss/theme` + `tailwindcss/utilities` in (never the full
 //    `tailwindcss`, whose Preflight is a global reset) and Glaze's own scoped entry.
 const compiled = await postcss([tailwind()]).process(readFileSync(from, 'utf8'), { from, to: cssOut })

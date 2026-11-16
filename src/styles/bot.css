@@ -1,18 +1,8 @@
-/* The aicss bot avatar (src/vendor/aicss/engine.ts drives the SVG). Kept out of the Glaze sheet on purpose: these are
-   the vendored avatar's own identity colours, not Glaze roles — the one place where a bot's hue is its identity, as
-   it was specified. Everything else on the page takes its colour from a token.
+/* The bot's mark (src/app/bot-avatar.tsx): a flat body, two capsule eyes. The body's colour is the bot's identity and
+   arrives as an attribute on the path, so this sheet only owns the box and the two small motions.
 
-   Scoped to .hui-bot, and its dark variant to .glaze[data-theme="dark"], so nothing here reaches the native app. */
+   Scoped to .hui-bot, so nothing here reaches the native app. */
 .hui-bot {
-  --bot-1: #66a6ff;
-  --bot-2: #0059d4;
-  --bot-face: #ffffff;
-  --bot-ground: rgba(0, 0, 0, 0.05);
-  --bot-ground-core: rgba(0, 0, 0, 0.095);
-  --bot-heart: #ff4f7e;
-  --bot-blush: rgba(255, 110, 150, 0.55);
-  /* The body is drawn larger than its box (the hop and the ground shadow need the room): the box must not clip it. */
-  overflow: visible;
   position: relative;
   display: inline-block;
   flex: none;
@@ -20,36 +10,68 @@
   height: var(--bot-size, 24px);
   vertical-align: middle;
 }
-.glaze[data-theme='dark'] .hui-bot {
-  --bot-face: #101010;
-  --bot-ground: rgba(0, 0, 0, 0.2);
-  --bot-ground-core: rgba(0, 0, 0, 0.3);
-}
-/* The SVG fills the box and the drawing is blown up around the centre: the aicss engine draws the body at R0 = 13.4
-   in a 48-unit viewBox (engine.ts, `R0` and `AI_BOT_SVG.viewBox`), so the face only covers 26.8 / 48 = 55.8% of the
-   box — ~26px in a 46px cell, which reads as a 28px avatar. `--bot-scale` takes that to 89.3% (~90%) at every size
-   (18, 20, 24, 36, 46, 56, 72), and the shape's own wobble (+6.8% of R0 at rest) tops out at 95%, inside the box.
-   Scale, not width: the engine keeps setting `d` and `transform` on the groups, and `transform-origin: center` keeps
-   the animation turning around the face rather than around the corner of the box. */
 .hui-bot svg {
-  --bot-scale: 1.6;
   position: absolute;
   inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   overflow: visible;
-  transform: scale(var(--bot-scale));
+}
+.hui-bot .hui-mark-body,
+.hui-bot .hui-mark-face {
+  transform-box: fill-box;
   transform-origin: center;
 }
-.hui-bot .stop1,
-.hui-bot .stop2 {
-  transition: stop-color 400ms ease;
+
+/* A bot at work breathes (body) and blinks (eyes). Slow and small: it is a sign of life, not an animation to watch. */
+.glaze .hui-bot[data-activity='working'] .hui-mark-body {
+  animation: hui-mark-breathe 2.4s ease-in-out infinite;
 }
-.hui-bot .stop1 { stop-color: var(--bot-1); }
-.hui-bot .stop2 { stop-color: var(--bot-2); }
-.hui-bot .face { fill: var(--bot-face); stroke: var(--bot-face); }
-.hui-bot .ground { fill: var(--bot-ground); }
-.hui-bot .core { fill: var(--bot-ground-core); }
-.hui-bot .blush { fill: var(--bot-blush); }
-.hui-bot .heart { fill: var(--bot-heart); }
+.glaze .hui-bot[data-activity='working'] .hui-mark-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hui-mark-blink 4.2s ease-in-out infinite;
+}
+@keyframes hui-mark-breathe {
+  50% {
+    transform: scale(1.045);
+  }
+}
+@keyframes hui-mark-blink {
+  0%,
+  92%,
+  100% {
+    scale: 1 1;
+  }
+  96% {
+    scale: 1 0.12;
+  }
+}
+
+/* The eyes look up at a bot you point at: a nudge of the face, only where hovering exists. */
+@media (hover: hover) and (pointer: fine) {
+  .glaze .hui-bot .hui-mark-face {
+    transition: transform 160ms var(--ease-out);
+  }
+  .glaze :is(.hui-bot-row, .hui-tile, .hui-pill):hover .hui-bot .hui-mark-face {
+    transform: translate(1.5px, -2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glaze .hui-bot[data-activity='working'] .hui-mark-body,
+  .glaze .hui-bot[data-activity='working'] .hui-mark-eye {
+    animation: none;
+  }
+  .glaze .hui-bot .hui-mark-face {
+    transition: none;
+  }
+}
+.glaze[data-motion='reduced'] .hui-bot[data-activity='working'] .hui-mark-body,
+.glaze[data-motion='reduced'] .hui-bot[data-activity='working'] .hui-mark-eye {
+  animation: none;
+}
+.glaze[data-motion='reduced'] .hui-bot .hui-mark-face {
+  transition: none;
+}

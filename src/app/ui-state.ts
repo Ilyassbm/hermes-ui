@@ -14,6 +14,8 @@ type ViewState = {
   picker: PickerMode | null
   /** Bumped by `/model` and by the model shortcut: the header opens its menu on each new value. */
   modelMenu: number
+  /** The bot whose look is being edited, or null. */
+  markEditor: string | null
 }
 type Store<T> = {
   get: () => T
@@ -21,7 +23,7 @@ type Store<T> = {
   subscribe: (fn: () => void) => () => void
 }
 
-export const view: Store<ViewState> = createStore({ asideOpen: true, railOpen: false, picker: null, modelMenu: 0 })
+export const view: Store<ViewState> = createStore({ asideOpen: true, railOpen: false, picker: null, modelMenu: 0, markEditor: null })
 
 /** Reads the persisted panel state once, when the page mounts. */
 export function initView(ctx: any) {
@@ -53,4 +55,14 @@ export function openPicker(mode: PickerMode | null) {
 /** Asks the header to open its model menu (the `/model` command, and the shortcut once it exists). */
 export function openModelMenu() {
   view.set(s => ({ modelMenu: s.modelMenu + 1 }))
+}
+
+/** Opens the look editor on a bot. */
+export function openMarkEditor(name: string) {
+  view.set({ markEditor: name })
+}
+
+/** Closes the look editor. */
+export function closeMarkEditor() {
+  view.set({ markEditor: null })
 }

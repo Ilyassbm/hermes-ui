@@ -8,6 +8,7 @@ import { view } from '../app/ui-state'
 import { bindOsDoor, openLink } from './open-link'
 import { createStore } from './store'
 import { modelLabel, setChosenLooks } from './labels'
+import { sanitizeMark } from './mark'
 
 export const store = createStore({
   ready: false,
@@ -335,6 +336,12 @@ export function toTurns(raw) {
 
 // ── bots & sessions ──────────────────────────────────────────────────────────
 
+/** The block of a roster row this plugin owns: `ui_meta['hermes-ui']`, or an empty object. */
+function ownMeta(row) {
+  const block = row?.ui_meta?.['hermes-ui']
+  return block && typeof block === 'object' && !Array.isArray(block) ? block : {}
+}
+
 export async function loadBots() {
   store.set({ connecting: true })
   let profiles = []
@@ -365,6 +372,11 @@ export async function loadBots() {
       skills: Number(p.skill_count) || 0,
       color: String(p.ui_meta?.['hermes-bots']?.color || ''),
       shape: String(p.ui_meta?.['hermes-bots']?.shape || ''),
+      // What this page saved for the bot (`ui_meta['hermes-ui']`), the revision it was read at, and the whole block so a
+      // save keeps whatever else the key carries.
+      mark: sanitizeMark(ownMeta(p).mark),
+      markRevision: Number(p.ui_meta_revisions?.['hermes-ui']) || 0,
+      uiMeta: ownMeta(p),
       display_name: p.display_name || '',
       description: p.description || '',
       model: p.model || '',
@@ -376,6 +388,56 @@ export async function loadBots() {
   setChosenLooks(bots)
   store.set({ bots, connecting: false })
   return bots
+}
+
+/**
+ * Saves a bot's mark (shape, eyes, colour) — or, with `null`, takes it back to the automatic one.
+ *
+ * It goes through `profiles.configure`, the call Hermes' own roster saves with, into `ui_meta['hermes-ui']`: the key this
+ * plugin owns, so nothing of Hermes' (`hermes-bots`) is touched. The save carries the revision it was read at; when
+ * another writer got there first the gateway answers a conflict and the save is replayed once at the revision it names.
+ * The page takes the new look only once the gateway took it: a refusal keeps the old one and says so.
+ */
+export async function saveMark(botName, next) {
+  const bot = store.get().bots.find(b => b.name === botName)
+  if (!bot) return false
+  const mark = next ? sanitizeMark(next) : null
+  const block = { ...(bot.uiMeta || {}) }
+  if (mark && Object.keys(mark).length) block.mark = mark
+  else delete block.mark
+  const key = Object.keys(block).length ? block : null
+  let revision = Number(bot.markRevision) || 0
+  try {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const res = await host.request('profiles.configure', {
+        name: botName,
+        ui_meta: { 'hermes-ui': key },
+        ui_meta_expected_revisions: { 'hermes-ui': revision }
+      })
+      const applied = res?.applied || {}
+      const conflict = applied.ui_meta_conflicts?.['hermes-ui']
+      if (conflict) {
+        revision = Number(conflict.actual ?? applied.ui_meta_revisions?.['hermes-ui']) || 0
+        continue
+      }
+      if (applied.ui_meta !== true) break
+      const taken = {
+        ...bot,
+        mark: mark || {},
+        uiMeta: block,
+        markRevision: Number(applied.ui_meta_revisions?.['hermes-ui']) || revision + 1
+      }
+      const bots = store.get().bots.map(b => (b.name === botName ? taken : b))
+      setChosenLooks(bots)
+      store.set({ bots })
+      return true
+    }
+    notify(UI.mark.saveFailed)
+    return false
+  } catch (e) {
+    notify(refusalText(UI.mark.saveFailed, e?.message || ''))
+    return false
+  }
 }
 
 export async function loadSessions(botName) {

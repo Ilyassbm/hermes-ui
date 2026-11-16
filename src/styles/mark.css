@@ -1,0 +1,80 @@
+/* The look editor (src/app/mark-editor.tsx): the bot drawn large, then three small grids — shape, eyes, colour. Plain CSS
+   on the page's tokens; the only hues here are the swatches and the bot itself, which are the choice being made. */
+.glaze [data-hui-part='dialog-content'].hui-mark-editor {
+  max-width: 440px;
+}
+.glaze .hui-mark-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 14px;
+}
+.glaze .hui-mark-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.glaze .hui-mark-group > legend {
+  padding: 0 0 8px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--text-2);
+}
+.glaze .hui-mark-group + .hui-mark-group {
+  margin-top: 14px;
+}
+.glaze .hui-mark-grid {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 6px;
+}
+.glaze .hui-mark-swatches {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.glaze .hui-mark-cell {
+  display: grid;
+  place-items: center;
+  height: 40px;
+  min-width: 0;
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 var(--hairline) var(--line-faint);
+}
+.glaze .hui-mark-cell.is-round {
+  border-radius: 999px;
+}
+.glaze .hui-mark-cell.is-auto {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.glaze .hui-mark-cell[data-on] {
+  box-shadow: inset 0 0 0 2px var(--line-focus);
+  color: var(--text-1);
+}
+.glaze .hui-mark-swatch {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--swatch);
+}
+.glaze .hui-aside-avatar {
+  height: auto;
+  padding: 0;
+  border-radius: 999px;
+  background: transparent;
+}
+/* The custom colour field: a visible box, so it reads as a field and not as a caption. */
+.glaze .hui-mark-group input {
+  border: var(--hairline) solid var(--border-control);
+  border-radius: 10px;
+  padding-inline: 10px;
+}
+.glaze .hui-mark-group input[aria-invalid='true'] {
+  border-color: var(--text-3);
+}

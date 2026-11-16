@@ -12,6 +12,7 @@
 // The words come from `toolVerbPresent` (the same table as the folded tool rows), so a verb edited once stays one verb.
 // Reduced motion is CSS's: no pulse, no dots, and a static dot with the time still counting (src/styles/working.css).
 import { useEffect, useState } from 'react'
+import type { Look } from '@/lib/mark'
 import { toolVerbPresent, workingTime } from '@/lib/labels'
 import { BotAvatar } from '../bot-avatar'
 import { UI } from '../strings'
@@ -78,7 +79,7 @@ export function WorkingLine({
   worked: WorkedTurn
   name?: string
   /** The bot's own avatar, at 26: the direction's activity line opens on it (spec §4). */
-  identity?: { colors: [string, string]; shape: any }
+  identity?: Look
 }) {
   const active = Boolean(live)
   const now = useLiveNow(active, live?.startedAt)
@@ -98,7 +99,7 @@ export function WorkingLine({
       {/* The bot at 26, and the state dot on its corner: the direction's avatar, the pulse the line already had. */}
       {identity ? (
         <span className="hui-avatar hui-working-avatar">
-          <BotAvatar size={26} colors={identity.colors} shape={identity.shape} label={name || ''} hoverGiggle={false} />
+          <BotAvatar size={26} look={identity} label={name || ''} />
           <WorkingDot done={!live} className="hui-working-mark" />
         </span>
       ) : (

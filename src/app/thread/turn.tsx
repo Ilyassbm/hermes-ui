@@ -4,6 +4,7 @@
 // optional. The turn owns its own tool-call list: the store appends the actions (`tool-events`), this component replays
 // them through Glaze's reducer, so a finished call folds away without a state machine of its own.
 import { useEffect, useReducer, useRef } from 'react'
+import type { Look } from '@/lib/mark'
 import { AgentTurn, MessageFooter } from '@/components/glaze/ai/message'
 import { ToolCallList, toolCallsReducer, type ToolCallData } from '@/components/glaze/ai/tool-call'
 import { Button } from '@/components/glaze/ui/button'
@@ -37,7 +38,7 @@ type TurnProps = {
   key?: string
   message: any
   name: string
-  identity: { colors: [string, string]; shape: any }
+  identity: Look
 }
 
 export function AssistantTurn({ message, name }: TurnProps) {

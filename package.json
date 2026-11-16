@@ -1,7 +1,7 @@
 {
   "name": "hermes-ui",
   "private": true,
-  "version": "1.6.4",
+  "version": "1.7.0",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
@@ -20,6 +20,7 @@
     "check:clarify": "node scripts/check-clarify.mjs",
     "check:links": "node scripts/check-links.mjs",
     "check:media": "node scripts/check-media.mjs",
+    "check:mark": "node scripts/check-mark.mjs",
     "check:motion": "node scripts/check-motion.mjs",
     "check:resume": "node scripts/check-resume.mjs",
     "check:composition": "node scripts/check-ui-composition.mjs",

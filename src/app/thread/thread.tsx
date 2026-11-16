@@ -94,7 +94,7 @@ export function Thread({ bot, name, input }: ThreadProps) {
               </MessageGroup>
             ) : (
               <div className="flex flex-col items-center gap-4 py-16 text-center">
-                <BotAvatar size={72} colors={identity.colors} shape={identity.shape} label={name} />
+                <BotAvatar size={72} look={identity} label={name} />
                 <h1 className="type-heading text-text-1">{UI.thread.emptyTitle(name)}</h1>
                 <ChipGroup aria-label={UI.thread.suggestionsLabel}>
                   {SUGGESTIONS.map(s => (

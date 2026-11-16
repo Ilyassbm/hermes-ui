@@ -378,7 +378,7 @@ if (browser) try {
       const text = (await sub.innerText()).trim()
       if (!/private/i.test(text)) throw new Error(`the line reads "${text}"`)
       const size = await sub.evaluate(n => getComputedStyle(n).fontSize)
-      const avatar = await box(page, '.hui-aside-profile > .hui-bot')
+      const avatar = await box(page, '.hui-aside-profile .hui-bot')
       const tabs = await box(page, '.hui-aside-profile [data-hui-part="segmented-control"]')
       const cards = await page.locator('.hui-aside-card').evaluateAll(nodes =>
         nodes.map(n => ({ w: n.getBoundingClientRect().width, radius: getComputedStyle(n).borderRadius, rows: [...n.querySelectorAll('.hui-aside-row')].map(r => r.getBoundingClientRect().height) }))

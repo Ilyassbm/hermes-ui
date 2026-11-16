@@ -33,7 +33,7 @@ import { botIdentity, botRole } from './format'
 import { capsOf } from './keys'
 import { openSettings } from './settings-link'
 import { UI } from './strings'
-import { openPicker } from './ui-state'
+import { openMarkEditor, openPicker } from './ui-state'
 import { useBots } from './use-bots'
 
 type Row = {
@@ -203,7 +203,7 @@ export function Rail({ ctx }: { ctx: any }) {
                   onKeyDown={enter(() => selectBot(row.name))}
                 >
                   <span className="hui-avatar">
-                    <BotAvatar size={55} colors={row.identity.colors} shape={row.identity.shape} label={row.label} />
+                    <BotAvatar size={55} look={row.identity} label={row.label} activity={busy(row.name) ? 'working' : 'idle'} />
                     {busy(row.name) ? (
                       <span className="hui-work" role="img" aria-label={UI.rail.working}>
                         <WorkingDot />
@@ -248,7 +248,7 @@ export function Rail({ ctx }: { ctx: any }) {
                         onKeyDown={enter(() => selectBot(row.name))}
                       >
                         <span className="hui-avatar">
-                          <BotAvatar size={33} colors={row.identity.colors} shape={row.identity.shape} label={row.label} />
+                          <BotAvatar size={33} look={row.identity} label={row.label} activity={busy(row.name) ? 'working' : 'idle'} />
                           {busy(row.name) ? (
                             <span className="hui-work" role="img" aria-label={UI.rail.working}>
                               <WorkingDot />
@@ -456,6 +456,7 @@ function BotContextMenu({
               {UI.rail.newConversation}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onPin}>{pinned ? UI.rail.unpin : UI.rail.pin}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => openMarkEditor(row.name)}>{UI.mark.edit}</DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 try {

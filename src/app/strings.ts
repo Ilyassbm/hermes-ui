@@ -67,6 +67,26 @@ export const UI = {
     modelAndEffort: (trigger: string) => `Model and effort, ${trigger}`
   },
 
+  /** The bot's mark: its editor and the sentence a refused save says. */
+  mark: {
+    saveFailed: "Couldn't save the look — the bot kept its own.",
+    edit: 'Change look',
+    title: 'Look',
+    shape: 'Shape',
+    eyes: 'Eyes',
+    color: 'Colour',
+    auto: 'Auto',
+    shuffle: 'Shuffle',
+    reset: 'Back to automatic',
+    save: 'Save',
+    cancel: 'Cancel',
+    custom: 'Custom colour',
+    preview: (name: string) => `${name}'s look`,
+    shapeOption: (name: string) => `Shape: ${name}`,
+    eyesOption: (name: string) => `Eyes: ${name}`,
+    colorOption: (name: string) => `Colour: ${name}`
+  },
+
   /** The model picker at the foot of the composer: the trigger, the provider groups, the effort. */
   model: {
     trigger: (model: string, effort: string) => `Model and effort: ${model}, ${effort}`,

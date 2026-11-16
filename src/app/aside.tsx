@@ -41,7 +41,7 @@ import { useStore } from '@/lib/store'
 import { BotAvatar } from './bot-avatar'
 import { botIdentity, botRole, sinceLabel } from './format'
 import { capsOf } from './keys'
-import { toggleAside } from './ui-state'
+import { openMarkEditor, toggleAside } from './ui-state'
 import { WorkingDot } from './thread/working'
 import { UI } from './strings'
 
@@ -405,7 +405,15 @@ export function Aside({ ctx }: { ctx: any }) {
             </TooltipProvider>
           </div>
           <div className="hui-aside-profile">
-            <BotAvatar size={59} colors={identity.colors} shape={identity.shape} label={name} />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hui-aside-avatar"
+              aria-label={`${UI.mark.edit}: ${name}`}
+              onClick={() => openMarkEditor(bot || 'default')}
+            >
+              <BotAvatar size={59} look={identity} label={name} />
+            </Button>
             <h2 className="hui-aside-name">{role ? `${name} · ${role}` : name}</h2>
             <SegmentedControl size="sm" value={tab} onValueChange={(value: any) => pickTab(value)} aria-label={UI.aside.views}>
               <SegmentedControlItem value="activity">{UI.aside.activity}</SegmentedControlItem>
